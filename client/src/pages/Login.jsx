@@ -112,53 +112,6 @@ export default function Login() {
           </button>
         </form>
 
-        <div
-          style={{
-            marginTop: '24px',
-            padding: '14px',
-            backgroundColor: '#F8FAFC',
-            border: '1px dashed #CBD5E1',
-            borderRadius: '8px',
-            fontSize: '0.85rem',
-          }}
-        >
-          <div style={{ fontWeight: 600, color: '#0F172A', marginBottom: '8px' }}>
-            Quick Test Accounts:
-          </div>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              onClick={() => setForm({ email: 'admin@yourdomain.com', password: 'password123' })}
-              style={{
-                fontSize: '0.8rem',
-                padding: '4px 10px',
-                borderRadius: '4px',
-                border: '1px solid #0F172A',
-                background: '#0F172A',
-                color: '#fff',
-                cursor: 'pointer',
-              }}
-            >
-              Fill Admin (admin@yourdomain.com)
-            </button>
-            <button
-              type="button"
-              onClick={() => setForm({ email: 'alex.morgan@example.com', password: 'password123' })}
-              style={{
-                fontSize: '0.8rem',
-                padding: '4px 10px',
-                borderRadius: '4px',
-                border: '1px solid #CBD5E1',
-                background: '#fff',
-                color: '#334155',
-                cursor: 'pointer',
-              }}
-            >
-              Fill Student (alex.morgan@example.com)
-            </button>
-          </div>
-        </div>
-
         <p className="muted" style={{ marginTop: '20px', fontSize: '0.95rem' }}>
           Don&apos;t have an account? <Link to="/register">Create one here</Link> or{' '}
           <Link to="/">join the masterclass</Link>.
