@@ -3,8 +3,8 @@ export const LIVE_MENTORSHIP = {
     id: 'live-session-101',
     title: 'Crack Unicorn Tech Placements: Live Resume Roasting & Mock DSA',
     status: 'UPCOMING',
-    date: 'Sunday, 11:00 AM - 1:30 PM IST',
-    scheduledDateIso: '2026-10-25T11:00:00+05:30',
+    date: 'Sunday, 01:30 PM IST',
+    scheduledDateIso: '2026-10-25T13:00:00+05:30',
     meetUrl: 'https://meet.google.com/strivers-placement-live',
     roomCode: 'str-unicorns-2026',
     mentors: [

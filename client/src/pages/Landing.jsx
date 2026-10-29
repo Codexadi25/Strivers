@@ -131,7 +131,9 @@ export default function Landing() {
               </Link>
             </div>
             <p className="session">
-              Live online session: <strong>{session}</strong>
+              Live online session: <strong>
+                {session}
+                </strong>
             </p>
             {early && (
               <p className="early" role="timer" aria-live="off">
