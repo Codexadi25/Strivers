@@ -13,4 +13,14 @@ export class OrderModel {
     const res = await apiRequest(`/orders?${query.toString()}`);
     return res.orders || [];
   }
+
+  static async getOrderDetails(orderId) {
+    const res = await apiRequest(`/orders/${encodeURIComponent(orderId)}/details`);
+    return res.order;
+  }
+
+  static async getTransactionAnalytics() {
+    const res = await apiRequest('/analytics/transactions');
+    return res.analytics;
+  }
 }

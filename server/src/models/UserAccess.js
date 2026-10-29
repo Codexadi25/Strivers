@@ -40,6 +40,7 @@ const userAccessSchema = new mongoose.Schema(
     enrolledCourses: { type: [enrolledCourseSchema], default: [] },
     enrolledPracticeSheets: { type: [enrolledPracticeSheetSchema], default: [] },
     maxPracticeSheetsAllowed: { type: Number, default: 2 },
+    unlockedNotes: { type: [String], default: [] }, // Note IDs unlocked via secret code or purchase
     resetPasswordToken: { type: String, default: null },
     resetPasswordExpires: { type: Date, default: null },
   },

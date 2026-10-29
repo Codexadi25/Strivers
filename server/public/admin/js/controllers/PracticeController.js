@@ -18,7 +18,7 @@ export class PracticeController {
     const search = document.getElementById('practice-search')?.value.trim().toLowerCase() || '';
     const roleFilter = document.getElementById('practice-role-filter')?.value || 'all';
 
-    tbody.innerHTML = `<tr><td colspan="8" class="text-center">Loading practice sheets...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center">Loading practice sheets...</td></tr>`;
 
     try {
       this.currentPracticeSheets = await PracticeModel.getSheets();
@@ -38,13 +38,13 @@ export class PracticeController {
       }
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">No practice sheets found matching filters.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No practice sheets found matching filters.</td></tr>`;
         return;
       }
 
       tbody.innerHTML = filtered.map((s) => PracticePageView.renderSheetRow(s)).join('');
     } catch (err) {
-      tbody.innerHTML = `<tr><td colspan="8" class="text-center" style="color: #f87171">Failed to load practice sheets: ${err.message}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5" class="text-center" style="color: #f87171">Failed to load practice sheets: ${err.message}</td></tr>`;
     }
   }
 

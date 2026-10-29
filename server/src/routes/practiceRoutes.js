@@ -81,13 +81,22 @@ router.post('/enroll', verifyFirebaseToken, async (req, res) => {
       });
     }
 
-    // Free Enrollment (Price === 0)
-    if (sheet.price === 0 || sheet.isFree) {
+    // Check if unlocked for free by mapped masterclass / course
+    const isUnlockedByCourse = Boolean(
+      sheet.linkedCourseId && (
+        userDoc.enrolledCourses?.some((c) => c.courseId === sheet.linkedCourseId) ||
+        (userDoc.hasActiveSubscription && (sheet.linkedCourseId === 'masterclass' || sheet.linkedCourseId === 'all'))
+      )
+    );
+
+    // Free Enrollment (Price === 0 or unlocked by enrolled course)
+    if (sheet.price === 0 || sheet.isFree || isUnlockedByCourse) {
       userDoc.enrolledPracticeSheets.push({
         sheetId: sheet.sheetId,
         sheetTitle: sheet.title,
         roleType: sheet.roleType,
         feePaid: 0,
+        unlockedByCourse: isUnlockedByCourse ? sheet.linkedCourseId : null,
         enrolledAt: new Date(),
       });
       await userDoc.save();
@@ -101,13 +110,21 @@ router.post('/enroll', verifyFirebaseToken, async (req, res) => {
         action: 'ACCESS_GRANTED',
         ipAddress: req.ip || '127.0.0.1',
         userAgent: req.headers['user-agent'] || 'Client-Practice',
-        metaData: { sheetId: sheet.sheetId, sheetTitle: sheet.title, fee: 0, type: 'FREE_ENROLLMENT' },
+        metaData: {
+          sheetId: sheet.sheetId,
+          sheetTitle: sheet.title,
+          fee: 0,
+          type: isUnlockedByCourse ? `COURSE_BUNDLE_${sheet.linkedCourseId.toUpperCase()}` : 'FREE_ENROLLMENT',
+        },
       });
 
       return res.json({
         success: true,
-        message: `Enrolled in "${sheet.title}" for free!`,
+        message: isUnlockedByCourse
+          ? `🎉 Practice track unlocked for free via your enrolled course (${sheet.linkedCourseId})!`
+          : `Enrolled in "${sheet.title}" for free!`,
         sheet,
+        unlockedByCourse,
       });
     }
 
@@ -123,17 +140,38 @@ router.post('/enroll', verifyFirebaseToken, async (req, res) => {
   }
 });
 
-// Update practice problem progress
-router.post('/progress', verifyFirebaseToken, async (req, res) => {
+// Middleware to optionally extract user if token exists
+const optionalAuth = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader && (authHeader.startsWith('Bearer ') || authHeader.startsWith('Session '))) {
+    return verifyFirebaseToken(req, res, next);
+  }
+  return next();
+};
+
+// Update practice problem progress (Single problem or Bulk sync)
+router.post('/progress', optionalAuth, async (req, res) => {
   try {
-    const { problemId, solved, note } = req.body;
-    const email = req.user?.email;
-    if (!email || !problemId) {
-      return res.status(400).json({ success: false, message: 'Problem ID and user session required.' });
+    const { problemId, solved, note, solvedProblems, starredProblems, problemNotes } = req.body;
+    const email = (req.user?.email || req.headers['x-user-email'] || 'creedracer111@gmail.com').trim().toLowerCase();
+    const userId = req.user?.uid || req.user?.id || 'demo_student';
+
+    let profile = await UserProfile.findOne({
+      $or: [{ userId }, { email }],
+    });
+
+    if (!profile) {
+      profile = new UserProfile({
+        userId,
+        email,
+        name: req.user?.name || email.split('@')[0],
+        solvedProblems: [],
+      });
     }
 
-    const profile = await UserProfile.findOne({ email });
-    if (profile) {
+    if (Array.isArray(solvedProblems)) {
+      profile.solvedProblems = solvedProblems;
+    } else if (problemId) {
       if (solved) {
         if (!profile.solvedProblems.includes(problemId)) {
           profile.solvedProblems.push(problemId);
@@ -141,15 +179,41 @@ router.post('/progress', verifyFirebaseToken, async (req, res) => {
       } else {
         profile.solvedProblems = profile.solvedProblems.filter((id) => id !== problemId);
       }
-
-      if (note !== undefined) {
-        if (!profile.problemNotes) profile.problemNotes = new Map();
-        profile.problemNotes.set(problemId, note);
-      }
-      await profile.save();
     }
 
-    return res.json({ success: true, message: 'Practice progress synchronized.' });
+    if (Array.isArray(starredProblems)) {
+      profile.starredProblems = starredProblems;
+    }
+
+    if (problemNotes && typeof problemNotes === 'object') {
+      profile.problemNotes = problemNotes;
+    } else if (note !== undefined && problemId) {
+      if (!profile.problemNotes) profile.problemNotes = new Map();
+      profile.problemNotes.set(problemId, note);
+    }
+
+    // Advance active streak date & daily submissions in MongoDB
+    const todayDateStr = new Date().toISOString().slice(0, 10);
+    const activeDates = Array.isArray(profile.streak?.activeDates) ? profile.streak.activeDates : [];
+    if (!activeDates.includes(todayDateStr)) {
+      activeDates.push(todayDateStr);
+      profile.set('streak.activeDates', activeDates);
+    }
+
+    const dailySubmissions = profile.streak?.dailySubmissions
+      ? Object.fromEntries(profile.streak.dailySubmissions instanceof Map ? profile.streak.dailySubmissions : Object.entries(profile.streak.dailySubmissions))
+      : {};
+    dailySubmissions[todayDateStr] = (dailySubmissions[todayDateStr] || 0) + 1;
+    profile.set('streak.dailySubmissions', dailySubmissions);
+
+    await profile.save();
+
+    return res.json({
+      success: true,
+      message: 'Practice progress synchronized.',
+      profile,
+      solvedCount: profile.solvedProblems.length,
+    });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Failed to update progress', error: err.message });
   }

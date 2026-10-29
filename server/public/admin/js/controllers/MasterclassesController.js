@@ -6,6 +6,7 @@ import { MasterclassModel } from '../models/MasterclassModel.js';
 import { MasterclassesPageView } from '../views/pages/MasterclassesPageView.js';
 import { PricingController } from './PricingController.js';
 import { showToast, escapeHtml } from '../utils/formatters.js';
+import { apiRequest } from '../services/api.js';
 
 export class MasterclassesController {
   static currentMasterclasses = [];
@@ -22,12 +23,16 @@ export class MasterclassesController {
     `;
 
     try {
-      this.currentMasterclasses = await MasterclassModel.getAll();
+      const allFetched = await MasterclassModel.getAll();
+      // Distinguish Masterclasses using the schema value (category: 'masterclass' or isMasterclass: true)
+      this.currentMasterclasses = (allFetched || []).filter(
+        (m) => m.category === 'masterclass' || m.isMasterclass === true || m.productId === 'masterclass'
+      );
 
       if (this.currentMasterclasses.length === 0) {
         container.innerHTML = `
           <div class="loading-state">
-            <p>No masterclasses or courses created yet.</p>
+            <p>No masterclasses created yet (Courses are managed under Pricing & Products).</p>
             <button class="btn btn-primary btn-sm mt-4" onclick="openCreateMasterclassModal()">+ Create First Masterclass</button>
           </div>
         `;
@@ -77,6 +82,25 @@ export class MasterclassesController {
     document.getElementById('mc-features').value = (m.features || []).join('\n');
     document.getElementById('mc-meeting-link').value = m.activeMeetingLink || '';
     document.getElementById('mc-session-status').value = m.sessionStatus || 'upcoming';
+    document.getElementById('mc-session-date').value = m.sessionDate || 'Sunday, 11:00 AM IST';
+    document.getElementById('mc-secret-passcode').value = m.secretPasscode || 'STRIVERS2026';
+
+    const mentors = m.mentors || [];
+    const m1 = mentors[0] || { name: 'Alex Morgan', role: 'Ex-Google · SDE-2 @ Blinkit', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80' };
+    const m2 = mentors[1] || { name: 'Priya Sharma', role: 'Staff Engineer @ Zomato', avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&h=200&q=80' };
+    const m3 = mentors[2] || { name: 'Rahul Verma', role: 'Engineering Lead @ Porter', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&h=200&q=80' };
+
+    document.getElementById('mc-m1-name').value = m1.name || '';
+    document.getElementById('mc-m1-role').value = m1.role || '';
+    document.getElementById('mc-m1-avatar').value = m1.avatar || '';
+
+    document.getElementById('mc-m2-name').value = m2.name || '';
+    document.getElementById('mc-m2-role').value = m2.role || '';
+    document.getElementById('mc-m2-avatar').value = m2.avatar || '';
+
+    document.getElementById('mc-m3-name').value = m3.name || '';
+    document.getElementById('mc-m3-role').value = m3.role || '';
+    document.getElementById('mc-m3-avatar').value = m3.avatar || '';
 
     document.getElementById('modal-create-masterclass').classList.remove('hidden');
   }
@@ -99,6 +123,34 @@ export class MasterclassesController {
       .filter(Boolean);
     const activeMeetingLink = document.getElementById('mc-meeting-link').value.trim();
     const sessionStatus = document.getElementById('mc-session-status').value;
+    const sessionDate = document.getElementById('mc-session-date').value.trim();
+    const secretPasscode = document.getElementById('mc-secret-passcode').value.trim();
+
+    const mentors = [];
+    const m1Name = document.getElementById('mc-m1-name').value.trim();
+    if (m1Name) {
+      mentors.push({
+        name: m1Name,
+        role: document.getElementById('mc-m1-role').value.trim(),
+        avatar: document.getElementById('mc-m1-avatar').value.trim(),
+      });
+    }
+    const m2Name = document.getElementById('mc-m2-name').value.trim();
+    if (m2Name) {
+      mentors.push({
+        name: m2Name,
+        role: document.getElementById('mc-m2-role').value.trim(),
+        avatar: document.getElementById('mc-m2-avatar').value.trim(),
+      });
+    }
+    const m3Name = document.getElementById('mc-m3-name').value.trim();
+    if (m3Name) {
+      mentors.push({
+        name: m3Name,
+        role: document.getElementById('mc-m3-role').value.trim(),
+        avatar: document.getElementById('mc-m3-avatar').value.trim(),
+      });
+    }
 
     try {
       const res = await MasterclassModel.create({
@@ -112,6 +164,9 @@ export class MasterclassesController {
         features,
         activeMeetingLink,
         sessionStatus,
+        sessionDate,
+        secretPasscode,
+        mentors,
         isActive: true,
       });
 
@@ -125,12 +180,12 @@ export class MasterclassesController {
   }
 
   static async deleteMasterclass(productId) {
-    if (!confirm(`Are you sure you want to delete course "${productId}"? This cannot be undone.`)) {
+    if (!confirm(`Are you sure you want to delete masterclass "${productId}"? This cannot be undone.`)) {
       return;
     }
     try {
       const res = await MasterclassModel.delete(productId);
-      showToast(res.message || `Course "${productId}" removed.`, 'success');
+      showToast(res.message || `Masterclass "${productId}" removed successfully.`, 'success');
       this.loadMasterclasses();
       PricingController.loadProducts();
     } catch (err) {
@@ -147,6 +202,8 @@ export class MasterclassesController {
     document.getElementById('session-link-input').value = m.activeMeetingLink || '';
     document.getElementById('session-code-input').value = m.meetingCode || '';
     document.getElementById('session-status-select').value = m.sessionStatus || 'upcoming';
+    document.getElementById('session-date-input').value = m.sessionDate || 'Sunday, 11:00 AM IST';
+    document.getElementById('session-passcode-input').value = m.secretPasscode || 'STRIVERS2026';
 
     document.getElementById('modal-session-link').classList.remove('hidden');
   }
@@ -162,9 +219,17 @@ export class MasterclassesController {
     const activeMeetingLink = document.getElementById('session-link-input').value.trim();
     const meetingCode = document.getElementById('session-code-input').value.trim();
     const sessionStatus = document.getElementById('session-status-select').value;
+    const sessionDate = document.getElementById('session-date-input').value.trim();
+    const secretPasscode = document.getElementById('session-passcode-input').value.trim();
 
     try {
-      const res = await MasterclassModel.updateSession(productId, { activeMeetingLink, meetingCode, sessionStatus });
+      const res = await MasterclassModel.updateSession(productId, {
+        activeMeetingLink,
+        meetingCode,
+        sessionStatus,
+        sessionDate,
+        secretPasscode,
+      });
       showToast(res.message || 'Meeting session updated!', 'success');
       this.closeSessionModal();
       this.loadMasterclasses();
@@ -317,6 +382,8 @@ export class MasterclassesController {
     const courseId = document.getElementById('materials-course-id').value;
     const title = document.getElementById('mat-title').value.trim();
     const fileType = document.getElementById('mat-type').value;
+    const tier = document.getElementById('mat-tier')?.value || 'paid';
+    const secretCode = document.getElementById('mat-secret-code')?.value.trim() || '';
     const description = document.getElementById('mat-desc').value.trim();
     const fileInput = document.getElementById('mat-file-input');
     const textInput = document.getElementById('mat-text-input').value.trim();
@@ -325,13 +392,19 @@ export class MasterclassesController {
     const file = fileInput.files && fileInput.files[0];
 
     if (!file && !textInput) {
-      showToast('Please select a file or enter text/markdown content to store in MongoDB.', 'error');
+      showToast('Please select a PDF/HTML file or enter text content to store in MongoDB.', 'error');
+      return;
+    }
+
+    // REQUIREMENT: Max file size up to 10MB only
+    if (file && file.size > 10 * 1024 * 1024) {
+      showToast(`File size (${(file.size / (1024 * 1024)).toFixed(2)} MB) exceeds 10MB limit! Notes must be up to 10MB only.`, 'error');
       return;
     }
 
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.querySelector('span').textContent = 'Encoding & Saving to MongoDB...';
+      submitBtn.querySelector('span').textContent = 'Encoding & Storing in MongoDB (Max 10MB)...';
     }
 
     try {
@@ -346,24 +419,48 @@ export class MasterclassesController {
           reader.onerror = (err) => reject(err);
           reader.readAsDataURL(file);
         });
-        mimeType = file.type || 'application/pdf';
+        mimeType = file.type || (fileType === 'pdf' ? 'application/pdf' : 'text/html');
         fileSize = file.size;
       } else {
-        fileData = 'data:text/markdown;base64,' + btoa(unescape(encodeURIComponent(textInput)));
-        mimeType = 'text/markdown';
+        fileData = 'data:text/html;base64,' + btoa(unescape(encodeURIComponent(textInput)));
+        mimeType = 'text/html';
         fileSize = textInput.length;
       }
 
+      // 1. Upload to Course Notes in MongoDB
       const res = await MasterclassModel.uploadStudyMaterial(courseId, {
         title,
         description,
-        fileType,
+        fileType: fileType === 'pdf' ? 'pdf' : 'notes',
         mimeType,
         fileData,
         fileSize,
       });
 
-      showToast(res.message || 'Document securely saved to MongoDB!', 'success');
+      // 2. Also register in Downloadable Notes Collection (Free or Paid with Secret Code)
+      try {
+        const rawBase64 = fileData.includes(',') ? fileData.split(',')[1] : fileData;
+        await apiRequest('/notes/admin/upload', {
+          method: 'POST',
+          body: JSON.stringify({
+            noteId: `note-${Date.now()}`,
+            title,
+            subtitle: description || 'Masterclass Study Guide & Engineering Notes',
+            tag: tier === 'paid' ? 'VIP Masterclass' : 'Core Academic',
+            type: tier,
+            fileType: fileType === 'pdf' ? 'pdf' : 'html',
+            mimeType,
+            fileData: rawBase64,
+            fileSize,
+            linkedMasterclassId: courseId,
+            secretCode,
+          }),
+        });
+      } catch (noteErr) {
+        console.warn('Note registry notice:', noteErr.message);
+      }
+
+      showToast(res.message || 'Note successfully saved to MongoDB (10MB limit enforced)!', 'success');
       document.getElementById('form-upload-material').reset();
 
       await this.loadMasterclasses();
@@ -374,7 +471,7 @@ export class MasterclassesController {
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.querySelector('span').textContent = 'Save to MongoDB (View-Only DRM)';
+        submitBtn.querySelector('span').textContent = 'Save Note to MongoDB (10MB Limit · View-Only DRM)';
       }
     }
   }

@@ -6,6 +6,7 @@ const ActivityLog = require('../models/ActivityLog');
 const Product = require('../models/Product');
 const PracticeSheet = require('../models/PracticeSheet');
 const { signSessionToken } = require('../utils/token');
+const { hashPassword } = require('../utils/password');
 
 // In-memory refund log backup
 const inMemoryRefunds = [];
@@ -154,7 +155,11 @@ exports.getOrders = async (req, res, next) => {
     const filter = {};
 
     if (status && status !== 'all') {
-      filter.status = status;
+      if (status === 'canceled' || status === 'created') {
+        filter.status = { $in: ['canceled', 'created'] };
+      } else {
+        filter.status = status;
+      }
     }
     if (plan && plan !== 'all') {
       filter.planId = plan;
@@ -171,10 +176,44 @@ exports.getOrders = async (req, res, next) => {
 
     const skip = (Number(page) - 1) * Number(limit);
     const total = await Payment.countDocuments(filter);
-    const orders = await Payment.find(filter)
+    const rawOrders = await Payment.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(Number(limit));
+
+    const orders = rawOrders.map((doc) => {
+      const obj = doc.toObject();
+      const fr = (obj.failureReason || '').toLowerCase();
+      const ec = (obj.errorCode || '').toUpperCase();
+      const ed = (obj.errorDescription || '').toLowerCase();
+      const es = (obj.errorSource || '').toLowerCase();
+
+      if (obj.status === 'created' || obj.status === 'canceled' || es === 'user_action' || fr.includes('cancel') || ec.includes('CANCEL')) {
+        obj.status = 'canceled';
+        obj.statusLabel = 'Payment Canceled';
+        obj.remark = 'User Canceled Midway: Modal dismissed before PIN/OTP completion (payment_checkout)';
+      } else if (fr === 'payment_risk_check_failed' || ed.includes('website does not match')) {
+        obj.statusLabel = 'PG Failure';
+        obj.remark = 'Gateway Failure: payment_risk_check_failed - Website mismatch (payment_initiation)';
+      } else if (es === 'bank' || ec.includes('BANK') || ed.includes('bank') || ed.includes('insufficient')) {
+        obj.statusLabel = 'PG Failure';
+        obj.remark = `Bank / Issuer Failure: ${obj.errorDescription || 'Declined by customer bank'}`;
+      } else if (ec.includes('NETWORK') || ed.includes('timeout') || ed.includes('network')) {
+        obj.statusLabel = 'PG Failure';
+        obj.remark = 'Network Issues: Handshake dropped or timed out midway during payment';
+      } else if (es === 'server' || ec.includes('INTERNAL') || ed.includes('server')) {
+        obj.statusLabel = 'PG Failure';
+        obj.remark = 'Server Failure: Internal signature verification exception or timeout';
+      } else if (obj.status === 'failed') {
+        obj.statusLabel = 'PG Failure';
+        obj.remark = obj.errorDescription || obj.failureReason || 'PG Failure: Gateway rejected transaction';
+      } else if (obj.status === 'captured') {
+        obj.statusLabel = 'Captured (Success)';
+      } else if (obj.status === 'refunded') {
+        obj.statusLabel = 'Refunded to Source';
+      }
+      return obj;
+    });
 
     return res.status(200).json({
       success: true,
@@ -501,11 +540,17 @@ exports.processRefund = async (req, res, next) => {
 };
 
 /**
- * Get Activity & Audit Logs
+ * Get Activity & Audit Logs with Pagination (20 / 50 / 100 items per page)
  */
 exports.getActivityLogs = async (req, res, next) => {
   try {
-    const { q, action, limit = 50 } = req.query;
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    let limit = parseInt(req.query.limit) || 20;
+    if (![20, 50, 100].includes(limit)) {
+      limit = limit > 50 ? 100 : limit > 20 ? 50 : 20;
+    }
+
+    const { q, action } = req.query;
     const filter = {};
 
     if (action && action !== 'all') {
@@ -519,16 +564,69 @@ exports.getActivityLogs = async (req, res, next) => {
       ];
     }
 
-    const logs = await ActivityLog.find(filter)
-      .sort({ createdAt: -1 })
-      .limit(Number(limit));
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(200).json({
+        success: true,
+        logs: [],
+        total: 0,
+        page,
+        limit,
+        totalPages: 1,
+      });
+    }
 
-    const total = await ActivityLog.countDocuments(filter);
+    const skip = (page - 1) * limit;
+    const [logs, total] = await Promise.all([
+      ActivityLog.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .catch(() => []),
+      ActivityLog.countDocuments(filter).catch(() => 0),
+    ]);
 
     return res.status(200).json({
       success: true,
-      logs,
-      total,
+      logs: logs || [],
+      total: total || 0,
+      page,
+      limit,
+      totalPages: Math.ceil((total || 0) / limit) || 1,
+    });
+  } catch (error) {
+    return res.status(200).json({
+      success: true,
+      logs: [],
+      total: 0,
+      page: 1,
+      limit: 20,
+      totalPages: 1,
+      warning: error.message,
+    });
+  }
+};
+
+/**
+ * Get All Products (Admin view including active & inactive, filterable by category or isMasterclass)
+ */
+exports.getAdminProducts = async (req, res, next) => {
+  try {
+    const { category, type, isMasterclass } = req.query;
+    const filter = {};
+    if (category) filter.category = category;
+    if (type) filter.productType = type;
+    if (isMasterclass !== undefined) {
+      filter.$or = [
+        { isMasterclass: isMasterclass === 'true' },
+        { category: isMasterclass === 'true' ? 'masterclass' : { $ne: 'masterclass' } },
+      ];
+    }
+
+    const products = await Product.find(filter).sort({ orderIndex: 1, createdAt: 1 });
+    return res.status(200).json({
+      success: true,
+      products,
+      courses: products,
     });
   } catch (error) {
     next(error);
@@ -536,14 +634,22 @@ exports.getActivityLogs = async (req, res, next) => {
 };
 
 /**
- * Get All Products (Admin view including active & inactive)
+ * Specifically Get Only Masterclasses (Distinguished from Courses in the Schema)
  */
-exports.getAdminProducts = async (req, res, next) => {
+exports.getAdminMasterclasses = async (req, res, next) => {
   try {
-    const products = await Product.find().sort({ createdAt: 1 });
+    const masterclasses = await Product.find({
+      $or: [
+        { category: 'masterclass' },
+        { isMasterclass: true },
+        { productId: 'masterclass' },
+      ],
+    }).sort({ orderIndex: 1, createdAt: 1 });
+
     return res.status(200).json({
       success: true,
-      products,
+      masterclasses,
+      courses: masterclasses,
     });
   } catch (error) {
     next(error);
@@ -556,7 +662,7 @@ exports.getAdminProducts = async (req, res, next) => {
 exports.updateProductPrice = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { price, originalPrice, badge, title, description, isActive } = req.body;
+    const { price, originalPrice, badge, title, description, isActive, category, isMasterclass } = req.body;
 
     const product = await Product.findOne({
       $or: [{ productId: id }, { _id: mongoose.isValidObjectId(id) ? id : null }],
@@ -567,6 +673,12 @@ exports.updateProductPrice = async (req, res, next) => {
     }
 
     const oldPrice = product.price;
+
+    if (category !== undefined) {
+      product.category = category;
+      product.isMasterclass = category === 'masterclass' || Boolean(isMasterclass);
+      product.productType = category;
+    }
 
     if (price !== undefined && price !== null && !isNaN(Number(price))) {
       const newPriceNum = Math.max(1, Number(price));
@@ -632,6 +744,10 @@ exports.createOrUpdateProduct = async (req, res, next) => {
       meetingCode,
       meetingPlatform,
       sessionStatus,
+      sessionDate,
+      targetCountdown,
+      mentors,
+      secretPasscode,
       timingSlots,
       isActive,
     } = req.body;
@@ -656,10 +772,16 @@ exports.createOrUpdateProduct = async (req, res, next) => {
         badge: badge || '',
         features: Array.isArray(features) ? features : [],
         category: category || 'masterclass',
+        isMasterclass: Boolean(category === 'masterclass' || productId.trim().toLowerCase() === 'masterclass'),
+        productType: category || 'masterclass',
         ...(activeMeetingLink !== undefined ? { activeMeetingLink: activeMeetingLink.trim() } : {}),
         ...(meetingCode !== undefined ? { meetingCode: meetingCode.trim() } : {}),
         ...(meetingPlatform !== undefined ? { meetingPlatform: meetingPlatform.trim() } : {}),
         ...(sessionStatus !== undefined ? { sessionStatus } : {}),
+        ...(sessionDate !== undefined ? { sessionDate: sessionDate.trim() } : {}),
+        ...(targetCountdown !== undefined ? { targetCountdown: targetCountdown ? new Date(targetCountdown) : null } : {}),
+        ...(mentors && Array.isArray(mentors) ? { mentors } : {}),
+        ...(secretPasscode !== undefined ? { secretPasscode: secretPasscode.trim() } : {}),
         ...(timingSlots && Array.isArray(timingSlots) ? { timingSlots } : {}),
         isActive: isActive !== undefined ? Boolean(isActive) : true,
         updatedBy: req.user?.email || 'admin@yourdomain.com',
@@ -696,12 +818,20 @@ exports.createOrUpdateProduct = async (req, res, next) => {
  */
 exports.deleteProduct = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const rawId = req.params.id;
+    if (!rawId) {
+      return res.status(400).json({ success: false, message: 'Product or Masterclass ID is required.' });
+    }
+    const cleanId = rawId.trim();
     const product = await Product.findOneAndDelete({
-      $or: [{ productId: id }, { _id: mongoose.isValidObjectId(id) ? id : null }],
+      $or: [
+        { productId: cleanId },
+        { productId: cleanId.toLowerCase() },
+        { _id: mongoose.isValidObjectId(cleanId) ? cleanId : null },
+      ],
     });
     if (!product) {
-      return res.status(404).json({ success: false, message: 'Course/Product not found.' });
+      return res.status(404).json({ success: false, message: `Masterclass/Course "${cleanId}" not found.` });
     }
     await ActivityLog.create({
       userId: req.user?.uid || 'admin',
@@ -709,9 +839,12 @@ exports.deleteProduct = async (req, res, next) => {
       action: 'COURSE_DELETED',
       ipAddress: req.ip || '127.0.0.1',
       userAgent: req.headers['user-agent'] || 'Server-Admin-Console',
-      metaData: { productId: product.productId, title: product.title },
+      metaData: { productId: product.productId, title: product.title, category: product.category },
     });
-    return res.status(200).json({ success: true, message: `Course "${product.title}" removed.` });
+    return res.status(200).json({
+      success: true,
+      message: `Masterclass/Course "${product.title}" (${product.productId}) removed successfully.`,
+    });
   } catch (error) {
     next(error);
   }
@@ -723,7 +856,7 @@ exports.deleteProduct = async (req, res, next) => {
 exports.updateMasterclassSession = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { activeMeetingLink, meetingCode, meetingPlatform, sessionStatus } = req.body;
+    const { activeMeetingLink, meetingCode, meetingPlatform, sessionStatus, sessionDate, targetCountdown, mentors, secretPasscode } = req.body;
 
     const product = await Product.findOne({
       $or: [{ productId: id }, { _id: mongoose.isValidObjectId(id) ? id : null }],
@@ -737,6 +870,10 @@ exports.updateMasterclassSession = async (req, res, next) => {
     if (meetingCode !== undefined) product.meetingCode = meetingCode.trim();
     if (meetingPlatform !== undefined) product.meetingPlatform = meetingPlatform.trim();
     if (sessionStatus !== undefined) product.sessionStatus = sessionStatus;
+    if (sessionDate !== undefined) product.sessionDate = sessionDate.trim();
+    if (targetCountdown !== undefined) product.targetCountdown = targetCountdown ? new Date(targetCountdown) : null;
+    if (mentors && Array.isArray(mentors)) product.mentors = mentors;
+    if (secretPasscode !== undefined) product.secretPasscode = secretPasscode.trim();
 
     product.updatedBy = req.user?.email || 'admin@yourdomain.com';
     await product.save();
@@ -968,8 +1105,7 @@ exports.resetUserPassword = async (req, res, next) => {
     }
 
     const pwdToSet = newPassword || 'strivers2026';
-    const salt = 'strivers_secure_salt_2026';
-    userDoc.password = crypto.scryptSync(pwdToSet, salt, 32).toString('hex');
+    userDoc.password = hashPassword(pwdToSet);
     userDoc.resetPasswordToken = null;
     userDoc.resetPasswordExpires = null;
     await userDoc.save();
@@ -1078,6 +1214,10 @@ exports.createOrUpdatePracticeSheet = async (req, res, next) => {
       isTemplate,
       isActive,
       topics,
+      htmlContent,
+      fileType,
+      fileName,
+      linkedCourseId,
     } = req.body;
     if (!sheetId || !title) {
       return res.status(400).json({ success: false, message: 'Sheet ID and Title are required.' });
@@ -1105,6 +1245,10 @@ exports.createOrUpdatePracticeSheet = async (req, res, next) => {
         isFree: priceNum === 0,
         isTemplate: Boolean(isTemplate),
         isActive: isActive !== undefined ? Boolean(isActive) : true,
+        htmlContent: htmlContent !== undefined ? htmlContent : '',
+        fileType: fileType || 'standard',
+        fileName: fileName || '',
+        linkedCourseId: linkedCourseId ? linkedCourseId.trim().toLowerCase() : '',
         updatedBy: req.user?.email || 'admin@yourdomain.com',
         ...(topics && Array.isArray(topics) ? { topics } : {}),
       },

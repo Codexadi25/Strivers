@@ -23,4 +23,10 @@ export class ProductModel {
       body: JSON.stringify(payload),
     });
   }
+
+  static async delete(productId) {
+    return await apiRequest(`/products/${encodeURIComponent(productId)}`, {
+      method: 'DELETE',
+    });
+  }
 }

@@ -5,19 +5,7 @@ const UserProfile = require('../models/UserProfile');
 const ActivityLog = require('../models/ActivityLog');
 const { verifyFirebaseToken } = require('../middlewares/authMiddleware');
 const { signSessionToken } = require('../utils/token');
-
-function hashPassword(password) {
-  if (!password) return '';
-  const salt = 'strivers_secure_salt_2026';
-  return crypto.scryptSync(password, salt, 32).toString('hex');
-}
-
-function verifyPassword(password, hash) {
-  if (!hash) return true; // Account created via OAuth / legacy
-  const salt = 'strivers_secure_salt_2026';
-  const computed = crypto.scryptSync(password, salt, 32).toString('hex');
-  return computed === hash || password === 'admin123' || password === 'strivers2026';
-}
+const { hashPassword, verifyPassword } = require('../utils/password');
 
 // Get current user session
 router.get('/me', verifyFirebaseToken, async (req, res) => {

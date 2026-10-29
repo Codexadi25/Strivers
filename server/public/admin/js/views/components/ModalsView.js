@@ -16,9 +16,21 @@ export class ModalsView {
           <form id="form-edit-price" onsubmit="submitPriceUpdate(event)">
             <input type="hidden" id="edit-product-id">
 
-            <div class="form-group">
-              <label for="edit-title">Product Title</label>
-              <input type="text" id="edit-title" class="input-control" required>
+            <div class="grid-2col">
+              <div class="form-group">
+                <label for="edit-title">Product Title</label>
+                <input type="text" id="edit-title" class="input-control" required>
+              </div>
+
+              <div class="form-group">
+                <label for="edit-category">Classification (Schema)</label>
+                <select id="edit-category" class="select-control">
+                  <option value="course">📚 Self-Paced Course (category: 'course')</option>
+                  <option value="masterclass">🎯 Live Placement Masterclass (category: 'masterclass')</option>
+                  <option value="channel">📢 Paid Job Channel (category: 'channel')</option>
+                  <option value="workshop">⚡ Weekend Workshop (category: 'workshop')</option>
+                </select>
+              </div>
             </div>
 
             <div class="grid-2col">
@@ -84,9 +96,19 @@ export class ModalsView {
               </div>
 
               <div class="form-group">
-                <label for="new-title">Product Title <span class="badge-required">*</span></label>
-                <input type="text" id="new-title" class="input-control" required placeholder="e.g. 1-on-1 Mock Interview">
+                <label for="new-category">Product Classification</label>
+                <select id="new-category" class="select-control">
+                  <option value="course" selected>📚 Self-Paced Course (category: 'course')</option>
+                  <option value="masterclass">🎯 Live Placement Masterclass (category: 'masterclass')</option>
+                  <option value="channel">📢 Paid Job Channel (category: 'channel')</option>
+                  <option value="workshop">⚡ Weekend Workshop (category: 'workshop')</option>
+                </select>
               </div>
+            </div>
+
+            <div class="form-group">
+              <label for="new-title">Product Title <span class="badge-required">*</span></label>
+              <input type="text" id="new-title" class="input-control" required placeholder="e.g. 1-on-1 Mock Interview">
             </div>
 
             <div class="grid-2col">
@@ -233,92 +255,183 @@ export class ModalsView {
         </div>
       </div>
 
-      <!-- MODAL: CREATE / EDIT MASTERCLASS -->
+      <!-- MODAL: CREATE / EDIT MASTERCLASS (FULL-SCREEN VIEWPORT RATIO FIT) -->
       <div id="modal-create-masterclass" class="modal-overlay hidden">
-        <div class="modal-card" style="max-width: 650px;">
+        <div class="modal-card modal-viewport-fit">
           <div class="modal-header">
-            <h3 id="modal-masterclass-title-text">Create Masterclass / Course</h3>
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="badge badge-success" style="font-size: 0.72rem; padding: 2px 7px;">STUDIO MODE</span>
+                <h3 id="modal-masterclass-title-text" style="margin: 0; font-size: 1.22rem; font-weight: 700;">Masterclass & Live Session Studio</h3>
+              </div>
+              <span class="modal-subtitle">Design masterclass identity, interactive webinar rooms, pricing tiers, and curriculum outcomes</span>
+            </div>
             <button class="btn-close" onclick="closeCreateMasterclassModal()">&times;</button>
           </div>
-          <form id="form-create-masterclass" onsubmit="submitCreateMasterclass(event)">
-            <div class="grid-2col">
-              <div class="form-group">
-                <label for="mc-id">Course Slug / ID <span class="badge-required">*</span></label>
-                <input type="text" id="mc-id" class="input-control" required placeholder="e.g. masterclass, channel, quick_ops">
-                <span class="help-text">Permanent identifier for checkout & URLs</span>
-              </div>
 
-              <div class="form-group">
-                <label for="mc-category">Course Type / Track</label>
-                <select id="mc-category" class="select-control">
-                  <option value="masterclass">Live Placement Masterclass</option>
-                  <option value="channel">Paid Job & Referral Channel</option>
-                  <option value="workshop">Specialized Workshop</option>
-                  <option value="course">Self-Paced Course</option>
-                </select>
-              </div>
-            </div>
+          <form id="form-create-masterclass" onsubmit="submitCreateMasterclass(event)" style="display: flex; flex-direction: column; flex: 1 1 auto; overflow: hidden; padding: 0;">
+            <div class="modal-body-scroll">
+              <!-- Section 1: Course Identity & Track -->
+              <div class="studio-section-card">
+                <div class="studio-section-header">
+                  <h4>🎯 1. Course Track & Basic Identity</h4>
+                  <span class="studio-pill">Required Metadata</span>
+                </div>
 
-            <div class="form-group">
-              <label for="mc-title">Course Title <span class="badge-required">*</span></label>
-              <input type="text" id="mc-title" class="input-control" required placeholder="e.g. Strivers Masterclass">
-            </div>
+                <div class="grid-2col">
+                  <div class="form-group">
+                    <label for="mc-id">Course Identifier (Slug) <span class="badge-required">*</span></label>
+                    <input type="text" id="mc-id" class="input-control" required placeholder="e.g. masterclass, channel, quick_ops">
+                    <span class="help-text">Permanent identifier used for checkout URLs & access permissions</span>
+                  </div>
 
-            <div class="form-group">
-              <label for="mc-desc">Subtitle / Blurb</label>
-              <input type="text" id="mc-desc" class="input-control" placeholder="e.g. Live online session, basics to advanced.">
-            </div>
+                  <div class="form-group">
+                    <label for="mc-category">Schema Product Classification <span class="badge-required">*</span></label>
+                    <select id="mc-category" class="select-control">
+                      <option value="masterclass" selected>🎯 Live Placement Masterclass (isMasterclass: true)</option>
+                      <option value="workshop">⚡ Interactive Workshop (isMasterclass: true)</option>
+                    </select>
+                    <span class="help-text">Distinguishes Masterclasses from self-paced Courses in the schema</span>
+                  </div>
+                </div>
 
-            <div class="grid-2col">
-              <div class="form-group">
-                <label for="mc-price">Price (₹ INR) <span class="badge-required">*</span></label>
-                <div class="input-prefix-wrap">
-                  <span class="prefix">₹</span>
-                  <input type="number" id="mc-price" class="input-control" min="0" step="1" required placeholder="21">
+                <div class="grid-2col">
+                  <div class="form-group">
+                    <label for="mc-title">Masterclass Title <span class="badge-required">*</span></label>
+                    <input type="text" id="mc-title" class="input-control" required placeholder="e.g. Strivers Placement Masterclass">
+                  </div>
+
+                  <div class="form-group">
+                    <label for="mc-badge">Promotional Card Badge / Tag</label>
+                    <input type="text" id="mc-badge" class="input-control" placeholder="e.g. Live Every Sunday • Placement Guarantee">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="mc-desc">Subtitle / Value Proposition Blurb</label>
+                  <input type="text" id="mc-desc" class="input-control" placeholder="e.g. Live online session every Sunday covering resume, LinkedIn, and cold email secrets.">
                 </div>
               </div>
 
-              <div class="form-group">
-                <label for="mc-original-price">Original / Strike Price (₹ INR)</label>
-                <div class="input-prefix-wrap">
-                  <span class="prefix">₹</span>
-                  <input type="number" id="mc-original-price" class="input-control" min="0" step="1" placeholder="999">
+              <!-- Section 2: Pricing & Commercials -->
+              <div class="studio-section-card">
+                <div class="studio-section-header">
+                  <h4>💵 2. Commercial Pricing & Access Model</h4>
+                  <span class="studio-pill">Razorpay Integrated</span>
+                </div>
+
+                <div class="grid-2col">
+                  <div class="form-group">
+                    <label for="mc-price">Selling Price (₹ INR) <span class="badge-required">*</span></label>
+                    <div class="input-prefix-wrap">
+                      <span class="prefix">₹</span>
+                      <input type="number" id="mc-price" class="input-control" min="0" step="1" required placeholder="21">
+                    </div>
+                    <span class="help-text">Gateway passes minimum 100 paise (₹1.00)</span>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="mc-original-price">Original Strike Price (₹ INR)</label>
+                    <div class="input-prefix-wrap">
+                      <span class="prefix">₹</span>
+                      <input type="number" id="mc-original-price" class="input-control" min="0" step="1" placeholder="999">
+                    </div>
+                    <span class="help-text">Displayed crossed-out to highlight discount</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section 3: Live Broadcast Studio & Meeting Configuration -->
+              <div class="studio-section-card">
+                <div class="studio-section-header">
+                  <h4>🎥 3. Live Broadcast Studio & Meeting Configuration</h4>
+                  <span class="studio-pill">Webinar DRM</span>
+                </div>
+
+                <div class="grid-2col">
+                  <div class="form-group">
+                    <label for="mc-meeting-link">Active Meeting Link (Google Meet / Zoom)</label>
+                    <input type="url" id="mc-meeting-link" class="input-control" placeholder="https://meet.google.com/abc-defg-hij">
+                    <span class="help-text">Protected behind verified payment session</span>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="mc-session-status">Session Status</label>
+                    <select id="mc-session-status" class="select-control">
+                      <option value="upcoming">Upcoming Session (Countdown Mode)</option>
+                      <option value="live">Live In Progress (Pulsing Red)</option>
+                      <option value="completed">Completed / Archive</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="grid-2col">
+                  <div class="form-group">
+                    <label for="mc-session-date">Session Schedule / Date Text</label>
+                    <input type="text" id="mc-session-date" class="input-control" placeholder="e.g. Sunday, 11:00 AM IST">
+                  </div>
+
+                  <div class="form-group">
+                    <label for="mc-secret-passcode">Attendee Secret Passcode (For Paid DRM Notes)</label>
+                    <input type="text" id="mc-secret-passcode" class="input-control" placeholder="STRIVERS2026">
+                    <span class="help-text">Announced live in class for enrolled students to unlock paid study materials for free</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Section 4: Mentors & Instructors (Alex Morgan, Priya Sharma, Rahul Verma) -->
+              <div class="studio-section-card">
+                <div class="studio-section-header">
+                  <h4>👨‍🏫 4. Mentors & Industry Instructors</h4>
+                  <span class="studio-pill">Shown on Live Card</span>
+                </div>
+
+                <div class="admin-subcard" style="margin-bottom: 12px; padding: 12px 14px;">
+                  <strong style="font-size: 0.85rem; color: #38bdf8;">Mentor 1:</strong>
+                  <div class="grid-2col" style="margin-top: 6px;">
+                    <input type="text" id="mc-m1-name" class="input-control" placeholder="Name (e.g. Alex Morgan)" value="Alex Morgan">
+                    <input type="text" id="mc-m1-role" class="input-control" placeholder="Role (e.g. Ex-Google · SDE-2 @ Blinkit)" value="Ex-Google · SDE-2 @ Blinkit">
+                  </div>
+                  <input type="url" id="mc-m1-avatar" class="input-control" style="margin-top: 6px;" placeholder="Avatar URL" value="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80">
+                </div>
+
+                <div class="admin-subcard" style="margin-bottom: 12px; padding: 12px 14px;">
+                  <strong style="font-size: 0.85rem; color: #38bdf8;">Mentor 2:</strong>
+                  <div class="grid-2col" style="margin-top: 6px;">
+                    <input type="text" id="mc-m2-name" class="input-control" placeholder="Name (e.g. Priya Sharma)" value="Priya Sharma">
+                    <input type="text" id="mc-m2-role" class="input-control" placeholder="Role (e.g. Staff Engineer @ Zomato)" value="Staff Engineer @ Zomato">
+                  </div>
+                  <input type="url" id="mc-m2-avatar" class="input-control" style="margin-top: 6px;" placeholder="Avatar URL" value="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&h=200&q=80">
+                </div>
+
+                <div class="admin-subcard" style="padding: 12px 14px;">
+                  <strong style="font-size: 0.85rem; color: #38bdf8;">Mentor 3:</strong>
+                  <div class="grid-2col" style="margin-top: 6px;">
+                    <input type="text" id="mc-m3-name" class="input-control" placeholder="Name (e.g. Rahul Verma)" value="Rahul Verma">
+                    <input type="text" id="mc-m3-role" class="input-control" placeholder="Role (e.g. Engineering Lead @ Porter)" value="Engineering Lead @ Porter">
+                  </div>
+                  <input type="url" id="mc-m3-avatar" class="input-control" style="margin-top: 6px;" placeholder="Avatar URL" value="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&h=200&q=80">
+                </div>
+              </div>
+
+              <!-- Section 5: Curriculum Highlights & Features -->
+              <div class="studio-section-card">
+                <div class="studio-section-header">
+                  <h4>📝 5. Key Curriculum Outcomes & Highlights</h4>
+                  <span class="studio-pill">Storefront Badges</span>
+                </div>
+
+                <div class="form-group">
+                  <label for="mc-features">Curriculum Highlights (One bullet point per line)</label>
+                  <textarea id="mc-features" class="input-control" rows="4" placeholder="Live online interactive session every Sunday&#10;Resume, portfolio, LinkedIn & Naukri review&#10;Cold emails, HR scripts and data skills for placements&#10;Direct entry to exclusive alumni channel"></textarea>
+                  <span class="help-text">Rendered on student landing cards with green verified checkmarks</span>
                 </div>
               </div>
             </div>
 
-            <div class="form-group">
-              <label for="mc-badge">Card Badge / Tag</label>
-              <input type="text" id="mc-badge" class="input-control" placeholder="e.g. Live Session Every Sunday, Fast Track">
-            </div>
-
-            <div class="form-group">
-              <label for="mc-features">Key Bullet Points / Highlights (One per line)</label>
-              <textarea id="mc-features" class="input-control" rows="3" placeholder="Live online session every Sunday&#10;Resume, portfolio, LinkedIn & Naukri&#10;Cold emails and data skills for placement"></textarea>
-              <span class="help-text">Displayed with green checkmarks on the card</span>
-            </div>
-
-            <div class="card" style="background: #F1F5F9; padding: 14px 16px; border-radius: 8px; margin-bottom: 16px;">
-              <h4 style="margin: 0 0 10px; font-size: 0.92rem; color: #0E1B3D;">🎥 Active Live Session Configuration</h4>
-              <div class="grid-2col">
-                <div class="form-group" style="margin-bottom: 8px;">
-                  <label for="mc-meeting-link">Active Meeting Link (Google Meet / Zoom)</label>
-                  <input type="url" id="mc-meeting-link" class="input-control" placeholder="https://meet.google.com/abc-defg-hij">
-                </div>
-                <div class="form-group" style="margin-bottom: 8px;">
-                  <label for="mc-session-status">Session Status</label>
-                  <select id="mc-session-status" class="select-control">
-                    <option value="upcoming">Upcoming Session (Countdown)</option>
-                    <option value="live">Live In Progress (Pulsing Red)</option>
-                    <option value="completed">Completed / Archive</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div class="modal-actions">
+            <div class="modal-footer-sticky">
               <button type="button" class="btn btn-secondary" onclick="closeCreateMasterclassModal()">Cancel</button>
-              <button type="submit" class="btn btn-primary">
+              <button type="submit" class="btn btn-primary" style="padding: 9px 22px;">
                 <span>Save Course & Masterclass</span>
               </button>
             </div>
@@ -358,6 +471,18 @@ export class ModalsView {
                   <option value="live">🔴 Live Now (Active Pulse)</option>
                   <option value="completed">✓ Completed</option>
                 </select>
+              </div>
+            </div>
+
+            <div class="grid-2col">
+              <div class="form-group">
+                <label for="session-date-input">Session Schedule Text</label>
+                <input type="text" id="session-date-input" class="input-control" placeholder="e.g. Sunday, 11:00 AM IST">
+              </div>
+
+              <div class="form-group">
+                <label for="session-passcode-input">Attendee Secret Code (Notes DRM)</label>
+                <input type="text" id="session-passcode-input" class="input-control" placeholder="STRIVERS2026">
               </div>
             </div>
 
@@ -459,44 +584,60 @@ export class ModalsView {
             <div id="materials-list-container" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px;"></div>
 
             <div class="admin-subcard">
-              <h4 class="modal-section-title" style="margin-bottom: 12px;">+ Upload New Study Material into MongoDB</h4>
+              <h4 class="modal-section-title" style="margin-bottom: 12px;">+ Upload Downloadable Note / Study Material into MongoDB</h4>
               <form id="form-upload-material" onsubmit="submitUploadMaterial(event)">
                 <div class="grid-2col">
                   <div class="form-group">
                     <label for="mat-title">Document Title <span class="badge-required">*</span></label>
-                    <input type="text" id="mat-title" class="input-control" required placeholder="e.g. ATS Resume Blueprint & Action Verbs">
+                    <input type="text" id="mat-title" class="input-control" required placeholder="e.g. ATS Resume Blueprint & Dark Store Playbook">
                   </div>
 
                   <div class="form-group">
-                    <label for="mat-type">Document Classification</label>
+                    <label for="mat-type">Document Format <span class="badge-required">*</span></label>
                     <select id="mat-type" class="select-control">
-                      <option value="notes">Lecture Notes / Summary</option>
-                      <option value="pdf">PDF Presentation / Document</option>
+                      <option value="pdf">PDF Document (.pdf)</option>
+                      <option value="html">HTML Web Document (.html)</option>
+                      <option value="notes">Handwritten Lecture Notes</option>
                       <option value="cheatsheet">High-Yield Cheatsheet</option>
-                      <option value="document">Case Study Docket</option>
                     </select>
+                  </div>
+                </div>
+
+                <div class="grid-2col">
+                  <div class="form-group">
+                    <label for="mat-tier">Access Tier (Free vs Paid) <span class="badge-required">*</span></label>
+                    <select id="mat-tier" class="select-control">
+                      <option value="paid" selected>🔒 Paid Note (Enrolled in Masterclass / Attendee Code Required)</option>
+                      <option value="free">🟢 Free Note (Accessible to all registered users)</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="mat-secret-code">Attendee Secret Passcode (For Live Masterclass)</label>
+                    <input type="text" id="mat-secret-code" class="input-control" placeholder="e.g. STRIVERS2026 (Announced by mentor in class)">
+                    <span class="help-text">Enrolled students attending the masterclass can enter this code to view for free.</span>
                   </div>
                 </div>
 
                 <div class="form-group">
                   <label for="mat-desc">Description / Instructions</label>
-                  <input type="text" id="mat-desc" class="input-control" placeholder="e.g. Mandatory reading before Sunday mock interview session">
+                  <input type="text" id="mat-desc" class="input-control" placeholder="e.g. Confidential interview breakdown shared during Sunday live session">
                 </div>
 
                 <div class="form-group">
-                  <label for="mat-file-input">Select File to Store in MongoDB (PDF, DOCX, TXT, MD)</label>
-                  <input type="file" id="mat-file-input" class="input-control" accept=".pdf,.doc,.docx,.txt,.md">
-                  <span class="help-text">File is converted to Base64 in your browser and stored directly in MongoDB.</span>
+                  <label for="mat-file-input">Select PDF or HTML File (Max 10MB Only)</label>
+                  <input type="file" id="mat-file-input" class="input-control" accept=".pdf,.html,.htm">
+                  <span class="help-text" style="color: #38bdf8;">⚡ Stored directly in MongoDB. Strict 10MB size limit. Anti-screenshot & anti-print protection enforced.</span>
                 </div>
 
                 <div class="form-group">
-                  <label for="mat-text-input">...or Paste Markdown / Text Content Directly</label>
-                  <textarea id="mat-text-input" class="input-control" rows="3" placeholder="Paste study notes or cheatsheet text here if not uploading a file..."></textarea>
+                  <label for="mat-text-input">...or Paste HTML / Markdown Content Directly</label>
+                  <textarea id="mat-text-input" class="input-control" rows="3" placeholder="Paste formatted HTML or notes text here if not uploading a file..."></textarea>
                 </div>
 
                 <div style="display: flex; justify-content: flex-end; margin-top: 12px;">
                   <button type="submit" id="btn-submit-mat" class="btn btn-primary">
-                    <span>Save to MongoDB (View-Only DRM)</span>
+                    <span>Save Note to MongoDB (10MB Limit · View-Only DRM)</span>
                   </button>
                 </div>
               </form>
@@ -511,88 +652,111 @@ export class ModalsView {
 
       <!-- MODAL: CREATE OR EDIT PRACTICE SHEET -->
       <div id="modal-add-sheet" class="modal-overlay hidden">
-        <div class="modal-card" style="max-width: 680px;">
+        <div class="modal-card modal-viewport-fit" style="width: min(960px, 92vw); height: min(90vh, 840px);">
           <div class="modal-header">
-            <h3 id="modal-sheet-title-text">Create Practice Sheet</h3>
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="badge badge-info" style="font-size: 0.72rem; padding: 2px 7px;">CURRICULUM SPEC</span>
+                <h3 id="modal-sheet-title-text" style="margin: 0; font-size: 1.22rem; font-weight: 700;">Create Practice Sheet</h3>
+              </div>
+              <span class="modal-subtitle">Define target role, hiring companies, curriculum overview and enrollment price</span>
+            </div>
             <button class="btn-close" onclick="closeAddPracticeSheetModal()">&times;</button>
           </div>
-          <form id="form-create-practice-sheet" onsubmit="submitCreatePracticeSheet(event)">
-            <div class="grid-2col">
-              <div class="form-group">
-                <label for="new-sheet-id">Sheet Slug / ID <span class="badge-required">*</span></label>
-                <input type="text" id="new-sheet-id" class="input-control" required placeholder="e.g. ops-zomato-blinkit, dsa-sde-sheet">
-                <span class="help-text">Unique URL identifier</span>
-              </div>
 
-              <div class="form-group">
-                <label for="new-sheet-role-type">Role Track</label>
-                <select id="new-sheet-role-type" class="select-control">
-                  <option value="non-tech">Non-Technical Operations (Live)</option>
-                  <option value="tech">Technical SDE (Template)</option>
-                  <option value="analytics">Data Analytics & SQL</option>
-                  <option value="product">Product & Growth</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="new-sheet-title">Sheet Curriculum Title <span class="badge-required">*</span></label>
-              <input type="text" id="new-sheet-title" class="input-control" required placeholder="e.g. Quick Commerce & Dark Store Operations Lead">
-            </div>
-
-            <div class="grid-2col">
-              <div class="form-group">
-                <label for="new-sheet-target-role">Target Job Role <span class="badge-required">*</span></label>
-                <input type="text" id="new-sheet-target-role" class="input-control" required placeholder="e.g. Store Operations Lead / Dark Store Executive">
-              </div>
-
-              <div class="form-group">
-                <label for="new-sheet-difficulty">Difficulty Level</label>
-                <select id="new-sheet-difficulty" class="select-control">
-                  <option value="All Levels">All Levels (Comprehensive)</option>
-                  <option value="Beginner">Beginner / Foundation</option>
-                  <option value="Intermediate">Intermediate / Core Prep</option>
-                  <option value="Advanced">Advanced / Lead Level</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="grid-2col">
-              <div class="form-group">
-                <label for="new-sheet-price">Enrollment Fee (₹ INR) <span class="badge-required">*</span></label>
-                <div class="input-prefix-wrap">
-                  <span class="prefix">₹</span>
-                  <input type="number" id="new-sheet-price" class="input-control" min="0" step="1" value="0" required placeholder="0">
+          <form id="form-create-practice-sheet" onsubmit="submitCreatePracticeSheet(event)" style="display: flex; flex-direction: column; flex: 1 1 auto; overflow: hidden; padding: 0;">
+            <div class="modal-body-scroll">
+              <div class="studio-section-card">
+                <div class="studio-section-header">
+                  <h4>🎯 Role & Sheet Identity</h4>
+                  <span class="studio-pill">Required</span>
                 </div>
-                <span class="help-text">Set to 0 for 1-Click Free Enrollment</span>
+
+                <div class="grid-2col">
+                  <div class="form-group">
+                    <label for="new-sheet-id">Sheet Slug / ID <span class="badge-required">*</span></label>
+                    <input type="text" id="new-sheet-id" class="input-control" required placeholder="e.g. ops-zomato-blinkit, dsa-sde-sheet">
+                    <span class="help-text">Unique URL identifier</span>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="new-sheet-role-type">Role Track</label>
+                    <select id="new-sheet-role-type" class="select-control">
+                      <option value="non-tech">Non-Technical Operations (Live)</option>
+                      <option value="tech">Technical SDE (Template)</option>
+                      <option value="analytics">Data Analytics & SQL</option>
+                      <option value="product">Product & Growth</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="new-sheet-title">Sheet Curriculum Title <span class="badge-required">*</span></label>
+                  <input type="text" id="new-sheet-title" class="input-control" required placeholder="e.g. Quick Commerce & Dark Store Operations Lead">
+                </div>
+
+                <div class="grid-2col">
+                  <div class="form-group">
+                    <label for="new-sheet-target-role">Target Job Role <span class="badge-required">*</span></label>
+                    <input type="text" id="new-sheet-target-role" class="input-control" required placeholder="e.g. Store Operations Lead / Dark Store Executive">
+                  </div>
+
+                  <div class="form-group">
+                    <label for="new-sheet-difficulty">Difficulty Level</label>
+                    <select id="new-sheet-difficulty" class="select-control">
+                      <option value="All Levels">All Levels (Comprehensive)</option>
+                      <option value="Beginner">Beginner / Foundation</option>
+                      <option value="Intermediate">Intermediate / Core Prep</option>
+                      <option value="Advanced">Advanced / Lead Level</option>
+                    </select>
+                  </div>
+                </div>
               </div>
 
-              <div class="form-group">
-                <label for="new-sheet-badge">Badge / Highlight</label>
-                <input type="text" id="new-sheet-badge" class="input-control" placeholder="e.g. 1-Click Free, Must Do, Top Pick">
+              <div class="studio-section-card">
+                <div class="studio-section-header">
+                  <h4>💵 Pricing & Access Configuration</h4>
+                  <span class="studio-pill">Enrollment</span>
+                </div>
+
+                <div class="grid-2col">
+                  <div class="form-group">
+                    <label for="new-sheet-price">Enrollment Fee (₹ INR) <span class="badge-required">*</span></label>
+                    <div class="input-prefix-wrap">
+                      <span class="prefix">₹</span>
+                      <input type="number" id="new-sheet-price" class="input-control" min="0" step="1" value="0" required placeholder="0">
+                    </div>
+                    <span class="help-text">Set to 0 for 1-Click Free Enrollment</span>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="new-sheet-badge">Badge / Highlight</label>
+                    <input type="text" id="new-sheet-badge" class="input-control" placeholder="e.g. 1-Click Free, Must Do, Top Pick">
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="new-sheet-companies">Target Companies (Comma-separated)</label>
+                  <input type="text" id="new-sheet-companies" class="input-control" placeholder="Zomato, Blinkit, Hyperpure, Swiggy, Porter, Amazon, Flipkart">
+                </div>
+
+                <div class="form-group">
+                  <label for="new-sheet-desc">Curriculum Overview / Instructions</label>
+                  <textarea id="new-sheet-desc" class="input-control" rows="3" placeholder="Overview of operational scenarios, interview simulations, or algorithms covered in this sheet..."></textarea>
+                </div>
+
+                <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="new-sheet-is-template">
+                  <label for="new-sheet-is-template" style="margin: 0; font-weight: 500;">
+                    Mark as Template Mode (preserves as reference curriculum)
+                  </label>
+                </div>
               </div>
             </div>
 
-            <div class="form-group">
-              <label for="new-sheet-companies">Target Companies (Comma-separated)</label>
-              <input type="text" id="new-sheet-companies" class="input-control" placeholder="Zomato, Blinkit, Hyperpure, Swiggy, Porter, Amazon, Flipkart">
-            </div>
-
-            <div class="form-group">
-              <label for="new-sheet-desc">Curriculum Overview / Instructions</label>
-              <textarea id="new-sheet-desc" class="input-control" rows="2" placeholder="Overview of operational scenarios, interview simulations, or algorithms covered in this sheet..."></textarea>
-            </div>
-
-            <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
-              <input type="checkbox" id="new-sheet-is-template">
-              <label for="new-sheet-is-template" style="margin: 0; font-weight: 500;">
-                Mark as Template Mode (preserves as reference curriculum)
-              </label>
-            </div>
-
-            <div class="modal-actions">
+            <div class="modal-footer-sticky">
               <button type="button" class="btn btn-secondary" onclick="closeAddPracticeSheetModal()">Cancel</button>
-              <button type="submit" class="btn btn-primary">
+              <button type="submit" class="btn btn-primary" style="padding: 9px 20px;">
                 <span>Save Practice Sheet</span>
               </button>
             </div>
@@ -642,51 +806,62 @@ export class ModalsView {
         </div>
       </div>
 
-      <!-- MODAL: PRACTICE SHEET CURRICULUM & PROBLEM BUILDER -->
+      <!-- MODAL: PRACTICE SHEET CURRICULUM & PROBLEM BUILDER (FULL VIEWPORT RATIO FIT) -->
       <div id="modal-sheet-curriculum" class="modal-overlay hidden">
-        <div class="modal-card" style="max-width: 840px;">
+        <div class="modal-card modal-viewport-fit curriculum-wide">
           <div class="modal-header">
             <div>
-              <h3 id="curriculum-sheet-title">Practice Sheet Curriculum Builder</h3>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="badge badge-info" style="font-size: 0.72rem; padding: 2px 7px;">CURRICULUM ENGINE</span>
+                <h3 id="curriculum-sheet-title" style="margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--text-main);">Practice Sheet Curriculum Builder</h3>
+              </div>
               <span id="curriculum-sheet-subtitle" class="modal-subtitle">Manage topics, real-world problems & interview scenarios</span>
             </div>
-            <button class="btn-close" onclick="closeCurriculumModal()">&times;</button>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span id="curriculum-stats-pill" class="badge badge-info" style="font-size: 0.8rem; padding: 5px 12px;">0 Topics · 0 Problems</span>
+              <button class="btn-close" onclick="closeCurriculumModal()">&times;</button>
+            </div>
           </div>
 
-          <div style="max-height: 72vh; overflow-y: auto; padding-right: 6px;">
+          <div class="modal-body-scroll">
             <input type="hidden" id="curriculum-sheet-id">
 
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-              <h4 class="modal-section-title" style="margin: 0;">Curriculum Structure (Topics & Problems):</h4>
-              <span id="curriculum-stats-pill" class="badge badge-info">0 Topics · 0 Problems</span>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+              <h4 class="modal-section-title" style="margin: 0;">Modules & Interview Scenarios:</h4>
             </div>
 
             <div id="curriculum-topics-container" style="margin-bottom: 24px;"></div>
 
             <!-- Add New Topic Section -->
-            <div class="admin-subcard-dashed" style="margin-bottom: 20px;">
-              <h4 class="modal-section-title" style="margin-bottom: 10px;">+ Add New Topic to Sheet</h4>
+            <div class="studio-section-card" style="margin-bottom: 20px;">
+              <div class="studio-section-header">
+                <h4>+ Add New Learning Module / Topic</h4>
+                <span class="studio-pill">Curriculum Topic</span>
+              </div>
               <form id="form-add-topic" onsubmit="submitAddTopic(event)" style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <input type="text" id="new-topic-title" class="input-control" style="flex: 2; min-width: 200px;" required placeholder="Topic Title (e.g. Dark Store Inventory & Shrinkage Control)">
                 <input type="text" id="new-topic-summary" class="input-control" style="flex: 3; min-width: 250px;" placeholder="Topic summary / focus area">
-                <button type="submit" class="btn btn-secondary btn-sm" style="white-space: nowrap;">+ Add Topic</button>
+                <button type="submit" class="btn btn-secondary btn-sm" style="white-space: nowrap; padding: 8px 16px;">+ Add Topic Module</button>
               </form>
             </div>
 
             <!-- Add Problem to Topic Section -->
-            <div class="admin-subcard">
-              <h4 class="modal-section-title" style="margin-bottom: 12px;">+ Add Interview Problem / Scenario to Topic</h4>
+            <div class="studio-section-card">
+              <div class="studio-section-header">
+                <h4>+ Add Real-World Problem / Interview Scenario</h4>
+                <span class="studio-pill">Scenario Builder</span>
+              </div>
               <form id="form-add-problem" onsubmit="submitAddProblem(event)">
                 <div class="grid-2col">
                   <div class="form-group">
-                    <label for="prob-target-topic">Select Topic <span class="badge-required">*</span></label>
+                    <label for="prob-target-topic">Select Module / Topic <span class="badge-required">*</span></label>
                     <select id="prob-target-topic" class="select-control" required>
                       <option value="">-- Choose a Topic --</option>
                     </select>
                   </div>
 
                   <div class="form-group">
-                    <label for="prob-title">Problem Title <span class="badge-required">*</span></label>
+                    <label for="prob-title">Scenario Title <span class="badge-required">*</span></label>
                     <input type="text" id="prob-title" class="input-control" required placeholder="e.g. Picker Route Optimization during 8 PM Surge">
                   </div>
                 </div>
@@ -694,23 +869,23 @@ export class ModalsView {
                 <div class="grid-2col">
                   <div class="form-group">
                     <label for="prob-company">Target Company</label>
-                    <input type="text" id="prob-company" class="input-control" placeholder="e.g. Blinkit, Zomato, Porter, Google">
+                    <input type="text" id="prob-company" class="input-control" placeholder="e.g. Blinkit, Zomato, Porter, Amazon, Swiggy">
                   </div>
 
                   <div class="form-group">
-                    <label for="prob-difficulty">Difficulty</label>
+                    <label for="prob-difficulty">Difficulty Level</label>
                     <select id="prob-difficulty" class="select-control">
-                      <option value="Easy">Easy</option>
-                      <option value="Medium" selected>Medium</option>
-                      <option value="Hard">Hard</option>
+                      <option value="Easy">Easy / Warmup</option>
+                      <option value="Medium" selected>Medium / Core Interview</option>
+                      <option value="Hard">Hard / Senior & Lead</option>
                     </select>
                   </div>
                 </div>
 
                 <div class="grid-2col">
                   <div class="form-group">
-                    <label for="prob-type">Problem Classification / Type</label>
-                    <input type="text" id="prob-type" class="input-control" placeholder="e.g. Operational Math, Dispatch Logic, Arrays">
+                    <label for="prob-type">Classification / Problem Type</label>
+                    <input type="text" id="prob-type" class="input-control" placeholder="e.g. Operational Math, Dispatch Logic, Metrics">
                   </div>
 
                   <div class="form-group">
@@ -720,29 +895,29 @@ export class ModalsView {
                 </div>
 
                 <div class="form-group">
-                  <label for="prob-scenario">Problem Statement / Scenario <span class="badge-required">*</span></label>
+                  <label for="prob-scenario">Problem Statement / Business Scenario <span class="badge-required">*</span></label>
                   <textarea id="prob-scenario" class="input-control" rows="3" required placeholder="Describe the business scenario, operational constraint, or algorithm problem statement..."></textarea>
                 </div>
 
                 <div class="form-group">
                   <label for="prob-solution">Solution Guidance / Approach</label>
-                  <textarea id="prob-solution" class="input-control" rows="2" placeholder="Key steps, formula, calculation, or algorithmic solution..."></textarea>
+                  <textarea id="prob-solution" class="input-control" rows="2" placeholder="Key formula, calculation, approach, or algorithmic resolution..."></textarea>
                 </div>
 
                 <div class="grid-2col">
                   <div class="form-group">
-                    <label for="prob-takeaway">Interview Takeaway / Concept</label>
-                    <input type="text" id="prob-takeaway" class="input-control" placeholder="e.g. In quick commerce, prioritize aisle batching over FIFO">
+                    <label for="prob-takeaway">Interview Takeaway / Key Concept</label>
+                    <input type="text" id="prob-takeaway" class="input-control" placeholder="e.g. Prioritize aisle batching over individual order picking">
                   </div>
 
                   <div class="form-group">
-                    <label for="prob-resource">Resource Link / LeetCode Reference</label>
-                    <input type="url" id="prob-resource" class="input-control" placeholder="https://leetcode.com/... or docs link">
+                    <label for="prob-resource">Resource Link / Document Reference</label>
+                    <input type="url" id="prob-resource" class="input-control" placeholder="https://leetcode.com/... or reference link">
                   </div>
                 </div>
 
-                <div style="display: flex; justify-content: flex-end; margin-top: 12px;">
-                  <button type="submit" class="btn btn-primary">
+                <div style="display: flex; justify-content: flex-end; margin-top: 14px;">
+                  <button type="submit" class="btn btn-primary" style="padding: 9px 20px;">
                     <span>+ Add Problem to Curriculum</span>
                   </button>
                 </div>
@@ -750,8 +925,9 @@ export class ModalsView {
             </div>
           </div>
 
-          <div class="modal-actions" style="margin-top: 18px;">
-            <button type="button" class="btn btn-secondary" onclick="closeCurriculumModal()">Close</button>
+          <div class="modal-footer-sticky">
+            <span class="text-muted" style="margin-right: auto; font-size: 0.82rem;">⚡ Changes to topics and scenarios are automatically saved to database</span>
+            <button type="button" class="btn btn-secondary" onclick="closeCurriculumModal()">Close Window</button>
           </div>
         </div>
       </div>
@@ -797,6 +973,100 @@ export class ModalsView {
               <button type="submit" class="btn btn-danger">
                 <span>Confirm & Reverse Payment</span>
               </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- MODAL: TRANSACTION DETAILS POPUP (Exact Merchant & Razorpay standard) -->
+      <div id="modal-transaction-details" class="modal-overlay hidden" style="z-index: 99999;" onclick="if(event.target === this) closeTransactionDetailsModal()">
+        <div class="txn-details-card">
+          <div class="txn-details-header">
+            <h3>Transaction Details</h3>
+            <button class="txn-btn-close" onclick="closeTransactionDetailsModal()">&times;</button>
+          </div>
+          <div class="txn-details-body">
+            <!-- Table 1: Transaction Information -->
+            <div class="txn-table-wrap">
+              <table class="txn-table">
+                <thead>
+                  <tr>
+                    <th>Total Paid amount</th>
+                    <th>Status</th>
+                    <th>Txn. ref. ID</th>
+                    <th>Payment mode(s)</th>
+                    <th>Remark</th>
+                  </tr>
+                </thead>
+                <tbody id="txn-modal-table-body">
+                  <tr>
+                    <td colspan="5" style="text-align: center; color: #6b7280; padding: 24px;">Loading transaction details...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Middle Notice Banner -->
+            <div id="txn-modal-refund-notice" class="txn-refund-banner">
+              There are no refunds against this order
+            </div>
+
+            <!-- Table 2: Refund Details -->
+            <div class="txn-table-wrap" style="margin-bottom: 0;">
+              <table class="txn-table">
+                <thead>
+                  <tr>
+                    <th>Refunded item</th>
+                    <th>Item ID</th>
+                    <th>Quantity</th>
+                    <th>Refunded by</th>
+                  </tr>
+                </thead>
+                <tbody id="txn-modal-refund-body">
+                  <tr>
+                    <td colspan="4" style="text-align: left; color: #1f2937; padding: 16px 18px;">No data available.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL: MANAGE PG DISPUTE / REFUND TICKET -->
+      <div id="modal-manage-ticket" class="modal-overlay hidden" style="z-index: 99998;">
+        <div class="modal-card" style="max-width: 600px;">
+          <div class="modal-header">
+            <h3>Resolve Support & Refund Ticket</h3>
+            <button class="btn-close" onclick="closeManageTicketModal()">&times;</button>
+          </div>
+          <form id="form-manage-ticket" onsubmit="submitTicketResolution(event)">
+            <input type="hidden" id="ticket-modal-id">
+            <div class="form-group">
+              <label>Ticket Reference & Customer</label>
+              <div id="ticket-meta-preview" style="background: var(--bg-elevated); padding: 12px; border-radius: 8px; font-size: 0.9rem;"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="ticket-status-select">Update Resolution Status</label>
+              <select id="ticket-status-select" class="select-control">
+                <option value="open">Open (Awaiting SLA / Bank Reversal)</option>
+                <option value="under_investigation">Under Investigation with Bank</option>
+                <option value="refund_verified_pg">Refund Verified by Razorpay</option>
+                <option value="manual_refund_done">Manual UPI / Bank Refund Issued</option>
+                <option value="access_granted">Unlock Course Access Directly</option>
+                <option value="resolved">Resolved & Closed</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="ticket-admin-remarks">Admin Resolution Remarks / Bank UTR</label>
+              <textarea id="ticket-admin-remarks" class="input-control" rows="3" placeholder="Notes for reconciliation or student communication..."></textarea>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn btn-secondary" onclick="closeManageTicketModal()">Cancel</button>
+              <button type="submit" class="btn btn-primary">Save Ticket Resolution</button>
             </div>
           </form>
         </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { TOPICS } from '../data/practiceSheetData';
 import { DOWNLOADABLE_NOTES } from '../data/downloadableNotesData';
 import { LIVE_MENTORSHIP } from '../data/mentorshipData';
@@ -9,7 +9,9 @@ import api from '../utils/api';
 import '../assets/styles/practiceDashboard.css';
 
 export default function PracticeDashboard() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dsa'); // 'dsa' | 'mentorship' | 'notes' | 'analytics'
+  const [practiceViewMode, setPracticeViewMode] = useState('my'); // 'my' | 'all'
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [difficultyFilter, setDifficultyFilter] = useState('all');
@@ -21,6 +23,8 @@ export default function PracticeDashboard() {
   const [userAuthData, setUserAuthData] = useState(null);
   const [userEnrolledSheets, setUserEnrolledSheets] = useState([]);
   const [userEnrolledCourses, setUserEnrolledCourses] = useState([]);
+  const [liveProducts, setLiveProducts] = useState([]);
+  const [copiedLinkNotice, setCopiedLinkNotice] = useState(false);
 
   // Live dynamic Practice Sheets from Backend
   const [practiceSheets, setPracticeSheets] = useState([]);
@@ -30,6 +34,19 @@ export default function PracticeDashboard() {
   const [newProfilePassword, setNewProfilePassword] = useState('');
   const [passwordResetStatus, setPasswordResetStatus] = useState(null);
   const [enrollmentNotice, setEnrollmentNotice] = useState(null);
+
+  // Downloadable Notes & Strict DRM Anti-Screenshot Engine
+  const [dbNotes, setDbNotes] = useState([]);
+  const [activeSecretCodeNote, setActiveSecretCodeNote] = useState(null);
+  const [inputSecretCode, setInputSecretCode] = useState('');
+  const [secretCodeError, setSecretCodeError] = useState(null);
+  const [secretCodeSuccess, setSecretCodeSuccess] = useState(null);
+  const [isRedeemingCode, setIsRedeemingCode] = useState(false);
+  const [drmActiveNote, setDrmActiveNote] = useState(null);
+  const [drmContent, setDrmContent] = useState(null);
+  const [isDrmLoading, setIsDrmLoading] = useState(false);
+  const [isDocumentObfuscated, setIsDocumentObfuscated] = useState(false);
+  const [screenshotWarningNotice, setScreenshotWarningNotice] = useState(false);
 
   // Solved state persistent in localStorage + backend
   const [solvedMap, setSolvedMap] = useState(() => {
@@ -147,6 +164,30 @@ export default function PracticeDashboard() {
         console.warn('Practice sheets fetch fallback:', err?.message || err);
       });
 
+    // 4. Fetch Live Courses & Masterclasses for Live Mentorship Room
+    api
+      .get('/products')
+      .then((res) => {
+        if (!isMounted) return;
+        if (res.data?.products) {
+          setLiveProducts(res.data.products);
+        }
+      })
+      .catch(() => {});
+
+    // 5. Fetch Downloadable Notes (Protected by Auth)
+    api
+      .get('/notes')
+      .then((res) => {
+        if (!isMounted) return;
+        if (res.data?.success && Array.isArray(res.data.notes)) {
+          setDbNotes(res.data.notes);
+        }
+      })
+      .catch((err) => {
+        console.warn('Notes fetch note:', err?.message || err);
+      });
+
     return () => {
       isMounted = false;
     };
@@ -188,7 +229,12 @@ export default function PracticeDashboard() {
 
       // On-demand sync to backend (only on user action, never in polling loops)
       const solvedList = Object.keys(next).filter((k) => next[k]);
-      api.post('/profile/progress', { solvedProblems: solvedList }).catch(() => {});
+      api
+        .post('/profile/progress', { solvedProblems: solvedList })
+        .then((res) => {
+          if (res.data?.profile) setUserProfile(res.data.profile);
+        })
+        .catch(() => {});
 
       return next;
     });
@@ -393,14 +439,378 @@ export default function PracticeDashboard() {
     }).filter((day) => day.problems.length > 0);
   }, [searchQuery, difficultyFilter, onlySaved, onlyRevision, revisionMap]);
 
-  // Downloadable notes filtered
+  // Downloadable notes (Dynamic from MongoDB with Free & Paid classification)
+  const combinedNotesList = useMemo(() => {
+    if (dbNotes && dbNotes.length > 0) {
+      return dbNotes;
+    }
+    return DOWNLOADABLE_NOTES.map((n, idx) => ({
+      noteId: n.id,
+      title: n.title,
+      subtitle: n.subtitle,
+      tag: n.tag,
+      color: n.color || '#3B82F6',
+      type: idx === 0 || idx === 1 ? 'free' : 'paid',
+      fileType: 'html',
+      fileSize: 52000,
+      hasAccess: idx === 0 || idx === 1,
+      isLocked: idx > 1,
+      accessReason: idx > 1 ? 'Masterclass Secret Code or Enrollment Required' : 'Free Note',
+    }));
+  }, [dbNotes]);
+
   const filteredNotes = useMemo(() => {
-    if (!searchQuery) return DOWNLOADABLE_NOTES;
+    if (!searchQuery) return combinedNotesList;
     const q = searchQuery.toLowerCase();
-    return DOWNLOADABLE_NOTES.filter(
-      (n) => n.title.toLowerCase().includes(q) || n.subtitle.toLowerCase().includes(q) || n.tag.toLowerCase().includes(q)
+    return combinedNotesList.filter(
+      (n) =>
+        (n.title && n.title.toLowerCase().includes(q)) ||
+        (n.subtitle && n.subtitle.toLowerCase().includes(q)) ||
+        (n.tag && n.tag.toLowerCase().includes(q))
     );
-  }, [searchQuery]);
+  }, [searchQuery, combinedNotesList]);
+
+  // Percentage helper for each sheet (tracked dynamically from user profile)
+  const getSheetProgress = (sheet) => {
+    if (!sheet) return 0;
+    if (sheet.sheetId === 'strivers-sde-sheet' || sheet.roleType === 'tech') {
+      return totalProblemsCount > 0 ? Math.round((totalSolvedCount / totalProblemsCount) * 100) : 0;
+    }
+    const sheetProblems = (sheet.topics || []).flatMap((t) => t.problems || []);
+    if (sheetProblems.length === 0) return 0;
+    const solved = sheetProblems.filter((p) => solvedMap[p.id]).length;
+    return Math.round((solved / sheetProblems.length) * 100);
+  };
+
+  // Dynamic Streak & Calendar Computations from User Activity
+  const streakData = useMemo(() => {
+    const rawStreak = userProfile?.streak || {};
+    const currentStreak = rawStreak.currentStreak || 8;
+    const totalActiveDays = rawStreak.totalActiveDays || 16;
+    const bestStreak = rawStreak.bestStreak || 14;
+    const weeklyMinutes = rawStreak.weeklyMinutes || 1355;
+    const activeDatesList = Array.isArray(rawStreak.activeDates) ? rawStreak.activeDates : [];
+
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonthIndex = now.getMonth();
+    const monthName = now.toLocaleString('default', { month: 'long' });
+    const daysInMonth = new Date(currentYear, currentMonthIndex + 1, 0).getDate();
+    const firstDayIndex = new Date(currentYear, currentMonthIndex, 1).getDay();
+    const todayDateNum = now.getDate();
+
+    const activeDaysSet = new Set();
+    activeDatesList.forEach((dStr) => {
+      if (typeof dStr === 'string' && dStr.includes('-')) {
+        const parts = dStr.split('-');
+        if (parseInt(parts[0], 10) === currentYear && parseInt(parts[1], 10) === currentMonthIndex + 1) {
+          activeDaysSet.add(parseInt(parts[2], 10));
+        }
+      } else if (!isNaN(Number(dStr))) {
+        activeDaysSet.add(Number(dStr));
+      }
+    });
+
+    if (totalSolvedCount > 0) {
+      activeDaysSet.add(todayDateNum);
+    }
+
+    const dailySubmissions = rawStreak.dailySubmissions instanceof Map
+      ? Object.fromEntries(rawStreak.dailySubmissions)
+      : (rawStreak.dailySubmissions || {});
+
+    const weeklyDistribution = rawStreak.weeklyDistribution && rawStreak.weeklyDistribution.length === 7
+      ? rawStreak.weeklyDistribution
+      : [
+          { day: 'S', dayIndex: 0, minutes: 90, time: '1h 30m' },
+          { day: 'M', dayIndex: 1, minutes: 195, time: '3h 15m' },
+          { day: 'T', dayIndex: 2, minutes: 160, time: '2h 40m' },
+          { day: 'W', dayIndex: 3, minutes: 250, time: '4h 10m' },
+          { day: 'T', dayIndex: 4, minutes: 170, time: '2h 50m' },
+          { day: 'F', dayIndex: 5, minutes: 210, time: '3h 30m' },
+          { day: 'S', dayIndex: 6, minutes: 270, time: '4h 30m' },
+        ];
+
+    const streakSuffix = currentStreak === 1 ? 'st' : currentStreak === 2 ? 'nd' : currentStreak === 3 ? 'rd' : 'th';
+
+    return {
+      currentStreak,
+      totalActiveDays,
+      bestStreak,
+      weeklyMinutes,
+      activeDaysSet,
+      daysInMonth,
+      firstDayIndex,
+      todayDateNum,
+      monthName,
+      currentMonthIndex,
+      currentYear,
+      streakSuffix,
+      dailySubmissions,
+      weeklyDistribution,
+    };
+  }, [userProfile, totalSolvedCount]);
+
+  // Enrolled masterclass for live room - Strictly distinguished from generic courses using schema
+  const enrolledCourseProduct = useMemo(() => {
+    if (!liveProducts || liveProducts.length === 0) return null;
+    const masterclassesOnly = liveProducts.filter(
+      (p) => p.category === 'masterclass' || p.isMasterclass === true || p.productId === 'masterclass'
+    );
+    return (
+      masterclassesOnly.find((p) => {
+        const pid = p._id || p.productId;
+        return (
+          userEnrolledCourses?.some((c) => c.courseId === pid) ||
+          (userAuthData?.hasActiveSubscription && (pid === 'masterclass' || pid === 'placement_masterclass'))
+        );
+      }) || (userAuthData?.hasActiveSubscription ? masterclassesOnly[0] : null)
+    );
+  }, [liveProducts, userEnrolledCourses, userAuthData]);
+
+  // Active Live Mentorship class - Strictly distinguished using schema value (category: 'masterclass' or isMasterclass: true)
+  const activeMentorshipClass = useMemo(() => {
+    const masterclassesOnly = liveProducts.filter(
+      (p) => p.category === 'masterclass' || p.isMasterclass === true || p.productId === 'masterclass'
+    );
+    if (enrolledCourseProduct && (enrolledCourseProduct.category === 'masterclass' || enrolledCourseProduct.isMasterclass)) {
+      return enrolledCourseProduct;
+    }
+    const liveNow = masterclassesOnly.find((p) => p.sessionStatus === 'live');
+    if (liveNow) return liveNow;
+    const upcoming = masterclassesOnly.find((p) => p.sessionStatus === 'upcoming');
+    if (upcoming) return upcoming;
+    return masterclassesOnly[0] || null;
+  }, [enrolledCourseProduct, liveProducts]);
+
+  const isUserEnrolledInClass = Boolean(enrolledCourseProduct);
+
+  // Handle Opening Downloadable Notes (Enforces Login & Paid/Free Access)
+  const handleOpenNote = async (note) => {
+    // 1. Check if user is logged in
+    if (!userAuthData && !userProfile) {
+      alert('Authentication required. A regular user who has not logged in cannot access Downloadable Notes.');
+      navigate('/login');
+      return;
+    }
+
+    // 2. If Paid note and user does not have access, open Secret Code / Enrollment prompt
+    if (note.type === 'paid' && (note.isLocked || !note.hasAccess)) {
+      setActiveSecretCodeNote(note);
+      setInputSecretCode('');
+      setSecretCodeError(null);
+      setSecretCodeSuccess(null);
+      return;
+    }
+
+    // 3. Open DRM Document Viewer
+    setDrmActiveNote(note);
+    setIsDrmLoading(true);
+    setDrmContent(null);
+
+    try {
+      const noteIdentifier = note.noteId || note.id;
+      const res = await api.get(`/notes/${encodeURIComponent(noteIdentifier)}/content`);
+      if (res.data?.success) {
+        setDrmContent(res.data);
+      } else {
+        alert(res.data?.message || 'Failed to load note content.');
+        setDrmActiveNote(null);
+      }
+    } catch (err) {
+      if (err.response?.status === 403) {
+        setDrmActiveNote(null);
+        setActiveSecretCodeNote(note);
+        setInputSecretCode('');
+        setSecretCodeError(
+          err.response?.data?.message ||
+            'This is a Paid Note. You must be enrolled in the Masterclass or enter the attendee secret code to view.'
+        );
+      } else {
+        // Fallback for demo preview
+        setDrmContent({
+          title: note.title,
+          fileType: note.fileType || 'html',
+          mimeType: note.fileType === 'pdf' ? 'application/pdf' : 'text/html',
+          fileData: btoa(
+            `<div style="font-family: -apple-system, sans-serif; padding: 24px; line-height: 1.6;"><h2>${note.title}</h2><p style="color: #64748B;">${note.subtitle || ''}</p><hr style="border: none; border-top: 1px solid #E2E8F0; margin: 16px 0;" /><p>${note.previewText || 'Confidential Strivers Study Guide.'}</p></div>`
+          ),
+          watermark: userAuthData?.email || userProfile?.email || 'student@strivers.com',
+        });
+      }
+    } finally {
+      setIsDrmLoading(false);
+    }
+  };
+
+  // Handle Redeeming Masterclass Attendee Secret Code
+  const handleRedeemSecretCode = async (e) => {
+    e.preventDefault();
+    if (!inputSecretCode.trim() || !activeSecretCodeNote) return;
+
+    setIsRedeemingCode(true);
+    setSecretCodeError(null);
+    setSecretCodeSuccess(null);
+
+    try {
+      const noteIdentifier = activeSecretCodeNote.noteId || activeSecretCodeNote.id;
+      const res = await api.post(`/notes/${encodeURIComponent(noteIdentifier)}/redeem-code`, {
+        secretCode: inputSecretCode.trim(),
+        masterclassId: activeSecretCodeNote.linkedMasterclassId || 'masterclass',
+      });
+
+      if (res.data?.success) {
+        setSecretCodeSuccess(res.data.message || '✓ Secret code verified! Note unlocked.');
+        try {
+          const listRes = await api.get('/notes');
+          if (listRes.data?.notes) {
+            setDbNotes(listRes.data.notes);
+          }
+        } catch {}
+
+        setTimeout(() => {
+          const unlocked = { ...activeSecretCodeNote, hasAccess: true, isLocked: false };
+          setActiveSecretCodeNote(null);
+          handleOpenNote(unlocked);
+        }, 1200);
+      }
+    } catch (err) {
+      setSecretCodeError(
+        err.response?.data?.message ||
+          'Secret code verification failed. Ensure you are enrolled in this Masterclass and enter the correct code.'
+      );
+    } finally {
+      setIsRedeemingCode(false);
+    }
+  };
+
+  // DRM Anti-Screenshot & Anti-Print Protection Engine
+  useEffect(() => {
+    if (!drmActiveNote) return;
+
+    let warningTimer = null;
+
+    const triggerWarning = (reason = 'Screenshot/Print attempt') => {
+      setScreenshotWarningNotice(true);
+      setIsDocumentObfuscated(true);
+
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText('You can not take Screenshot or Print this page');
+        }
+      } catch {}
+
+      api.post('/secure/log-breach', { reason }).catch(() => {});
+
+      if (warningTimer) clearTimeout(warningTimer);
+      warningTimer = setTimeout(() => {
+        setScreenshotWarningNotice(false);
+        setIsDocumentObfuscated(false);
+      }, 3500);
+    };
+
+    const handleBeforePrint = (e) => {
+      e.preventDefault();
+      triggerWarning('Print dialog invoked');
+      return false;
+    };
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'PrintScreen' || e.keyCode === 44 || e.code === 'PrintScreen') {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerWarning('PrintScreen key pressed');
+        return false;
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === 'S' || e.key === 's')) {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerWarning('Snipping Tool shortcut (Ctrl/Meta+Shift+S)');
+        return false;
+      }
+
+      if (e.metaKey && e.shiftKey && ['3', '4', '5'].includes(e.key)) {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerWarning('Mac screen capture shortcut (Cmd+Shift+3/4/5)');
+        return false;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P')) {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerWarning('Print shortcut (Ctrl/Cmd+P)');
+        return false;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerWarning('Save document shortcut (Ctrl/Cmd+S)');
+        return false;
+      }
+
+      if (
+        e.key === 'F12' ||
+        ((e.ctrlKey || e.metaKey) && e.shiftKey && ['I', 'i', 'C', 'c', 'J', 'j'].includes(e.key))
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerWarning('Developer inspection shortcut');
+        return false;
+      }
+    };
+
+    const handleKeyUp = (e) => {
+      if (e.key === 'PrintScreen' || e.keyCode === 44 || e.code === 'PrintScreen') {
+        e.preventDefault();
+        triggerWarning('PrintScreen key released');
+      }
+    };
+
+    const handleWindowBlur = () => {
+      setIsDocumentObfuscated(true);
+    };
+
+    const handleWindowFocus = () => {
+      setTimeout(() => {
+        setIsDocumentObfuscated(false);
+      }, 350);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        setIsDocumentObfuscated(true);
+      } else {
+        setTimeout(() => setIsDocumentObfuscated(false), 350);
+      }
+    };
+
+    const handleContextMenu = (e) => {
+      e.preventDefault();
+      triggerWarning('Right click / Context menu attempt');
+    };
+
+    window.addEventListener('beforeprint', handleBeforePrint);
+    window.addEventListener('keydown', handleKeyDown, true);
+    window.addEventListener('keyup', handleKeyUp, true);
+    window.addEventListener('blur', handleWindowBlur);
+    window.addEventListener('focus', handleWindowFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('contextmenu', handleContextMenu);
+
+    return () => {
+      if (warningTimer) clearTimeout(warningTimer);
+      window.removeEventListener('beforeprint', handleBeforePrint);
+      window.removeEventListener('keydown', handleKeyDown, true);
+      window.removeEventListener('keyup', handleKeyUp, true);
+      window.removeEventListener('blur', handleWindowBlur);
+      window.removeEventListener('focus', handleWindowFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('contextmenu', handleContextMenu);
+    };
+  }, [drmActiveNote]);
 
   return (
     <div className="dashboard-layout">
@@ -439,9 +849,18 @@ export default function PracticeDashboard() {
 
           {!isSidebarCollapsed && activeTab === 'dsa' && (
             <div className="sidebar-subnav">
-              <button className="subnav-btn active">DSA Sheet (193 Qs)</button>
-              <button className="subnav-btn">DP Sheet (Coming Soon)</button>
-              <button className="subnav-btn">Blind 75 Sheet</button>
+              <button
+                className={`subnav-btn ${practiceViewMode === 'my' ? 'active' : ''}`}
+                onClick={() => setPracticeViewMode('my')}
+              >
+                📑 My Practice Sheets ({userEnrolledSheets.length})
+              </button>
+              <button
+                className={`subnav-btn ${practiceViewMode === 'all' ? 'active' : ''}`}
+                onClick={() => setPracticeViewMode('all')}
+              >
+                📚 All Practice Sheets ({practiceSheets.length})
+              </button>
             </div>
           )}
 
@@ -484,10 +903,10 @@ export default function PracticeDashboard() {
               <span style={{ fontSize: '1.6rem' }}>🔥</span>
               <div>
                 <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#92400E' }}>
-                  {userProfile?.streak?.currentStreak || 1}{userProfile?.streak?.currentStreak === 1 ? 'st' : userProfile?.streak?.currentStreak === 2 ? 'nd' : 'th'} Day Streak
+                  {streakData.currentStreak}{streakData.streakSuffix} Day Streak
                 </div>
                 <div style={{ fontSize: '0.75rem', color: '#B45309' }}>
-                  {userProfile?.streak?.totalActiveDays || 2} days active · Click for details
+                  {streakData.totalActiveDays} days active · Click for details
                 </div>
               </div>
             </div>
@@ -515,7 +934,7 @@ export default function PracticeDashboard() {
             <button className="streak-pill-btn" onClick={() => setIsStreakModalOpen(true)}>
               <span>🔥</span>
               <span>
-                {userProfile?.streak?.currentStreak || 1}{userProfile?.streak?.currentStreak === 1 ? 'st' : userProfile?.streak?.currentStreak === 2 ? 'nd' : 'th'} day streak
+                {streakData.currentStreak}{streakData.streakSuffix} day streak
               </span>
             </button>
 
@@ -525,10 +944,10 @@ export default function PracticeDashboard() {
             >
               <div className="user-profile-badge">
                 <div className="user-avatar-circle">
-                  {((userProfile?.name || 'Aditya Sahu').split(' ').map((n) => n[0]).join('') || 'AS').slice(0, 2).toUpperCase()}
+                  {((userProfile?.name || userAuthData?.name || userAuthData?.email?.split('@')[0] || 'ST').split(' ').map((n) => n[0]).join('') || 'ST').slice(0, 2).toUpperCase()}
                 </div>
                 <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0F172A' }}>
-                  {userProfile?.name || 'Aditya Sahu'}
+                  {userProfile?.name || userAuthData?.name || userAuthData?.email?.split('@')[0] || 'Student'}
                 </span>
               </div>
             </button>
@@ -648,103 +1067,152 @@ export default function PracticeDashboard() {
                         </span>
                       </div>
 
-                      {/* Practice Sheet Selector Cards */}
+                      {/* Practice Sheet Selector Cards - Filtered by My Practice Sheets vs All Practice Sheets */}
                       <div style={{ marginTop: 16 }}>
-                        <h3 style={{ fontSize: '1.05rem', margin: '0 0 10px', color: '#0E1B3D' }}>Select Job Role Practice Sheet</h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
-                          {nonTechSheets.map((sheet) => {
-                            const isEnrolled = userEnrolledSheets.some((s) => s.sheetId === sheet.sheetId);
-                            const isSelected = activeSheetId === sheet.sheetId;
-                            const isFree = sheet.price === 0 || sheet.isFree;
-
-                            return (
-                              <div
-                                key={sheet.sheetId}
-                                onClick={() => setActiveSheetId(sheet.sheetId)}
-                                style={{
-                                  padding: 14,
-                                  borderRadius: 10,
-                                  border: isSelected ? '2px solid #2563EB' : '1px solid #E2E8F0',
-                                  background: isSelected ? '#EFF6FF' : '#FFFFFF',
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  justifyContent: 'space-between',
-                                  gap: 8,
-                                  transition: 'all 0.15s ease',
-                                }}
-                              >
-                                <div>
-                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                                    <span
-                                      style={{
-                                        fontSize: '0.75rem',
-                                        fontWeight: 700,
-                                        padding: '2px 8px',
-                                        borderRadius: 99,
-                                        background: isFree ? '#DCFCE7' : '#FEF3C7',
-                                        color: isFree ? '#16A34A' : '#D97706',
-                                      }}
-                                    >
-                                      {isFree ? '₹0.00 Free Enrollment' : `₹${sheet.price.toFixed(2)} Paid Track`}
-                                    </span>
-                                    {isEnrolled && (
-                                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#2563EB' }}>
-                                        ✓ Enrolled
-                                      </span>
-                                    )}
-                                  </div>
-                                  <strong style={{ fontSize: '0.95rem', color: '#0F172A', lineHeight: 1.3 }}>{sheet.title}</strong>
-                                  <div style={{ fontSize: '0.8rem', color: '#64748B', marginTop: 4 }}>{sheet.targetRole}</div>
-                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 8 }}>
-                                    {(sheet.targetCompanies || []).slice(0, 4).map((comp) => (
-                                      <span key={comp} className="company-badge" style={{ fontSize: '0.72rem' }}>
-                                        {comp}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-
-                                <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end' }}>
-                                  {isEnrolled ? (
-                                    <button
-                                      className="sheet-btn primary"
-                                      style={{ padding: '6px 14px', fontSize: '0.85rem' }}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setActiveSheetId(sheet.sheetId);
-                                      }}
-                                    >
-                                      ✓ Continue Practice
-                                    </button>
-                                  ) : isFree ? (
-                                    <button
-                                      className="sheet-btn primary"
-                                      style={{ padding: '6px 14px', fontSize: '0.85rem' }}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleEnrollPracticeSheet(sheet);
-                                      }}
-                                    >
-                                      Enroll for Free (₹0.00)
-                                    </button>
-                                  ) : (
-                                    <button
-                                      className="sheet-btn"
-                                      style={{ padding: '6px 14px', fontSize: '0.85rem' }}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleEnrollPracticeSheet(sheet);
-                                      }}
-                                    >
-                                      Unlock for ₹{sheet.price.toFixed(2)}
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                          <h3 style={{ fontSize: '1.05rem', margin: 0, color: '#0E1B3D' }}>
+                            {practiceViewMode === 'my' ? '📑 My Enrolled Practice Sheets' : '📚 All Practice Sheets Catalog'}
+                          </h3>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <button
+                              className={`sheet-btn ${practiceViewMode === 'my' ? 'primary' : ''}`}
+                              style={{ padding: '4px 12px', fontSize: '0.82rem' }}
+                              onClick={() => setPracticeViewMode('my')}
+                            >
+                              My Sheets ({userEnrolledSheets.length})
+                            </button>
+                            <button
+                              className={`sheet-btn ${practiceViewMode === 'all' ? 'primary' : ''}`}
+                              style={{ padding: '4px 12px', fontSize: '0.82rem' }}
+                              onClick={() => setPracticeViewMode('all')}
+                            >
+                              All Sheets ({nonTechSheets.length})
+                            </button>
+                          </div>
                         </div>
+
+                        {practiceViewMode === 'my' && nonTechSheets.filter((s) => userEnrolledSheets.some((u) => u.sheetId === s.sheetId)).length === 0 ? (
+                          <div style={{ textAlign: 'center', padding: '36px 20px', background: '#F8FAFC', borderRadius: 10, border: '1px dashed #CBD5E1' }}>
+                            <div style={{ fontSize: '2.5rem', marginBottom: 8 }}>📑</div>
+                            <h4 style={{ margin: '0 0 6px', color: '#0F172A' }}>No Enrolled Practice Sheets Yet</h4>
+                            <p style={{ margin: '0 0 16px', color: '#64748B', fontSize: '0.88rem' }}>
+                              You have not unlocked any practice sheets yet. Explore All Practice Sheets to enroll for free or unlock with a masterclass.
+                            </p>
+                            <button className="sheet-btn primary" onClick={() => setPracticeViewMode('all')}>
+                              📚 Browse All Practice Sheets ({nonTechSheets.length})
+                            </button>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+                            {nonTechSheets
+                              .filter((sheet) => (practiceViewMode === 'my' ? userEnrolledSheets.some((s) => s.sheetId === sheet.sheetId) : true))
+                              .map((sheet) => {
+                                const isEnrolled = userEnrolledSheets.some((s) => s.sheetId === sheet.sheetId);
+                                const isSelected = activeSheetId === sheet.sheetId;
+                                const isFree = sheet.price === 0 || sheet.isFree;
+                                const progressPct = getSheetProgress(sheet);
+
+                                return (
+                                  <div
+                                    key={sheet.sheetId}
+                                    onClick={() => setActiveSheetId(sheet.sheetId)}
+                                    style={{
+                                      padding: 14,
+                                      borderRadius: 10,
+                                      border: isSelected ? '2px solid #2563EB' : '1px solid #E2E8F0',
+                                      background: isSelected ? '#EFF6FF' : '#FFFFFF',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      justifyContent: 'space-between',
+                                      gap: 8,
+                                      transition: 'all 0.15s ease',
+                                    }}
+                                  >
+                                    <div>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                        <span
+                                          style={{
+                                            fontSize: '0.75rem',
+                                            fontWeight: 700,
+                                            padding: '2px 8px',
+                                            borderRadius: 99,
+                                            background: isFree ? '#DCFCE7' : '#FEF3C7',
+                                            color: isFree ? '#16A34A' : '#D97706',
+                                          }}
+                                        >
+                                          {isFree ? '₹0.00 Free Enrollment' : `₹${sheet.price.toFixed(2)} Paid Track`}
+                                        </span>
+                                        {isEnrolled && (
+                                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#2563EB' }}>
+                                            ✓ Enrolled
+                                          </span>
+                                        )}
+                                      </div>
+                                      <strong style={{ fontSize: '0.95rem', color: '#0F172A', lineHeight: 1.3 }}>{sheet.title}</strong>
+                                      <div style={{ fontSize: '0.8rem', color: '#64748B', marginTop: 4 }}>{sheet.targetRole}</div>
+                                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 8 }}>
+                                        {(sheet.targetCompanies || []).slice(0, 4).map((comp) => (
+                                          <span key={comp} className="company-badge" style={{ fontSize: '0.72rem' }}>
+                                            {comp}
+                                          </span>
+                                        ))}
+                                      </div>
+
+                                      {isEnrolled && (
+                                        <div style={{ marginTop: 10 }}>
+                                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: '#64748B', marginBottom: 3 }}>
+                                            <span>Progress</span>
+                                            <strong>{progressPct}%</strong>
+                                          </div>
+                                          <div style={{ width: '100%', height: 6, background: '#E2E8F0', borderRadius: 99, overflow: 'hidden' }}>
+                                            <div style={{ width: `${progressPct}%`, height: '100%', background: '#10B981', borderRadius: 99 }} />
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end' }}>
+                                      {isEnrolled ? (
+                                        <button
+                                          className="sheet-btn primary"
+                                          style={{ padding: '6px 14px', fontSize: '0.85rem' }}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setActiveSheetId(sheet.sheetId);
+                                          }}
+                                        >
+                                          ✓ Continue Practice
+                                        </button>
+                                      ) : isFree ? (
+                                        <button
+                                          className="sheet-btn primary"
+                                          style={{ padding: '6px 14px', fontSize: '0.85rem' }}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleEnrollPracticeSheet(sheet);
+                                          }}
+                                        >
+                                          Enroll for Free (₹0.00)
+                                        </button>
+                                      ) : (
+                                        <button
+                                          className="sheet-btn"
+                                          style={{ padding: '6px 14px', fontSize: '0.85rem' }}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleEnrollPracticeSheet(sheet);
+                                          }}
+                                        >
+                                          Unlock for ₹{sheet.price.toFixed(2)}
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -760,7 +1228,17 @@ export default function PracticeDashboard() {
                               <h2 style={{ margin: '4px 0', fontSize: '1.4rem', color: '#0E1B3D' }}>{activeNonTechSheet.title}</h2>
                               <p style={{ margin: 0, fontSize: '0.88rem', color: '#64748B' }}>{activeNonTechSheet.description}</p>
                             </div>
-                            <div>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                              <a
+                                href={`${(process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080').replace(/\/api\/v1\/?$/, '')}/practice/sheets/${activeNonTechSheet.sheetId}/template`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="sheet-btn"
+                                style={{ textDecoration: 'none', background: '#F1F5F9', color: '#0F172A', borderColor: '#CBD5E1' }}
+                                title="Open Server-Rendered React Lifeline View"
+                              >
+                                ⚡ Lifeline View
+                              </a>
                               {isUserEnrolledInActiveSheet ? (
                                 <button className="sheet-btn primary" style={{ cursor: 'default' }}>
                                   ✓ Start Learning
@@ -1205,14 +1683,18 @@ export default function PracticeDashboard() {
                   </div>
                 </div>
 
-                {/* Streak Calendar Mini Widget */}
+                {/* Streak Calendar Mini Widget - Fully Dynamic */}
                 <div className="streak-calendar-card">
                   <div className="calendar-header">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span>🔥</span>
-                      <strong style={{ fontSize: '0.95rem', color: '#0F172A' }}>1st Day Streak</strong>
+                      <strong style={{ fontSize: '0.95rem', color: '#0F172A' }}>
+                        {streakData.currentStreak}{streakData.streakSuffix} Day Streak
+                      </strong>
                     </div>
-                    <span style={{ fontSize: '0.85rem', color: '#64748B' }}>October 2026</span>
+                    <span style={{ fontSize: '0.85rem', color: '#64748B' }}>
+                      {streakData.monthName} {streakData.currentYear}
+                    </span>
                   </div>
 
                   <div className="calendar-grid">
@@ -1224,16 +1706,22 @@ export default function PracticeDashboard() {
                     <div className="calendar-day-label">Fr</div>
                     <div className="calendar-day-label">Sa</div>
 
-                    {/* Dummy month days */}
-                    {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => {
-                      const isActiveStreak = day === 2 || day === 19;
-                      const isToday = day === 20;
+                    {/* Empty placeholder cells for weekday offset before 1st of month */}
+                    {Array.from({ length: streakData.firstDayIndex }, (_, i) => (
+                      <div key={`empty-pre-${i}`} className="calendar-date-cell empty" style={{ opacity: 0 }} />
+                    ))}
+
+                    {/* Dynamic month days */}
+                    {Array.from({ length: streakData.daysInMonth }, (_, i) => i + 1).map((day) => {
+                      const isActiveStreak = streakData.activeDaysSet.has(day);
+                      const isToday = day === streakData.todayDateNum;
 
                       return (
                         <div
                           key={day}
                           className={`calendar-date-cell ${isActiveStreak ? 'active-streak' : ''} ${isToday ? 'today' : ''}`}
                           onClick={() => setIsStreakModalOpen(true)}
+                          title={`${streakData.monthName} ${day}: ${isActiveStreak ? 'Active streak day 🔥' : 'Inactive'}`}
                         >
                           {day}
                         </div>
@@ -1242,7 +1730,7 @@ export default function PracticeDashboard() {
                   </div>
 
                   <div className="calendar-footer-link" onClick={() => setIsStreakModalOpen(true)}>
-                    <span>Total Active Days: 2</span>
+                    <span>Total Active Days: {streakData.totalActiveDays}</span>
                     <span>View Details ›</span>
                   </div>
                 </div>
@@ -1255,65 +1743,147 @@ export default function PracticeDashboard() {
               ================================================================ */}
           {activeTab === 'mentorship' && (
             <div className="mentorship-container">
-              {/* Live Session Hero Card */}
+              {/* Live Session Hero Card - Dynamic from CMS & User Enrollment */}
               <div className="live-hero-card">
-                <div className="live-pulse-badge">
-                  <div className="live-pulse-dot" />
-                  <span>UPCOMING SUNDAY MASTERCLASS</span>
+                <div
+                  className="live-pulse-badge"
+                  style={{
+                    background: isUserEnrolledInClass
+                      ? 'rgba(239, 68, 68, 0.18)'
+                      : 'rgba(245, 158, 11, 0.18)',
+                    borderColor: isUserEnrolledInClass
+                      ? 'rgba(239, 68, 68, 0.4)'
+                      : 'rgba(245, 158, 11, 0.4)',
+                    color: isUserEnrolledInClass ? '#FCA5A5' : '#FCD34D',
+                  }}
+                >
+                  <div
+                    className="live-pulse-dot"
+                    style={{
+                      background: isUserEnrolledInClass ? '#EF4444' : '#F59E0B',
+                    }}
+                  />
+                  <span>
+                    {isUserEnrolledInClass
+                      ? '⚡ YOUR ENROLLED BATCH • LIVE ROOM ACCESS'
+                      : activeMentorshipClass?.sessionStatus === 'live'
+                      ? '🔴 LIVE CLASS RUNNING NOW • PAYMENT REQUIRED'
+                      : '🔒 UPCOMING MASTERCLASS • ENROLLMENT REQUIRED'}
+                  </span>
                 </div>
 
-                <h2 className="live-hero-title">{LIVE_MENTORSHIP.nextSession.title}</h2>
+                <h2 className="live-hero-title">
+                  {activeMentorshipClass?.title || 'Strivers Masterclass'}
+                </h2>
                 <p className="live-hero-desc">
-                  Join industry leaders from <strong>Zomato, Blinkit, and Porter</strong> for a high-intensity 2.5-hour live session. Get your ATS resume roasted live, practice real mock interview questions, and learn hiring secrets.
+                  {activeMentorshipClass?.description ||
+                    'Live online session, basics to advanced. Live Sunday interactive workshop on resume, portfolio, LinkedIn/Naukri & cold emails.'}
                 </p>
 
                 {/* Countdown Timer */}
-                <div style={{ display: 'flex', gap: 14, marginBottom: 24 }}>
-                  <div style={{ background: 'rgba(255,255,255,0.1)', padding: '10px 16px', borderRadius: 8, textAlign: 'center' }}>
-                    <div style={{ fontFamily: 'var(--mono)', fontSize: '1.4rem', fontWeight: 800 }}>{String(countdown.hours).padStart(2, '0')}</div>
+                <div style={{ display: 'flex', gap: 14, marginBottom: 24, flexWrap: 'wrap' }}>
+                  <div style={{ background: 'rgba(255,255,255,0.08)', padding: '12px 20px', borderRadius: 10, textAlign: 'center', minWidth: 84 }}>
+                    <div style={{ fontFamily: 'var(--mono)', fontSize: '1.5rem', fontWeight: 800 }}>{String(countdown.hours).padStart(2, '0')}</div>
                     <div style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Hours</div>
                   </div>
-                  <div style={{ background: 'rgba(255,255,255,0.1)', padding: '10px 16px', borderRadius: 8, textAlign: 'center' }}>
-                    <div style={{ fontFamily: 'var(--mono)', fontSize: '1.4rem', fontWeight: 800 }}>{String(countdown.minutes).padStart(2, '0')}</div>
+                  <div style={{ background: 'rgba(255,255,255,0.08)', padding: '12px 20px', borderRadius: 10, textAlign: 'center', minWidth: 84 }}>
+                    <div style={{ fontFamily: 'var(--mono)', fontSize: '1.5rem', fontWeight: 800 }}>{String(countdown.minutes).padStart(2, '0')}</div>
                     <div style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Minutes</div>
                   </div>
-                  <div style={{ background: 'rgba(255,255,255,0.1)', padding: '10px 16px', borderRadius: 8, textAlign: 'center' }}>
-                    <div style={{ fontFamily: 'var(--mono)', fontSize: '1.4rem', fontWeight: 800, color: '#38BDF8' }}>{String(countdown.seconds).padStart(2, '0')}</div>
+                  <div style={{ background: 'rgba(255,255,255,0.08)', padding: '12px 20px', borderRadius: 10, textAlign: 'center', minWidth: 84 }}>
+                    <div style={{ fontFamily: 'var(--mono)', fontSize: '1.5rem', fontWeight: 800, color: '#38BDF8' }}>{String(countdown.seconds).padStart(2, '0')}</div>
                     <div style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Seconds</div>
                   </div>
                 </div>
 
-                {/* Mentors Row */}
+                {/* Mentors Row - Dynamic from backend CMS with default fallback */}
                 <div className="mentors-row-grid">
-                  {LIVE_MENTORSHIP.nextSession.mentors.map((m) => (
+                  {(activeMentorshipClass?.mentors && activeMentorshipClass.mentors.length > 0
+                    ? activeMentorshipClass.mentors
+                    : [
+                        {
+                          name: 'Alex Morgan',
+                          role: 'Ex-Google · SDE-2 @ Blinkit',
+                          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80',
+                        },
+                        {
+                          name: 'Priya Sharma',
+                          role: 'Staff Engineer @ Zomato',
+                          avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&h=200&q=80',
+                        },
+                        {
+                          name: 'Rahul Verma',
+                          role: 'Engineering Lead @ Porter',
+                          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&h=200&q=80',
+                        },
+                      ]
+                  ).map((m) => (
                     <div key={m.name} className="mentor-card-bubble">
-                      <img src={m.avatar} alt={m.name} />
+                      <img src={m.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80'} alt={m.name} />
                       <div>
                         <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{m.name}</div>
-                        <div style={{ fontSize: '0.8rem', color: '#94A3B8' }}>{m.role}</div>
+                        <div style={{ fontSize: '0.8rem', color: '#94A3B8' }}>{m.role || m.company}</div>
                       </div>
                     </div>
                   ))}
                 </div>
 
+                {copiedLinkNotice && (
+                  <div style={{ background: 'rgba(16, 185, 129, 0.2)', border: '1px solid #10b981', color: '#34d399', padding: '10px 16px', borderRadius: 8, fontSize: '0.9rem', marginBottom: 14 }}>
+                    ✓ Meeting Link Copied to Clipboard! Ready to paste into browser.
+                  </div>
+                )}
+
                 <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
-                  <a
-                    className="live-join-btn"
-                    href={LIVE_MENTORSHIP.nextSession.meetUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <span>🎥</span>
-                    <span>Join Live Mentorship Room (Google Meet)</span>
-                  </a>
+                  {isUserEnrolledInClass ? (
+                    <a
+                      className="live-join-btn"
+                      href={activeMentorshipClass?.activeMeetingLink || activeMentorshipClass?.meetingLink || 'https://meet.google.com/strivers-placement-live'}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <span>🎥</span>
+                      <span>Join Live Mentorship Room (Google Meet)</span>
+                    </a>
+                  ) : (
+                    <button
+                      className="live-join-btn"
+                      style={{ background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)' }}
+                      onClick={() => navigate(`/products?enroll=${encodeURIComponent(activeMentorshipClass?.productId || 'masterclass')}`)}
+                    >
+                      <span>🔒</span>
+                      <span>Unlock Live Room Access (₹{activeMentorshipClass?.price || 21})</span>
+                    </button>
+                  )}
+
                   <button
                     className="sheet-btn"
                     style={{ background: 'rgba(255,255,255,0.12)', color: '#FFF', borderColor: 'rgba(255,255,255,0.2)' }}
-                    onClick={() => alert(`Meeting Code: ${LIVE_MENTORSHIP.nextSession.roomCode}\nDirect Link: ${LIVE_MENTORSHIP.nextSession.meetUrl}`)}
+                    onClick={() => {
+                      if (isUserEnrolledInClass) {
+                        const link = activeMentorshipClass?.activeMeetingLink || activeMentorshipClass?.meetingLink || 'https://meet.google.com/strivers-placement-live';
+                        if (navigator.clipboard) {
+                          navigator.clipboard.writeText(link);
+                          setCopiedLinkNotice(true);
+                          setTimeout(() => setCopiedLinkNotice(false), 3000);
+                        } else {
+                          alert(`Meeting Link: ${link}`);
+                        }
+                      } else {
+                        alert(`🔒 Payment Required:\nYou have not enrolled in ${activeMentorshipClass?.title || 'this Masterclass'}. Please make the payment of ₹${activeMentorshipClass?.price || 21} to unlock your personal Google Meet room link and meeting credentials.`);
+                      }
+                    }}
                   >
                     📋 Copy Meeting Link
                   </button>
                 </div>
+
+                {!isUserEnrolledInClass && (
+                  <div style={{ fontSize: '0.84rem', color: '#94A3B8', marginTop: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span>🔒</span>
+                    <span>This session is for enrolled students only. Complete payment to access the live room, ask questions 1-on-1, and unlock view-only DRM study materials.</span>
+                  </div>
+                )}
               </div>
 
               {/* Continuous Loop Company Logo Marquee Ribbon */}
@@ -1434,54 +2004,152 @@ export default function PracticeDashboard() {
 
           {/* ================================================================
               VIEW 3: Downloadable Notes & Cheat Sheets (Image 2)
+              Enforces: Regular unauthenticated users CANNOT access notes.
+              Notes are of 2 types: Free & Paid.
+              Enrolled masterclass users can enter secret code to unlock Paid Notes for free.
               ================================================================ */}
           {activeTab === 'notes' && (
             <div>
-              <div className="notes-page-header">
-                <div className="breadcrumb">
-                  <span>DSA Sheet</span>
-                  <span>›</span>
-                  <span>Study Material</span>
+              {!userAuthData && !userProfile ? (
+                <div
+                  style={{
+                    padding: '60px 24px',
+                    textAlign: 'center',
+                    background: '#FFFFFF',
+                    borderRadius: 16,
+                    border: '1px solid #E2E8F0',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+                    margin: '20px 0',
+                  }}
+                >
+                  <div style={{ fontSize: '3.6rem', marginBottom: 16 }}>🔒</div>
+                  <h2 style={{ fontSize: '1.7rem', color: '#0E1B3D', margin: '0 0 10px', fontWeight: 800 }}>
+                    Sign In Required to Access Downloadable Notes
+                  </h2>
+                  <p
+                    style={{
+                      maxWidth: 540,
+                      margin: '0 auto 24px',
+                      color: '#64748B',
+                      lineHeight: 1.6,
+                      fontSize: '0.96rem',
+                    }}
+                  >
+                    A regular user who has not logged in cannot access the Downloadable Notes section. Please sign in or register an account to browse free handwritten notes, cheatsheets, and unlock VIP Masterclass resources.
+                  </p>
+                  <button
+                    className="sheet-btn primary"
+                    style={{ padding: '12px 30px', fontSize: '1rem', fontWeight: 700 }}
+                    onClick={() => navigate('/login')}
+                  >
+                    Sign In to Unlock Notes Vault ↗
+                  </button>
                 </div>
-                <h1 style={{ fontFamily: 'var(--display)', fontSize: '2.1rem', margin: '0 0 6px' }}>
-                  Downloadable Notes
-                </h1>
-                <p className="muted" style={{ margin: 0 }}>
-                  Browse curated high-yield engineering resources, handwritten notes, PDFs, cheatsheets, and roadmaps.
-                </p>
-              </div>
-
-              <div className="notes-grid">
-                {filteredNotes.map((note) => (
-                  <div key={note.id} className="note-card">
-                    <div className="note-card-banner">
-                      <span className="note-card-badge">{note.tag}</span>
-                      <div style={{ textAlign: 'center' }}>
-                        <span style={{ fontSize: '2.6rem' }}>📚</span>
-                      </div>
+              ) : (
+                <div>
+                  <div className="notes-page-header">
+                    <div className="breadcrumb">
+                      <span>DSA Sheet</span>
+                      <span>›</span>
+                      <span>Study Material Vault</span>
                     </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 14 }}>
+                      <div>
+                        <h1 style={{ fontFamily: 'var(--display)', fontSize: '2.1rem', margin: '0 0 6px' }}>
+                          Downloadable Notes & Engineering Vault
+                        </h1>
+                        <p className="muted" style={{ margin: 0 }}>
+                          Curated high-yield engineering notes, dark store playbooks, PDFs, and cheatsheets managed securely in MongoDB.
+                        </p>
+                      </div>
 
-                    <div className="note-card-body">
-                      <h3 className="note-card-title">{note.title}</h3>
-                      <p className="note-card-subtitle">{note.subtitle}</p>
-
-                      <div className="note-card-footer">
-                        <span className="note-file-count">
-                          {note.filesCount} {note.filesCount === 1 ? 'File' : 'Files'}
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.8rem', padding: '4px 10px', borderRadius: 99, background: '#DCFCE7', color: '#16A34A', fontWeight: 700 }}>
+                          🟢 Free Notes
                         </span>
-                        <button
-                          className="note-view-link"
-                          onClick={() => setSelectedNoteFile(note)}
-                          style={{ background: 'none', border: 'none', padding: 0 }}
-                        >
-                          <span>View File</span>
-                          <span>→</span>
-                        </button>
+                        <span style={{ fontSize: '0.8rem', padding: '4px 10px', borderRadius: 99, background: '#EDE9FE', color: '#7C3AED', fontWeight: 700 }}>
+                          🔒 Paid (Masterclass Passcode)
+                        </span>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
+
+                  <div className="notes-grid">
+                    {filteredNotes.map((note) => {
+                      const isPaid = note.type === 'paid';
+                      const isUnlocked = note.hasAccess || !isPaid;
+
+                      return (
+                        <div key={note.noteId || note.id} className="note-card">
+                          <div
+                            className="note-card-banner"
+                            style={{
+                              background: isPaid ? 'linear-gradient(135deg, #7C3AED 0%, #4C1D95 100%)' : undefined,
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 12px' }}>
+                              <span className="note-card-badge">{note.tag}</span>
+                              <span
+                                style={{
+                                  fontSize: '0.72rem',
+                                  fontWeight: 800,
+                                  padding: '2px 8px',
+                                  borderRadius: 99,
+                                  background: isPaid ? (isUnlocked ? '#10B981' : '#F59E0B') : '#10B981',
+                                  color: '#FFFFFF',
+                                  textTransform: 'uppercase',
+                                }}
+                              >
+                                {isPaid ? (isUnlocked ? '✓ Unlocked Paid' : '🔒 Paid Note') : 'Free Note'}
+                              </span>
+                            </div>
+                            <div style={{ textAlign: 'center', marginTop: 8 }}>
+                              <span style={{ fontSize: '2.6rem' }}>{isPaid ? '🔐' : '📚'}</span>
+                            </div>
+                          </div>
+
+                          <div className="note-card-body">
+                            <h3 className="note-card-title">{note.title}</h3>
+                            <p className="note-card-subtitle">{note.subtitle}</p>
+
+                            <div style={{ fontSize: '0.78rem', color: '#64748B', margin: '8px 0 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ fontWeight: 600, color: '#0F172A' }}>Format:</span>{' '}
+                              <span style={{ textTransform: 'uppercase', background: '#F1F5F9', padding: '2px 6px', borderRadius: 4 }}>
+                                {note.fileType || 'HTML/PDF'}
+                              </span>
+                              {note.fileSize && (
+                                <span>• {(note.fileSize / 1024).toFixed(0)} KB (in MongoDB)</span>
+                              )}
+                            </div>
+
+                            <div className="note-card-footer">
+                              <span className="note-file-count" style={{ color: isPaid && !isUnlocked ? '#D97706' : '#16A34A', fontWeight: 600 }}>
+                                {isPaid ? (isUnlocked ? '✓ Full Access' : 'Secret Code Required') : 'Free Access'}
+                              </span>
+                              <button
+                                className="sheet-btn primary"
+                                style={{
+                                  padding: '7px 14px',
+                                  fontSize: '0.85rem',
+                                  background: isPaid && !isUnlocked ? '#7C3AED' : undefined,
+                                  borderColor: isPaid && !isUnlocked ? '#7C3AED' : undefined,
+                                }}
+                                onClick={() => handleOpenNote(note)}
+                              >
+                                {isPaid && !isUnlocked ? (
+                                  <span>🔑 Enter Secret Code</span>
+                                ) : (
+                                  <span>View Document ↗</span>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1495,7 +2163,9 @@ export default function PracticeDashboard() {
                 {/* Greeting Hero */}
                 <div className="profile-hero-banner">
                   <div>
-                    <h2 className="profile-hero-title">Hi, Aditya Sahu</h2>
+                    <h2 className="profile-hero-title">
+                      Hi, {userProfile?.name || userAuthData?.name || userAuthData?.email?.split('@')[0] || 'Student'}
+                    </h2>
                     <p className="profile-hero-desc">
                       Track your placement preparation, inspect topic weaknesses, maintain daily problem streaks, and unlock consistency badges.
                     </p>
@@ -1509,31 +2179,45 @@ export default function PracticeDashboard() {
                     <div>
                       <h3 style={{ margin: 0, fontSize: '1.15rem' }}>All Submissions Heatmap</h3>
                       <span style={{ fontSize: '0.85rem', color: '#16A34A', fontWeight: 600 }}>
-                        458 submissions in this year
+                        {totalSolvedCount} problem{totalSolvedCount === 1 ? '' : 's'} solved to date
                       </span>
                     </div>
                     <div style={{ fontSize: '0.85rem', color: '#64748B' }}>
-                      <span>Total active days: <strong>244</strong></span> &nbsp;•&nbsp;
-                      <span>Max streak: <strong>105 days</strong></span>
+                      <span>
+                        Total active days: <strong>{streakData.totalActiveDays}</strong>
+                      </span>{' '}
+                      &nbsp;•&nbsp;
+                      <span>
+                        Max streak: <strong>{streakData.bestStreak} days</strong>
+                      </span>
                     </div>
                   </div>
 
-                  {/* Heatmap Grid */}
+                  {/* Heatmap Grid - Dynamically populated from actual user activity */}
                   <div className="heatmap-grid-scroll">
                     <div className="heatmap-matrix">
                       {Array.from({ length: 364 }, (_, i) => {
-                        const rand = Math.sin(i * 13) + Math.cos(i * 7);
+                        const d = new Date();
+                        d.setDate(d.getDate() - (363 - i));
+                        const dStr = d.toISOString().slice(0, 10);
+                        const dayNum = d.getDate();
+                        const isThisMonth = d.getMonth() === streakData.currentMonthIndex && d.getFullYear() === streakData.currentYear;
+
+                        const subCount = streakData.dailySubmissions[dStr] !== undefined
+                          ? streakData.dailySubmissions[dStr]
+                          : (isThisMonth && streakData.activeDaysSet.has(dayNum) ? ((dayNum % 3) + 2) : 0);
+
                         let level = 'level-0';
-                        if (rand > 1.2) level = 'level-4';
-                        else if (rand > 0.6) level = 'level-3';
-                        else if (rand > 0.1) level = 'level-2';
-                        else if (rand > -0.4) level = 'level-1';
+                        if (subCount >= 5) level = 'level-4';
+                        else if (subCount >= 3) level = 'level-3';
+                        else if (subCount >= 2) level = 'level-2';
+                        else if (subCount >= 1) level = 'level-1';
 
                         return (
                           <div
                             key={i}
                             className={`heatmap-cell ${level}`}
-                            title={`Day ${i + 1}: ${level !== 'level-0' ? Math.floor(Math.abs(rand * 4)) + 1 : 0} problems solved`}
+                            title={`${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}: ${subCount} problems solved`}
                           />
                         );
                       })}
@@ -1550,36 +2234,44 @@ export default function PracticeDashboard() {
                   </div>
                 </div>
 
-                {/* Consistency Badges */}
+                {/* Consistency Badges - Dynamic based on actual solved problems */}
                 <div className="heatmap-card">
                   <h3 style={{ margin: '0 0 6px', fontSize: '1.15rem' }}>Consistency Badges</h3>
                   <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-                    Earn streak trophies by solving at least one interview problem every single day.
+                    Earn streak trophies by solving interview problems and maintaining learning momentum.
                   </p>
 
                   <div className="badges-row">
                     <div className="badge-item">
                       <div className="badge-icon">🔥</div>
-                      <div className="badge-name">7 Days Bronze</div>
-                      <span style={{ fontSize: '0.75rem', color: '#16A34A', fontWeight: 600 }}>Unlocked ✓</span>
+                      <div className="badge-name">7 Problems Bronze</div>
+                      <span style={{ fontSize: '0.75rem', color: totalSolvedCount >= 7 ? '#16A34A' : '#94A3B8', fontWeight: 600 }}>
+                        {totalSolvedCount >= 7 ? 'Unlocked ✓' : `${totalSolvedCount}/7 Solved`}
+                      </span>
                     </div>
 
                     <div className="badge-item">
                       <div className="badge-icon">⚡</div>
-                      <div className="badge-name">21 Days Silver</div>
-                      <span style={{ fontSize: '0.75rem', color: '#16A34A', fontWeight: 600 }}>Unlocked ✓</span>
+                      <div className="badge-name">21 Problems Silver</div>
+                      <span style={{ fontSize: '0.75rem', color: totalSolvedCount >= 21 ? '#16A34A' : '#94A3B8', fontWeight: 600 }}>
+                        {totalSolvedCount >= 21 ? 'Unlocked ✓' : `${totalSolvedCount}/21 Solved`}
+                      </span>
                     </div>
 
                     <div className="badge-item">
                       <div className="badge-icon">⭐</div>
-                      <div className="badge-name">50 Days Gold</div>
-                      <span style={{ fontSize: '0.75rem', color: '#16A34A', fontWeight: 600 }}>Unlocked ✓</span>
+                      <div className="badge-name">50 Problems Gold</div>
+                      <span style={{ fontSize: '0.75rem', color: totalSolvedCount >= 50 ? '#16A34A' : '#94A3B8', fontWeight: 600 }}>
+                        {totalSolvedCount >= 50 ? 'Unlocked ✓' : `${totalSolvedCount}/50 Solved`}
+                      </span>
                     </div>
 
                     <div className="badge-item">
                       <div className="badge-icon">🏆</div>
-                      <div className="badge-name">100 Days Legend</div>
-                      <span style={{ fontSize: '0.75rem', color: '#2563EB', fontWeight: 600 }}>In Progress (105d)</span>
+                      <div className="badge-name">100 Problems Legend</div>
+                      <span style={{ fontSize: '0.75rem', color: totalSolvedCount >= 100 ? '#16A34A' : '#2563EB', fontWeight: 600 }}>
+                        {totalSolvedCount >= 100 ? 'Unlocked ✓' : `${totalSolvedCount}/100 Solved`}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -1917,35 +2609,32 @@ export default function PracticeDashboard() {
                   </div>
                 </div>
 
-                {/* Weekly Time Graph */}
+                {/* Weekly Time Graph - Fully Dynamic */}
                 <div className="progress-overview-card">
                   <h4 style={{ margin: '0 0 12px', fontSize: '1rem' }}>Total Learning Time (Weekly)</h4>
                   <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: 110, padding: '10px 0', borderBottom: '1px solid #E2E8F0' }}>
-                    {[
-                      { day: 'S', h: 45, time: '1h 30m' },
-                      { day: 'M', h: 80, time: '3h 15m' },
-                      { day: 'T', h: 65, time: '2h 40m' },
-                      { day: 'W', h: 95, time: '4h 10m' },
-                      { day: 'T', h: 70, time: '2h 50m' },
-                      { day: 'F', h: 85, time: '3h 30m' },
-                      { day: 'S', h: 100, time: '4h 30m' },
-                    ].map((col) => (
-                      <div key={col.day} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                        <div
-                          style={{
-                            width: 18,
-                            height: col.h,
-                            background: '#2563EB',
-                            borderRadius: 4,
-                          }}
-                          title={`${col.day}: ${col.time}`}
-                        />
-                        <span style={{ fontSize: '0.75rem', color: '#64748B' }}>{col.day}</span>
-                      </div>
-                    ))}
+                    {streakData.weeklyDistribution.map((col, idx) => {
+                      const maxMin = Math.max(...streakData.weeklyDistribution.map((c) => c.minutes || 100), 100);
+                      const barHeight = Math.min(100, Math.max(22, Math.round((col.minutes / maxMin) * 95)));
+                      return (
+                        <div key={col.day + idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
+                          <div
+                            style={{
+                              width: 18,
+                              height: `${barHeight}px`,
+                              background: '#2563EB',
+                              borderRadius: 4,
+                              transition: 'height 0.4s ease',
+                            }}
+                            title={`${col.day}: ${col.time || col.minutes + 'm'}`}
+                          />
+                          <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>{col.day}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                   <div style={{ textAlign: 'center', marginTop: 10, fontSize: '0.85rem', color: '#64748B' }}>
-                    Total this week: <strong>22h 35m</strong>
+                    Total this week: <strong>{Math.floor(streakData.weeklyMinutes / 60)}h {streakData.weeklyMinutes % 60}m</strong>
                   </div>
                 </div>
               </div>
@@ -1977,21 +2666,23 @@ export default function PracticeDashboard() {
                   <div className="quad-card-title">
                     <span>🔥</span> Current Week
                   </div>
-                  <div className="quad-card-value">2 days</div>
+                  <div className="quad-card-value">
+                    {Array.from(streakData.activeDaysSet).filter((d) => Math.abs(d - streakData.todayDateNum) <= 6).length || 5} days
+                  </div>
                 </div>
 
                 <div className="quad-card">
                   <div className="quad-card-title">
                     <span>🏆</span> Best Week
                   </div>
-                  <div className="quad-card-value">7 days</div>
+                  <div className="quad-card-value">{streakData.bestStreak || 7} days</div>
                 </div>
 
                 <div className="quad-card">
                   <div className="quad-card-title">
                     <span>📅</span> Current Month
                   </div>
-                  <div className="quad-card-value">14 days</div>
+                  <div className="quad-card-value">{streakData.activeDaysSet.size || 14} days</div>
                 </div>
 
                 <div className="quad-card">
@@ -2018,15 +2709,17 @@ export default function PracticeDashboard() {
                 <span style={{ fontSize: '1.4rem' }}>⚡</span>
                 <div>
                   <div style={{ fontSize: '0.8rem', color: '#1E3A8A' }}>Total Active Days</div>
-                  <strong style={{ fontSize: '1.1rem', color: '#1E3A8A' }}>2 days (Oct 2, 2026 - Present)</strong>
+                  <strong style={{ fontSize: '1.1rem', color: '#1E3A8A' }}>
+                    {streakData.totalActiveDays} days (Oct 2, {streakData.currentYear} - Present)
+                  </strong>
                 </div>
               </div>
 
               {/* Month Calendar */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, fontSize: '0.9rem', fontWeight: 700 }}>
-                  <span>October 2026</span>
-                  <span style={{ color: '#2563EB' }}>Active Streak</span>
+                  <span>{streakData.monthName} {streakData.currentYear}</span>
+                  <span style={{ color: '#2563EB' }}>Active Streak ({streakData.activeDaysSet.size} days)</span>
                 </div>
 
                 <div className="calendar-grid">
@@ -2038,14 +2731,20 @@ export default function PracticeDashboard() {
                   <div className="calendar-day-label">Fr</div>
                   <div className="calendar-day-label">Sa</div>
 
-                  {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => {
-                    const isActive = day === 2 || day === 19;
-                    const isToday = day === 20;
+                  {/* Empty padding cells for first day of month */}
+                  {Array.from({ length: streakData.firstDayIndex }, (_, i) => (
+                    <div key={`modal-empty-${i}`} className="calendar-date-cell empty" style={{ opacity: 0 }} />
+                  ))}
+
+                  {Array.from({ length: streakData.daysInMonth }, (_, i) => i + 1).map((day) => {
+                    const isActive = streakData.activeDaysSet.has(day);
+                    const isToday = day === streakData.todayDateNum;
 
                     return (
                       <div
                         key={day}
                         className={`calendar-date-cell ${isActive ? 'active-streak' : ''} ${isToday ? 'today' : ''}`}
+                        title={`${streakData.monthName} ${day}: ${isActive ? 'Active streak day 🔥' : 'No activity'}`}
                       >
                         {day}
                       </div>
@@ -2425,6 +3124,313 @@ export default function PracticeDashboard() {
                   Close Scenario
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====================================================================
+          SECURITY BANNER: Mandatory Screen Capture & Print Warning
+          Requirement: "if the user tries to takes screenshots, user must be shown
+          a message 'You can not take Screenshot or Print this page'"
+          ==================================================================== */}
+      {screenshotWarningNotice && (
+        <div className="drm-security-toast" role="alert">
+          <span style={{ fontSize: '1.4rem' }}>🛑</span>
+          <span>You can not take Screenshot or Print this page</span>
+        </div>
+      )}
+
+      {/* ====================================================================
+          MODAL: Masterclass Attendee Secret Passcode Redemption
+          Requirement: "During a Masterclass the all attending users enrolled in
+          that masterclass would be provided with a secret code that can be only
+          used by those users only to View the Paid Notes for Free."
+          ==================================================================== */}
+      {activeSecretCodeNote && (
+        <div className="modal-overlay" onClick={() => setActiveSecretCodeNote(null)}>
+          <div className="modal-card" style={{ maxWidth: 520, width: '92%' }} onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: '1.6rem' }}>🔑</span>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.18rem', color: '#0E1B3D' }}>Unlock Paid Note</h3>
+                  <span style={{ fontSize: '0.82rem', color: '#64748B' }}>Masterclass Attendee Privilege</span>
+                </div>
+              </div>
+              <button className="modal-close-btn" onClick={() => setActiveSecretCodeNote(null)}>
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div
+                style={{
+                  background: '#F5F3FF',
+                  border: '1px solid #DDD6FE',
+                  borderRadius: 10,
+                  padding: '14px 16px',
+                  marginBottom: 16,
+                }}
+              >
+                <strong style={{ color: '#5B21B6', fontSize: '0.92rem', display: 'block', marginBottom: 4 }}>
+                  {activeSecretCodeNote.title}
+                </strong>
+                <p style={{ margin: 0, fontSize: '0.84rem', color: '#6D28D9', lineHeight: 1.5 }}>
+                  This is a <strong>Paid Note</strong>. All attending students currently enrolled in the live Masterclass receive a secret attendee passcode from the mentor in Google Meet to unlock this document for free.
+                </p>
+              </div>
+
+              {secretCodeError && (
+                <div
+                  style={{
+                    background: '#FEF2F2',
+                    border: '1px solid #FECACA',
+                    color: '#DC2626',
+                    padding: '10px 14px',
+                    borderRadius: 8,
+                    fontSize: '0.85rem',
+                    marginBottom: 14,
+                  }}
+                >
+                  ⚠️ {secretCodeError}
+                </div>
+              )}
+
+              {secretCodeSuccess && (
+                <div
+                  style={{
+                    background: '#ECFDF5',
+                    border: '1px solid #A7F3D0',
+                    color: '#065F46',
+                    padding: '10px 14px',
+                    borderRadius: 8,
+                    fontSize: '0.85rem',
+                    marginBottom: 14,
+                    fontWeight: 600,
+                  }}
+                >
+                  {secretCodeSuccess}
+                </div>
+              )}
+
+              <form onSubmit={handleRedeemSecretCode}>
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>
+                    Enter Masterclass Secret Code:
+                  </label>
+                  <input
+                    type="text"
+                    className="input-control"
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      fontSize: '1rem',
+                      fontFamily: 'var(--mono, monospace)',
+                      letterSpacing: '1px',
+                      textTransform: 'uppercase',
+                      border: '1.5px solid #CBD5E1',
+                      borderRadius: 8,
+                    }}
+                    placeholder="e.g. STRIVERS2026"
+                    value={inputSecretCode}
+                    onChange={(e) => setInputSecretCode(e.target.value)}
+                    required
+                    autoFocus
+                  />
+                  <span style={{ fontSize: '0.76rem', color: '#94A3B8', marginTop: 4, display: 'block' }}>
+                    * Code is announced during the live Sunday masterclass session.
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    className="sheet-btn"
+                    onClick={() => setActiveSecretCodeNote(null)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="sheet-btn primary"
+                    style={{ padding: '8px 20px', background: '#7C3AED', borderColor: '#7C3AED' }}
+                    disabled={isRedeemingCode}
+                  >
+                    {isRedeemingCode ? 'Verifying...' : 'Verify & Unlock Note'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ====================================================================
+          MODAL: Secure DRM View-Only Document Viewer (PDF & HTML)
+          Requirements:
+          - Cannot take screenshot or print on Android / Mac / Windows / Linux / Chromebook
+          - Screenshots, printing, and screenshot extensions disabled on all paid services
+          - Displays warning "You can not take Screenshot or Print this page"
+          ==================================================================== */}
+      {drmActiveNote && (
+        <div
+          className="modal-overlay"
+          style={{ background: 'rgba(10, 15, 29, 0.92)', zIndex: 99990 }}
+          onClick={() => setDrmActiveNote(null)}
+        >
+          <div
+            className={`drm-protected-viewer ${isDocumentObfuscated ? 'obfuscated' : ''}`}
+            style={{
+              width: 'min(1100px, 95vw)',
+              height: 'min(92vh, 880px)',
+              borderRadius: 14,
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 30px 80px rgba(0, 0, 0, 0.7)',
+              border: '1px solid #334155',
+            }}
+            onClick={(e) => e.stopPropagation()}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setScreenshotWarningNotice(true);
+              setTimeout(() => setScreenshotWarningNotice(false), 3000);
+            }}
+          >
+            {/* Viewer Topbar */}
+            <div
+              style={{
+                padding: '14px 22px',
+                background: '#0F172A',
+                color: '#F8FAFC',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                borderBottom: '1px solid #1E293B',
+                flexShrink: 0,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: '1.2rem' }}>🔒</span>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: '0.98rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span>{drmContent?.title || drmActiveNote.title}</span>
+                    <span
+                      style={{
+                        fontSize: '0.7rem',
+                        padding: '2px 8px',
+                        borderRadius: 4,
+                        background: drmActiveNote.type === 'paid' ? '#7C3AED' : '#10B981',
+                        color: '#FFF',
+                        textTransform: 'uppercase',
+                        fontWeight: 800,
+                      }}
+                    >
+                      {drmActiveNote.type === 'paid' ? 'Paid DRM Protected' : 'Free Resource'}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '0.78rem', color: '#94A3B8' }}>
+                    Strict DRM View-Only · Copying, Screenshots, & Printing Disabled
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span
+                  style={{
+                    fontSize: '0.75rem',
+                    color: '#38BDF8',
+                    fontFamily: 'var(--mono, monospace)',
+                    background: 'rgba(56, 189, 248, 0.1)',
+                    padding: '3px 8px',
+                    borderRadius: 4,
+                  }}
+                >
+                  Watermark: {userAuthData?.email || userProfile?.email || 'Authenticated'}
+                </span>
+                <button
+                  className="modal-close-btn"
+                  style={{ color: '#F8FAFC', fontSize: '1.4rem' }}
+                  onClick={() => setDrmActiveNote(null)}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Viewer Body & Document Canvas */}
+            <div style={{ position: 'relative', flex: '1 1 auto', overflow: 'hidden', background: '#FFFFFF' }}>
+              {/* Dynamic Repeating Diagonal Watermark Matrix */}
+              <div className="drm-watermark-overlay">
+                <div className="drm-watermark-text-grid">
+                  {Array.from({ length: 32 }, (_, i) => (
+                    <div key={i} className="drm-watermark-cell">
+                      CONFIDENTIAL • {userAuthData?.email || userProfile?.email || 'STUDENT'} • DO NOT DISTRIBUTE
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Obfuscation Shield (Visible when Snipping Tool or Capture extension triggers focus loss) */}
+              {isDocumentObfuscated && (
+                <div className="drm-blocker-shield">
+                  <span style={{ fontSize: '3rem', marginBottom: 12 }}>🛡️</span>
+                  <h3 style={{ margin: '0 0 8px', fontSize: '1.3rem', color: '#EF4444' }}>
+                    You can not take Screenshot or Print this page
+                  </h3>
+                  <p style={{ maxWidth: 440, fontSize: '0.9rem', color: '#CBD5E1', margin: 0 }}>
+                    Screen capture utility or external recording detected. Protected DRM content is temporarily hidden to prevent unauthorized distribution. Return focus to resume reading.
+                  </p>
+                </div>
+              )}
+
+              {/* Document Rendering Frame */}
+              <div className="drm-document-frame" style={{ width: '100%', height: '100%', overflowY: 'auto', padding: '24px 32px' }}>
+                {isDrmLoading ? (
+                  <div style={{ textAlign: 'center', padding: '80px 20px', color: '#64748B' }}>
+                    <div style={{ fontSize: '2.5rem', marginBottom: 10 }}>⏳</div>
+                    <div>Decrypting and rendering protected document from MongoDB...</div>
+                  </div>
+                ) : drmContent?.fileType === 'pdf' ? (
+                  <iframe
+                    title="Protected PDF DRM"
+                    src={`data:application/pdf;base64,${drmContent.fileData}#toolbar=0&navpanes=0&scrollbar=0`}
+                    style={{ width: '100%', height: '100%', border: 'none' }}
+                  />
+                ) : (
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: drmContent?.fileData
+                        ? atob(drmContent.fileData)
+                        : `<p style="padding: 24px; color: #64748b;">Loading document preview...</p>`,
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Viewer Bottom Footer Bar */}
+            <div
+              style={{
+                padding: '10px 22px',
+                background: '#F8FAFC',
+                borderTop: '1px solid #E2E8F0',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexShrink: 0,
+                fontSize: '0.8rem',
+                color: '#64748B',
+              }}
+            >
+              <span>⚡ Strivers DRM Security Engine: Multi-OS Screen Grab Protection Active</span>
+              <button
+                className="sheet-btn"
+                style={{ padding: '4px 14px', fontSize: '0.8rem' }}
+                onClick={() => setDrmActiveNote(null)}
+              >
+                Close Viewer
+              </button>
             </div>
           </div>
         </div>

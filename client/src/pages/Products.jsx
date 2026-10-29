@@ -34,7 +34,7 @@ export default function Products() {
             _id: 'masterclass',
             title: 'Strivers Placement Masterclass',
             description: 'Live Sunday interactive workshop on resume, portfolio, LinkedIn/Naukri & cold emails.',
-            priceInPaise: 100,
+            priceInPaise: 2100,
             currency: 'INR',
           },
           {
@@ -81,13 +81,29 @@ export default function Products() {
 
     setPayingId(pid);
     try {
+      await loadRazorpay();
+      if (!window.Razorpay) {
+        throw new Error('Razorpay SDK could not be loaded. Check your internet connection.');
+      }
+
+      const amountInPaise = product.priceInPaise || Math.round((product.price || 21) * 100);
+
       let orderData;
       try {
-        const res = await api.post('/orders/create', { productId: pid, plan: pid });
+        const res = await api.post('/create-order', {
+          amount: amountInPaise,
+          currency: 'INR',
+          productId: pid,
+          plan: pid,
+          planId: pid,
+        });
         orderData = res.data;
       } catch {
-        const fbRes = await api.post('/payments/create-order', {
-          amount: product.price || (product.priceInPaise || 2100) / 100,
+        const fbRes = await api.post('/orders/create', {
+          amount: amountInPaise,
+          currency: 'INR',
+          productId: pid,
+          plan: pid,
           planId: pid,
         });
         orderData = fbRes.data;
@@ -98,70 +114,71 @@ export default function Products() {
         return;
       }
 
+      const orderId = orderData.order_id || orderData.orderId;
+      const keyId =
+        orderData.key_id ||
+        orderData.keyId ||
+        orderData.key ||
+        process.env.REACT_APP_RAZORPAY_KEY_ID;
+
+      if (!orderId) {
+        throw new Error('Order creation failed: No order ID returned from server.');
+      }
+
       const verifyPaymentOnServer = async (r) => {
+        const verifyPayload = {
+          razorpay_order_id: r.razorpay_order_id,
+          razorpay_payment_id: r.razorpay_payment_id,
+          razorpay_signature: r.razorpay_signature,
+        };
         try {
-          const verifyRes = await api.post('/orders/verify', {
-            razorpay_order_id: r.razorpay_order_id,
-            razorpay_payment_id: r.razorpay_payment_id,
-            razorpay_signature: r.razorpay_signature,
-          });
+          const verifyRes = await api.post('/verify-payment', verifyPayload);
           navigate(verifyRes.data.accessUrl || `/products/${product._id}/access`);
         } catch {
-          const fbVerify = await api.post('/payments/verify-payment', {
-            razorpay_order_id: r.razorpay_order_id,
-            razorpay_payment_id: r.razorpay_payment_id,
-            razorpay_signature: r.razorpay_signature,
-          });
+          const fbVerify = await api.post('/orders/verify', verifyPayload);
           navigate(fbVerify.data.accessUrl || `/products/${product._id}/access`);
         }
       };
 
-      const isMock =
-        orderData.demoMode ||
-        orderData.isSimulated ||
-        !orderData.keyId ||
-        orderData.keyId.includes('mock') ||
-        orderData.keyId.includes('XXXX') ||
-        orderData.orderId?.startsWith('order_dev_') ||
-        orderData.orderId?.startsWith('demo_order_');
-
-      if (isMock || !window.Razorpay) {
-        await verifyPaymentOnServer({
-          razorpay_order_id: orderData.orderId,
-          razorpay_payment_id: `pay_dev_${Date.now()}`,
-          razorpay_signature: 'simulated_sig',
-        });
-        return;
-      }
-
-      await loadRazorpay();
       const options = {
-        key: orderData.keyId || orderData.key,
-        amount: orderData.amount,
+        key: keyId,
+        amount: orderData.amount || amountInPaise,
         currency: orderData.currency || 'INR',
-        order_id: orderData.orderId,
-        name: BRAND.name,
+        order_id: orderId,
+        name: BRAND.name || 'Strivers',
         description: product.title,
-        prefill: { name: user?.name || 'Student', email: user?.email || 'student@example.com' },
+        prefill: {
+          name: user?.name || 'Student',
+          email: user?.email || 'student@example.com',
+        },
         theme: { color: '#2F4BFF' },
         handler: async (response) => {
           try {
             await verifyPaymentOnServer(response);
-          } catch {
-            setError('Payment verification failed on server.');
+          } catch (err) {
+            setError(err.response?.data?.error || err.message || 'Payment verification failed on server.');
+          } finally {
+            setPayingId(null);
           }
         },
         modal: {
-          ondismiss: () => setPayingId(null),
+          ondismiss: () => {
+            setPayingId(null);
+            setError('Payment was cancelled by the user.');
+          },
         },
       };
 
       const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', (response) => {
+        setPayingId(null);
+        setError(response.error?.description || 'Payment failed. Please try again.');
+      });
+
       rzp.open();
     } catch (err) {
-      setError(err.response?.data?.error || err.message || 'Could not start payment');
-    } finally {
       setPayingId(null);
+      setError(err.response?.data?.error || err.response?.data?.message || err.message || 'Could not start payment');
     }
   }
 

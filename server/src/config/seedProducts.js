@@ -55,10 +55,34 @@ const DEFAULT_PRODUCTS = [
     badge: 'Live Session Every Sunday',
     currency: 'INR',
     category: 'masterclass',
+    isMasterclass: true,
+    productType: 'masterclass',
     activeMeetingLink: 'https://meet.google.com/strivers-placement-live',
     meetingCode: 'strivers-placement-live',
     meetingPlatform: 'Google Meet',
     sessionStatus: 'upcoming',
+    sessionDate: 'Sunday, 11:00 AM IST',
+    secretPasscode: 'STRIVERS2026',
+    mentors: [
+      {
+        name: 'Alex Morgan',
+        role: 'Ex-Google · SDE-2 @ Blinkit',
+        company: 'Blinkit',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80',
+      },
+      {
+        name: 'Priya Sharma',
+        role: 'Staff Engineer @ Zomato',
+        company: 'Zomato',
+        avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&h=200&q=80',
+      },
+      {
+        name: 'Rahul Verma',
+        role: 'Engineering Lead @ Porter',
+        company: 'Porter',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&h=200&q=80',
+      },
+    ],
     features: [
       'Live online session every Sunday',
       'Resume, portfolio, LinkedIn & Naukri',
@@ -125,6 +149,28 @@ const DEFAULT_PRODUCTS = [
     meetingCode: 'strivers-channel-interviews',
     meetingPlatform: 'Google Meet',
     sessionStatus: 'upcoming',
+    sessionDate: 'Sunday, 11:00 AM IST',
+    secretPasscode: 'STRIVERS2026',
+    mentors: [
+      {
+        name: 'Alex Morgan',
+        role: 'Ex-Google · SDE-2 @ Blinkit',
+        company: 'Blinkit',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80',
+      },
+      {
+        name: 'Priya Sharma',
+        role: 'Staff Engineer @ Zomato',
+        company: 'Zomato',
+        avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&h=200&q=80',
+      },
+      {
+        name: 'Rahul Verma',
+        role: 'Engineering Lead @ Porter',
+        company: 'Porter',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&h=200&q=80',
+      },
+    ],
     features: [
       'Interview meeting links shared in the channel',
       'Enrol per upcoming vacancy',
@@ -165,6 +211,26 @@ const DEFAULT_PRODUCTS = [
     ],
     isActive: true,
   },
+  {
+    productId: 'sde_course_pro',
+    title: 'Complete SDE & Technical Interview Course',
+    description: 'Self-paced full-stack technical curriculum: 200+ recorded video lessons, system design deep-dives, and hands-on coding labs.',
+    price: 499,
+    priceInPaise: 49900,
+    originalPrice: 2999,
+    badge: 'Self-Paced Course',
+    currency: 'INR',
+    category: 'course',
+    isMasterclass: false,
+    productType: 'course',
+    features: [
+      '200+ modular self-paced video lessons',
+      'Curated coding problems with editorial solutions',
+      'Lifetime course access & video replays',
+      'Certificate of Completion',
+    ],
+    isActive: true,
+  },
 ];
 
 async function seedProductsIfEmpty() {
@@ -174,13 +240,11 @@ async function seedProductsIfEmpty() {
       await Product.insertMany(DEFAULT_PRODUCTS);
       console.log('[Course Catalog] Initialized default courses, meeting links & protected study materials.');
     } else {
-      // Ensure existing default products have timingSlots and notesAndPdfs populated
+      // If products already exist in MongoDB, only backfill missing sub-fields for existing ones.
+      // Do NOT re-create products that were explicitly removed by an admin.
       for (const defP of DEFAULT_PRODUCTS) {
         const existing = await Product.findOne({ productId: defP.productId });
-        if (!existing) {
-          await Product.create(defP);
-          console.log(`[Course Catalog] Created default course ${defP.productId} in MongoDB.`);
-        } else {
+        if (existing) {
           let needsSave = false;
           if (!existing.timingSlots || existing.timingSlots.length === 0) {
             existing.timingSlots = defP.timingSlots;

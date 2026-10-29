@@ -19,7 +19,37 @@ function formatPublicProduct(p) {
     badge: p.badge,
     features: p.features || [],
     category: p.category || 'masterclass',
+    isMasterclass: Boolean(p.isMasterclass ?? (p.category === 'masterclass' || p.productId === 'masterclass')),
+    productType: p.productType || p.category || 'masterclass',
     sessionStatus: p.sessionStatus || 'upcoming',
+    sessionDate: p.sessionDate || 'Sunday, 11:00 AM IST',
+    targetCountdown: p.targetCountdown || null,
+    secretPasscode: p.secretPasscode || 'STRIVERS2026',
+    mentors: (p.mentors && p.mentors.length > 0)
+      ? p.mentors
+      : [
+          {
+            name: 'Alex Morgan',
+            role: 'Ex-Google · SDE-2 @ Blinkit',
+            company: 'Blinkit',
+            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80',
+          },
+          {
+            name: 'Priya Sharma',
+            role: 'Staff Engineer @ Zomato',
+            company: 'Zomato',
+            avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&h=200&q=80',
+          },
+          {
+            name: 'Rahul Verma',
+            role: 'Engineering Lead @ Porter',
+            company: 'Porter',
+            avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&h=200&q=80',
+          },
+        ],
+    activeMeetingLink: p.activeMeetingLink || 'https://meet.google.com/strivers-placement-live',
+    meetingCode: p.meetingCode || 'strivers-placement-live',
+    meetingPlatform: p.meetingPlatform || 'Google Meet',
     timingSlots: (p.timingSlots || []).map((s) => ({
       slotId: s.slotId,
       title: s.title,
@@ -57,15 +87,25 @@ router.get('/', async (req, res) => {
 // 2. Get specific product/masterclass by ID
 router.get('/:id', async (req, res) => {
   try {
-    const product = await Product.findOne({ productId: req.params.id, isActive: true });
+    const queryId = (req.params.id || '').trim();
+    const product = await Product.findOne({
+      $or: [
+        { productId: queryId },
+        { productId: queryId.toLowerCase() },
+      ],
+      isActive: true,
+    });
     if (product) {
       return res.json({ product: formatPublicProduct(product) });
     }
-    const defaultP = DEFAULT_PRODUCTS.find((p) => p.productId === req.params.id) || DEFAULT_PRODUCTS[0];
-    res.json({ product: { ...defaultP, _id: defaultP.productId } });
+    const count = await Product.countDocuments();
+    if (count === 0) {
+      const defaultP = DEFAULT_PRODUCTS.find((p) => p.productId === queryId) || DEFAULT_PRODUCTS[0];
+      return res.json({ product: { ...defaultP, _id: defaultP.productId } });
+    }
+    return res.status(404).json({ success: false, message: 'Masterclass or course not found.' });
   } catch (err) {
-    const defaultP = DEFAULT_PRODUCTS.find((p) => p.productId === req.params.id) || DEFAULT_PRODUCTS[0];
-    res.json({ product: { ...defaultP, _id: defaultP.productId } });
+    return res.status(500).json({ success: false, message: err.message });
   }
 });
 
@@ -110,9 +150,24 @@ router.get('/:id/access', verifyFirebaseToken, async (req, res) => {
       uploadedAt: m.uploadedAt,
     }));
 
+    const userEnrollment = access?.enrolledCourses?.find((c) => c.courseId === courseId);
+
     return res.json({
       success: true,
       isEnrolled: Boolean(isEnrolledInCourse),
+      enrollmentDetails: userEnrollment
+        ? {
+            orderId: userEnrollment.orderId,
+            txnId: userEnrollment.paymentId,
+            paymentId: userEnrollment.paymentId,
+            refId: userEnrollment.referenceId,
+            referenceId: userEnrollment.referenceId,
+            paidAt: userEnrollment.paidAt,
+            amount: userEnrollment.amount,
+            currency: userEnrollment.currency || 'INR',
+            isPermanent: true,
+          }
+        : null,
       course: {
         productId: activeData.productId,
         title: activeData.title,

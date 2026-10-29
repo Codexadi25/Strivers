@@ -50,6 +50,7 @@ export class PricingController {
 
     document.getElementById('edit-product-id').value = product.productId;
     document.getElementById('edit-title').value = product.title || '';
+    document.getElementById('edit-category').value = product.category || 'course';
     document.getElementById('edit-price').value = product.price;
     document.getElementById('edit-paise-calc').textContent = product.priceInPaise;
     document.getElementById('edit-original-price').value = product.originalPrice || '';
@@ -76,6 +77,7 @@ export class PricingController {
     if (e && e.preventDefault) e.preventDefault();
     const productId = document.getElementById('edit-product-id').value;
     const title = document.getElementById('edit-title').value.trim();
+    const category = document.getElementById('edit-category').value;
     const price = parseFloat(document.getElementById('edit-price').value);
     const originalPrice = document.getElementById('edit-original-price').value ? parseFloat(document.getElementById('edit-original-price').value) : null;
     const badge = document.getElementById('edit-badge').value.trim();
@@ -96,6 +98,8 @@ export class PricingController {
     try {
       const res = await ProductModel.updatePrice(productId, {
         title,
+        category,
+        isMasterclass: category === 'masterclass',
         price,
         originalPrice,
         badge,
@@ -130,6 +134,7 @@ export class PricingController {
     if (e && e.preventDefault) e.preventDefault();
     const productId = document.getElementById('new-product-id').value.trim().toLowerCase();
     const title = document.getElementById('new-title').value.trim();
+    const category = document.getElementById('new-category') ? document.getElementById('new-category').value : 'course';
     const price = parseFloat(document.getElementById('new-price').value);
     const originalPrice = document.getElementById('new-original-price').value ? parseFloat(document.getElementById('new-original-price').value) : null;
     const badge = document.getElementById('new-badge').value.trim();
@@ -139,6 +144,8 @@ export class PricingController {
       await ProductModel.create({
         productId,
         title,
+        category,
+        isMasterclass: category === 'masterclass',
         price,
         originalPrice,
         badge,

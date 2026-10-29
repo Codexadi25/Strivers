@@ -88,6 +88,29 @@ const practiceSheetSchema = new mongoose.Schema(
       type: Boolean,
       default: false, // For keeping Tech sheets as templates
     },
+    // Uploaded HTML / EJS Practice Sheet Support
+    htmlContent: {
+      type: String,
+      default: '', // HTML / EJS source content or interactive template
+    },
+    fileType: {
+      type: String,
+      enum: ['standard', 'html', 'ejs', 'react'],
+      default: 'standard',
+    },
+    fileName: {
+      type: String,
+      default: '',
+    },
+    // Dynamic Mapping to Courses / Masterclasses
+    linkedCourseId: {
+      type: String,
+      default: '', // If set, users enrolled in this course unlock this sheet for FREE
+    },
+    requiresCourseOrPurchase: {
+      type: Boolean,
+      default: false,
+    },
     enrolledCount: {
       type: Number,
       default: 0,

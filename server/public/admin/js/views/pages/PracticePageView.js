@@ -34,21 +34,18 @@ export class PracticePageView {
         </div>
 
         <div class="card table-responsive">
-          <table class="data-table">
+          <table class="data-table practice-table">
             <thead>
               <tr>
-                <th>Sheet Identifier</th>
-                <th>Curriculum Title & Target Role</th>
-                <th>Target Companies</th>
-                <th>Role Type</th>
-                <th>Access Fee</th>
-                <th>Template Status</th>
-                <th>Enrolled</th>
-                <th>Actions</th>
+                <th style="min-width: 260px;">Curriculum & Target Job Role</th>
+                <th style="min-width: 170px;">Track & Scope</th>
+                <th style="min-width: 190px;">Hiring Companies</th>
+                <th style="min-width: 140px;">Pricing & Access</th>
+                <th style="min-width: 230px; text-align: right;">Curriculum Engine Actions</th>
               </tr>
             </thead>
             <tbody id="practice-tbody">
-              <tr><td colspan="8" class="text-center">Loading practice sheets...</td></tr>
+              <tr><td colspan="5" class="text-center">Loading practice sheets...</td></tr>
             </tbody>
           </table>
         </div>
@@ -63,57 +60,64 @@ export class PracticePageView {
     const problemsCount = (s.topics || []).reduce((acc, t) => acc + (t.problems ? t.problems.length : 0), 0);
 
     const companyBadges = (s.targetCompanies || []).map((c) => `
-      <span class="badge" style="background: var(--bg-subtle); color: var(--text-muted); border: 1px solid var(--border-subtle); font-size: 0.72rem; margin-right: 2px;">${escapeHtml(c)}</span>
+      <span class="company-tag-pill">${escapeHtml(c)}</span>
     `).join('');
 
     const sheetJsonEscaped = JSON.stringify(s).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
 
     return `
       <tr>
-        <td><span class="code-cell">${escapeHtml(s.sheetId)}</span></td>
         <td>
-          <strong>${escapeHtml(s.title)}</strong>
-          <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 2px;">
-            Role: <em>${escapeHtml(s.targetRole || 'Operations Specialist')}</em>
+          <div class="practice-sheet-title" onclick="openCurriculumModal('${escapeHtml(s.sheetId)}')" style="cursor: pointer;" title="Click to view detailed curriculum">
+            ${escapeHtml(s.title)}
           </div>
-          <div style="margin-top: 5px; display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
-            <span class="badge badge-info" style="font-size: 10.5px;">📚 ${topicsCount} Topics</span>
-            <span class="badge" style="background: rgba(99,102,241,0.15); color: #818cf8; font-size: 10.5px; border: 1px solid rgba(99,102,241,0.3);">
-              ⚡ ${problemsCount} Scenarios
+          <div class="practice-sheet-role">
+            Target: <strong>${escapeHtml(s.targetRole || 'Operations Specialist')}</strong>
+          </div>
+          <div class="practice-meta-row">
+            <span class="code-cell" style="font-size: 0.72rem;">${escapeHtml(s.sheetId)}</span>
+            <span class="badge" style="background: rgba(148, 163, 184, 0.12); color: #94a3b8; font-size: 0.72rem;">${escapeHtml(s.difficultyLevel || 'All Levels')}</span>
+            ${s.badge ? `<span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; font-size: 0.72rem; border: 1px solid rgba(245, 158, 11, 0.3);">⭐ ${escapeHtml(s.badge)}</span>` : ''}
+          </div>
+        </td>
+        <td>
+          <div style="margin-bottom: 5px;">
+            <span class="badge ${isNonTech ? 'badge-success' : 'badge-info'}" style="font-size: 0.74rem;">
+              ${isNonTech ? 'Non-Tech Operations' : (s.roleType === 'tech' ? 'Technical SDE' : s.roleType.toUpperCase())}
             </span>
-            ${s.badge ? `<span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; font-size: 10.5px; border: 1px solid rgba(245, 158, 11, 0.3);">⭐ ${escapeHtml(s.badge)}</span>` : ''}
-            <span class="badge" style="background: rgba(148, 163, 184, 0.12); color: #94a3b8; font-size: 10.5px;">${escapeHtml(s.difficultyLevel || 'All Levels')}</span>
+          </div>
+          <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+            <span class="practice-pill-stat">📚 ${topicsCount} Modules</span>
+            <span class="practice-pill-stat">⚡ ${problemsCount} Scenarios</span>
           </div>
         </td>
-        <td><div style="max-width: 220px; display: flex; flex-wrap: wrap; gap: 2px;">${companyBadges}</div></td>
         <td>
-          <span class="badge ${isNonTech ? 'badge-success' : 'badge-info'}">
-            ${isNonTech ? 'Non-Tech Operations' : (s.roleType === 'tech' ? 'Technical SDE' : s.roleType.toUpperCase())}
-          </span>
+          <div style="display: flex; flex-wrap: wrap; gap: 3px; max-width: 210px;">
+            ${companyBadges || '<span class="text-muted" style="font-size: 0.75rem;">General Track</span>'}
+          </div>
         </td>
         <td>
-          <span class="badge ${isFree ? 'badge-success' : 'badge-warning'}">
-            ${isFree ? '₹0.00 Free Enrollment' : `₹${s.price.toFixed(2)} Paid Track`}
-          </span>
+          <div style="margin-bottom: 3px;">
+            <span class="badge ${isFree ? 'badge-success' : 'badge-warning'}" style="font-size: 0.76rem; font-weight: 600;">
+              ${isFree ? '₹0.00 Free' : `₹${s.price.toFixed(2)}`}
+            </span>
+          </div>
+          <div class="text-muted" style="font-size: 0.76rem;">
+            <strong>${s.enrolledCount || 0}</strong> enrolled
+          </div>
         </td>
-        <td>
-          <span class="badge ${s.isTemplate ? 'badge-info' : 'badge-secondary'}">
-            ${s.isTemplate ? 'Template Mode (Preserved)' : 'Active Curriculum'}
-          </span>
-        </td>
-        <td><strong>${s.enrolledCount || 0}</strong> users</td>
-        <td>
-          <div class="d-flex gap-1" style="flex-wrap: wrap;">
-            <button class="btn btn-primary btn-xs" style="padding: 4px 8px; font-size: 11px;" onclick="openCurriculumModal('${escapeHtml(s.sheetId)}')">
-              📚 Curriculum & Problems (${problemsCount})
+        <td style="text-align: right;">
+          <div class="d-flex gap-1" style="justify-content: flex-end; flex-wrap: wrap;">
+            <button class="btn btn-primary btn-xs" style="padding: 5px 10px; font-size: 0.8rem; font-weight: 600;" onclick="openCurriculumModal('${escapeHtml(s.sheetId)}')">
+              📚 Curriculum (${problemsCount})
             </button>
-            <button class="btn btn-secondary btn-xs" style="padding: 4px 8px; font-size: 11px;" onclick="openEditPracticeSheetModal('${escapeHtml(s.sheetId)}')">
-              ✏️ Edit Details
+            <button class="btn btn-secondary btn-xs" style="padding: 5px 8px; font-size: 0.78rem;" onclick="openEditPracticeSheetModal('${escapeHtml(s.sheetId)}')">
+              ✏️ Edit
             </button>
-            <button class="btn btn-secondary btn-xs" style="padding: 4px 8px; font-size: 11px;" data-sheet='${sheetJsonEscaped}' onclick="handleEditSheetPriceClick(this)">
+            <button class="btn btn-secondary btn-xs" style="padding: 5px 8px; font-size: 0.78rem;" data-sheet='${sheetJsonEscaped}' onclick="handleEditSheetPriceClick(this)">
               💵 Price
             </button>
-            <button class="btn btn-outline-danger btn-xs" style="padding: 4px 8px; font-size: 11px;" onclick="deletePracticeSheet('${escapeHtml(s.sheetId)}')">
+            <button class="btn btn-outline-danger btn-xs" style="padding: 5px 8px; font-size: 0.78rem;" onclick="deletePracticeSheet('${escapeHtml(s.sheetId)}')">
               🗑️
             </button>
           </div>

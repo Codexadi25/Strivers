@@ -34,7 +34,7 @@ export class SidebarView {
             <polygon points="23 7 16 12 23 17 23 7"></polygon>
             <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
           </svg>
-          <span>Masterclasses & Sessions</span>
+          <span>Masterclasses & Live Sessions</span>
           <span class="pill-highlight" style="background: #2563EB; color: white;">LIVE</span>
         </button>
 
@@ -55,6 +55,25 @@ export class SidebarView {
             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
           </svg>
           <span>Orders & Payments</span>
+        </button>
+
+        <a class="nav-item" href="/templates/lifeline" target="_blank" style="text-decoration: none; color: inherit;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          <span>Lifeline Hub</span>
+          <span class="pill-highlight" style="background: #16A34A; color: white;">REACT</span>
+        </a>
+
+        <button class="nav-item" data-tab="tickets" onclick="switchTab('tickets')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="12" y1="18" x2="12" y2="12"></line>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
+          </svg>
+          <span>PG Failure & Tickets</span>
+          <span class="pill-highlight" style="background: #f59e0b; color: white;">DISPUTES</span>
         </button>
 
         <button class="nav-item" data-tab="users" onclick="switchTab('users')">

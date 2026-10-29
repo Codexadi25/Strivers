@@ -4,8 +4,8 @@ import { DRMProtectionWrapper } from '../components/secureViewer/DRMProtectionWr
 import { SecureCanvasViewer } from '../components/secureViewer/SecureCanvasViewer';
 import { SkeletonLoader } from '../components/common/SkeletonLoader';
 import Navbar from '../components/common/Navbar';
+import { loadRazorpay } from '../utils/razorpay';
 import '../assets/styles/secureViewer.css';
-
 
 export const ViewerPage = () => {
   const [loading, setLoading] = useState(true);
@@ -42,37 +42,38 @@ export const ViewerPage = () => {
   const handleRazorpayCheckout = async () => {
     try {
       setLoading(true);
-      // 1. Create Order on Backend
-      const { data: orderData } = await axiosClient.post('/payments/create-order', {
-        amount: 499, // Amount in INR
+      setError(null);
+      await loadRazorpay();
+
+      // 1. Create Order on Backend (amount in paise, min 100 paise)
+      const { data: orderData } = await axiosClient.post('/create-order', {
+        amount: 49900, // ₹499 in paise
+        currency: 'INR',
         planId: 'plan_pro_access',
       });
 
-      // 2. Open Razorpay Modal or simulate locally if in dev mode
-      if (orderData.isSimulated || !window.Razorpay || orderData.key.includes('mock') || orderData.key.includes('XXXX')) {
-        const verifyRes = await axiosClient.post('/payments/verify-payment', {
-          razorpay_order_id: orderData.orderId,
-          razorpay_payment_id: `pay_dev_${Date.now()}`,
-          razorpay_signature: 'simulated_sig',
-        });
+      const orderId = orderData.order_id || orderData.orderId;
+      const keyId =
+        process.env.REACT_APP_RAZORPAY_KEY_ID ||
+        orderData.key_id ||
+        orderData.keyId ||
+        orderData.key;
 
-        if (verifyRes.data.success) {
-          fetchProtectedContent();
-        }
-        return;
+      if (!orderId) {
+        throw new Error('Order creation failed on server.');
       }
 
       const options = {
-        key: orderData.key,
-        amount: orderData.amount,
-        currency: orderData.currency,
+        key: keyId,
+        amount: orderData.amount || 49900,
+        currency: orderData.currency || 'INR',
         name: 'Secure Enterprise Access',
         description: '30-Day Protected Tier Subscription',
-        order_id: orderData.orderId,
+        order_id: orderId,
         handler: async (response) => {
           try {
             // 3. Verify Razorpay Signature on Server
-            const verifyRes = await axiosClient.post('/payments/verify-payment', {
+            const verifyRes = await axiosClient.post('/verify-payment', {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
@@ -82,21 +83,36 @@ export const ViewerPage = () => {
               fetchProtectedContent();
             }
           } catch (verificationErr) {
-            setError('Payment verification failed on the server.');
+            setError(
+              verificationErr.response?.data?.error ||
+              verificationErr.response?.data?.message ||
+              'Payment verification failed on the server.'
+            );
+          } finally {
+            setLoading(false);
           }
+        },
+        modal: {
+          ondismiss: () => {
+            setLoading(false);
+            setError('Payment was cancelled by the user.');
+          },
         },
         theme: { color: '#00f2fe' },
       };
 
       const razorpayInstance = new window.Razorpay(options);
+      razorpayInstance.on('payment.failed', (response) => {
+        setLoading(false);
+        setError(response.error?.description || 'Payment failed. Please try again.');
+      });
+
       razorpayInstance.open();
     } catch (err) {
-      setError(err.response?.data?.message || 'Payment initiation failed.');
-    } finally {
       setLoading(false);
+      setError(err.response?.data?.error || err.response?.data?.message || err.message || 'Payment initiation failed.');
     }
   };
-
 
   if (loading) {
     return (
@@ -165,4 +181,4 @@ export const ViewerPage = () => {
       </div>
     </div>
   );
-};
+};

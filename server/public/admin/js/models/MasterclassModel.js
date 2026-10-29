@@ -6,21 +6,35 @@ import { apiRequest } from '../services/api.js';
 
 export class MasterclassModel {
   static async getAll() {
-    const res = await apiRequest('/courses');
-    return res.courses || [];
+    // Specifically fetch Masterclasses distinguished from Courses in the schema
+    const res = await apiRequest('/masterclasses');
+    return res.masterclasses || res.courses || [];
   }
 
   static async create(payload) {
+    // Ensure payload is explicitly tagged as a Masterclass
+    const masterclassPayload = {
+      ...payload,
+      category: 'masterclass',
+      isMasterclass: true,
+      productType: 'masterclass',
+    };
     return await apiRequest('/courses', {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body: JSON.stringify(masterclassPayload),
     });
   }
 
   static async delete(productId) {
-    return await apiRequest(`/courses/${encodeURIComponent(productId)}`, {
-      method: 'DELETE',
-    });
+    try {
+      return await apiRequest(`/masterclasses/${encodeURIComponent(productId)}`, {
+        method: 'DELETE',
+      });
+    } catch (err) {
+      return await apiRequest(`/courses/${encodeURIComponent(productId)}`, {
+        method: 'DELETE',
+      });
+    }
   }
 
   static async updateSession(productId, payload) {

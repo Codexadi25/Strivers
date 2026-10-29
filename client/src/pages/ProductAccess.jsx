@@ -12,6 +12,7 @@ export default function ProductAccess() {
   const [loading, setLoading] = useState(true);
   const [courseData, setCourseData] = useState(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const [enrollmentDetails, setEnrollmentDetails] = useState(null);
   const [user, setUser] = useState(null);
   const [error, setError] = useState('');
   const [copiedCode, setCopiedCode] = useState(false);
@@ -39,6 +40,9 @@ export default function ProductAccess() {
         if (res.data.success) {
           setCourseData(res.data.course);
           setIsEnrolled(Boolean(res.data.isEnrolled));
+          if (res.data.enrollmentDetails) {
+            setEnrollmentDetails(res.data.enrollmentDetails);
+          }
         } else {
           setError('Failed to load course details.');
         }
@@ -226,6 +230,37 @@ export default function ProductAccess() {
                 </strong>
               </div>
             </div>
+
+            {/* Verified Payment Transaction Credentials (Txn ID & Ref. ID) */}
+            {enrollmentDetails && (
+              <div
+                style={{
+                  background: '#F0FDF4',
+                  border: '1px solid #BBF7D0',
+                  borderRadius: '12px',
+                  padding: '12px 18px',
+                  marginBottom: '24px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                  fontSize: '0.86rem',
+                  color: '#166534',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '1.2rem' }}>🧾</span>
+                  <span><strong>Verified Payment Receipt:</strong></span>
+                  <span>Txn ID: <code style={{ color: '#047857', fontWeight: 700 }}>{enrollmentDetails.txnId || 'pay_verified'}</code></span>
+                  <span>•</span>
+                  <span>Ref. ID: <code style={{ color: '#2563EB', fontWeight: 700 }}>{enrollmentDetails.refId || 'rcpt_verified'}</code></span>
+                </div>
+                <span style={{ background: '#DCFCE7', color: '#15803D', fontWeight: 700, padding: '3px 10px', borderRadius: '6px', fontSize: '0.78rem' }}>
+                  Status: Captured (Success)
+                </span>
+              </div>
+            )}
 
             {/* LIVE BROADCAST & MEETING ROOM CARD */}
             <div

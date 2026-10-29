@@ -143,6 +143,21 @@ const productSchema = new mongoose.Schema(
       type: String,
       enum: ['masterclass', 'channel', 'course', 'workshop'],
       default: 'masterclass',
+      index: true,
+    },
+    // Explicit schema flag distinguishing Masterclasses (live interactive webinar sessions) from Courses (recorded/modular learning)
+    isMasterclass: {
+      type: Boolean,
+      default: function () {
+        return this.category === 'masterclass' || this.productId === 'masterclass';
+      },
+      index: true,
+    },
+    productType: {
+      type: String,
+      enum: ['masterclass', 'course', 'channel', 'workshop'],
+      default: 'masterclass',
+      index: true,
     },
 
     // Dynamic Live Meeting & Session Management
@@ -164,6 +179,33 @@ const productSchema = new mongoose.Schema(
       type: String,
       enum: ['upcoming', 'live', 'completed'],
       default: 'upcoming',
+    },
+
+    // Session Date & Countdown Target (for live timer)
+    sessionDate: {
+      type: String,
+      default: 'Sunday, 11:00 AM IST',
+    },
+    targetCountdown: {
+      type: Date,
+      default: null,
+    },
+
+    // Mentors & Instructors for Masterclass (Alex Morgan, Priya Sharma, Rahul Verma, etc.)
+    mentors: [
+      {
+        name: { type: String, default: '' },
+        role: { type: String, default: '' },
+        company: { type: String, default: '' },
+        avatar: { type: String, default: '' },
+      },
+    ],
+
+    // Attendee Secret Passcode (for enrolled students to view paid DRM notes for free)
+    secretPasscode: {
+      type: String,
+      default: 'STRIVERS2026',
+      trim: true,
     },
 
     // Session Timing Slots
@@ -195,13 +237,23 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Pre-validate hook to keep price and priceInPaise synchronized
+// Pre-validate hook to keep price and priceInPaise synchronized and distinguish Masterclass schema flag
 productSchema.pre('validate', function (next) {
   if (this.price !== undefined) {
     this.priceInPaise = Math.round(this.price * 100);
   } else if (this.priceInPaise !== undefined) {
     this.price = this.priceInPaise / 100;
   }
+
+  // Ensure isMasterclass flag and productType strictly reflect category
+  if (this.category === 'masterclass' || this.productId === 'masterclass') {
+    this.isMasterclass = true;
+    this.productType = 'masterclass';
+  } else {
+    this.isMasterclass = false;
+    this.productType = this.category || 'course';
+  }
+
   next();
 });
 

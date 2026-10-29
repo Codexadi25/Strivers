@@ -55,8 +55,11 @@ export class PricingPageView {
 
     return `
       <div class="product-card ${isInactive ? 'inactive' : ''}" id="product-card-${p.productId}">
-        <div class="product-top">
+        <div class="product-top" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
           <span class="product-badge-pill">${escapeHtml(p.badge || 'Standard Tier')}</span>
+          <span class="badge ${p.category === 'masterclass' ? 'badge-success' : p.category === 'course' ? 'badge-info' : 'badge-warning'}" style="font-size: 0.72rem; padding: 2px 7px;">
+            ${p.category === 'masterclass' ? '🎯 MASTERCLASS' : p.category === 'course' ? '📚 COURSE' : escapeHtml((p.category || 'PRODUCT').toUpperCase())}
+          </span>
           <span class="product-slug">ID: ${escapeHtml(p.productId)}</span>
         </div>
 

@@ -1383,3 +1383,133 @@
   }
 }
 
+/* ==========================================================================
+   DRM ANTI-SCREENSHOT & ANTI-PRINT SECURITY ENGINE
+   Applies across Windows, Mac, Linux, Chromebook, Android, iOS
+   ========================================================================== */
+
+/* Strict Print Disabler - Blocks all browser printing */
+@media print {
+  html, body, #root, .dashboard-layout, * {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+  }
+  body::before {
+    content: "You can not take Screenshot or Print this page";
+    display: block !important;
+    visibility: visible !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-size: 26px !important;
+    font-weight: 800 !important;
+    color: #dc2626 !important;
+    text-align: center !important;
+    padding-top: 250px !important;
+  }
+}
+
+/* DRM Protected Viewer Container */
+.drm-protected-viewer {
+  position: relative;
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  -khtml-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+/* Obfuscation Curtain: Blurs instantly if window loses focus or screenshot tool activates */
+.drm-protected-viewer.obfuscated .drm-document-frame {
+  filter: blur(40px) brightness(0.2) !important;
+  pointer-events: none !important;
+  transition: filter 0.05s ease-out;
+}
+
+/* Diagonal Security Watermark Matrix */
+.drm-watermark-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  overflow: hidden;
+  opacity: 0.16;
+  background-image: repeating-linear-gradient(
+    -35deg,
+    transparent,
+    transparent 120px,
+    rgba(15, 23, 42, 0.4) 120px,
+    rgba(15, 23, 42, 0.4) 240px
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drm-watermark-text-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 100px 40px;
+  transform: rotate(-25deg) scale(1.1);
+  width: 140%;
+  height: 140%;
+  pointer-events: none;
+}
+
+.drm-watermark-cell {
+  font-family: var(--mono, monospace);
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  white-space: nowrap;
+}
+
+/* Security Alert Warning Banner: "You can not take Screenshot or Print this page" */
+.drm-security-toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #991b1b;
+  color: #ffffff;
+  padding: 16px 28px;
+  border-radius: 12px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.4), 0 0 0 2px #ef4444;
+  z-index: 999999;
+  font-size: 1.05rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: drmShake 0.4s ease-in-out;
+}
+
+@keyframes drmShake {
+  0%, 100% { transform: translateX(-50%); }
+  20%, 60% { transform: translateX(calc(-50% - 8px)); }
+  40%, 80% { transform: translateX(calc(-50% + 8px)); }
+}
+
+/* Obfuscation Blocker Shield */
+.drm-blocker-shield {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.94);
+  color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  text-align: center;
+  padding: 30px;
+  backdrop-filter: blur(12px);
+}
+
+

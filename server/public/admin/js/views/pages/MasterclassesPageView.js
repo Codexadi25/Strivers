@@ -10,15 +10,18 @@ export class MasterclassesPageView {
       <section id="tab-masterclasses" class="tab-pane">
         <div class="pane-header">
           <div>
-            <h2>Masterclasses, Live Sessions & Study Material</h2>
-            <p class="text-muted">Create courses, update active Google Meet links, session timing slots, and manage view-only DRM study materials in MongoDB.</p>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+              <h2 style="margin: 0;">Masterclasses, Live Sessions & Study Material</h2>
+              <span class="badge badge-info" style="font-size: 0.72rem; padding: 3px 8px; font-weight: 700;">SCHEMA: category='masterclass'</span>
+            </div>
+            <p class="text-muted">Live interactive masterclasses, Google Meet links, industry mentors, and MongoDB DRM study materials. (Self-paced courses are managed separately under Pricing & Products).</p>
           </div>
           <button class="btn btn-primary" onclick="openCreateMasterclassModal()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
-            <span>+ Create Masterclass / Course</span>
+            <span>+ Create Masterclass</span>
           </button>
         </div>
 
@@ -65,10 +68,10 @@ export class MasterclassesPageView {
       <div class="product-card" id="mc-card-${m.productId}" style="display: flex; flex-direction: column; justify-content: space-between;">
         <div>
           <div class="product-top">
-            <span class="product-badge-pill" style="background: var(--info-bg); color: var(--info-text); border: 1px solid var(--info-border);">
-              ${escapeHtml((m.category || 'masterclass').toUpperCase())}
+            <span class="product-badge-pill" style="background: rgba(37, 99, 235, 0.2); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.4); font-weight: 700;">
+              🔴 MASTERCLASS (schema: ${escapeHtml(m.category || 'masterclass')})
             </span>
-            <span class="product-slug">Slug: ${escapeHtml(m.productId)}</span>
+            <span class="product-slug">ID: ${escapeHtml(m.productId)}</span>
           </div>
 
           <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-top: 6px;">
@@ -77,6 +80,34 @@ export class MasterclassesPageView {
           </div>
 
           <p class="product-desc" style="margin-top: 6px;">${escapeHtml(m.description || 'No blurb provided.')}</p>
+
+          <div style="margin: 8px 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+            <span style="font-size: 0.82rem; color: #94a3b8;">📅 Schedule: <strong style="color: #f1f5f9;">${escapeHtml(m.sessionDate || 'Sunday, 11:00 AM IST')}</strong></span>
+            <span class="badge badge-info" style="font-size: 0.74rem;">🔑 DRM Passcode: <code>${escapeHtml(m.secretPasscode || 'STRIVERS2026')}</code></span>
+          </div>
+
+          <!-- Mentors List Preview -->
+          <div style="margin: 10px 0 14px;">
+            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 6px; font-weight: 700;">
+              👨‍🏫 Live Instructors & Mentors:
+            </div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              ${(m.mentors && m.mentors.length > 0
+                ? m.mentors
+                : [
+                    { name: 'Alex Morgan', role: 'Ex-Google · Blinkit' },
+                    { name: 'Priya Sharma', role: 'Staff Eng @ Zomato' },
+                    { name: 'Rahul Verma', role: 'Eng Lead @ Porter' },
+                  ]
+              ).map((mt) => `
+                <span style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); padding: 4px 9px; border-radius: 99px; font-size: 0.76rem; display: inline-flex; align-items: center; gap: 5px;">
+                  <span style="color: #38bdf8;">👤</span>
+                  <strong style="color: #f8fafc;">${escapeHtml(mt.name)}</strong>
+                  <span style="color: #94a3b8; font-size: 0.7rem;">(${escapeHtml(mt.role)})</span>
+                </span>
+              `).join('')}
+            </div>
+          </div>
 
           <!-- Active Meeting Link Box -->
           <div class="session-box">

@@ -13,6 +13,7 @@ import { UsersController } from './UsersController.js';
 import { PracticeController } from './PracticeController.js';
 import { RefundsController } from './RefundsController.js';
 import { LogsController } from './LogsController.js';
+import { TicketsController } from './TicketsController.js';
 
 import { SidebarView } from '../views/components/SidebarView.js';
 import { TopbarView } from '../views/components/TopbarView.js';
@@ -26,6 +27,7 @@ import { UsersPageView } from '../views/pages/UsersPageView.js';
 import { PracticePageView } from '../views/pages/PracticePageView.js';
 import { RefundsPageView } from '../views/pages/RefundsPageView.js';
 import { LogsPageView } from '../views/pages/LogsPageView.js';
+import { TicketsPageView } from '../views/pages/TicketsPageView.js';
 
 export class AppController {
   static currentActiveTab = 'pricing';
@@ -74,6 +76,7 @@ export class AppController {
         MasterclassesPageView.renderPane(),
         TelemetryPageView.renderPane(),
         OrdersPageView.renderPane(),
+        TicketsPageView.renderPane(),
         UsersPageView.renderPane(),
         PracticePageView.renderPane(),
         RefundsPageView.renderPane(),
@@ -117,6 +120,9 @@ export class AppController {
         break;
       case 'orders':
         OrdersController.loadOrders();
+        break;
+      case 'tickets':
+        TicketsController.loadTickets();
         break;
       case 'users':
         UsersController.loadUsers();
@@ -190,10 +196,19 @@ export class AppController {
     window.submitUploadMaterial = (e) => MasterclassesController.submitUploadMaterial(e);
     window.deleteStudyMaterial = (cId, mId) => MasterclassesController.deleteStudyMaterial(cId, mId);
 
-    // Orders & Transactions
+    // Orders & Transactions (including Exact Transaction Details Popup)
     window.loadOrders = () => OrdersController.loadOrders();
     window.debounceOrdersSearch = () => OrdersController.debounceOrdersSearch();
     window.promptRefund = (oId, amt) => OrdersController.promptRefund(oId, amt);
+    window.openTransactionDetailsModal = (id) => OrdersController.openTransactionDetailsModal(id);
+    window.closeTransactionDetailsModal = () => OrdersController.closeTransactionDetailsModal();
+
+    // Tickets & Dispute Management
+    window.loadTickets = () => TicketsController.loadTickets();
+    window.openManageTicketModal = (id, em, amt, oId, st) =>
+      TicketsController.openManageTicketModal(id, em, amt, oId, st);
+    window.closeManageTicketModal = () => TicketsController.closeManageTicketModal();
+    window.submitTicketResolution = (e) => TicketsController.submitTicketResolution(e);
 
     // User Access
     window.loadUsers = () => UsersController.loadUsers();
@@ -235,6 +250,11 @@ export class AppController {
       }
     };
 
+    // Telemetry & Activities
+    window.handleActivitiesLimitChange = (val) => TelemetryController.changeLimit(val);
+    window.handleActivitiesPrevPage = () => TelemetryController.prevPage();
+    window.handleActivitiesNextPage = () => TelemetryController.nextPage();
+
     // Refunds
     window.loadRefunds = () => RefundsController.loadRefunds();
     window.openRefundModal = (oId, amt) => RefundsController.openRefundModal(oId, amt);
@@ -244,5 +264,8 @@ export class AppController {
     // Logs
     window.loadLogs = () => LogsController.loadLogs();
     window.debounceLogsSearch = () => LogsController.debounceLogsSearch();
+    window.handleLogsLimitChange = (val) => LogsController.changeLimit(val);
+    window.handleLogsPrevPage = () => LogsController.prevPage();
+    window.handleLogsNextPage = () => LogsController.nextPage();
   }
 }
