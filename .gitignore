@@ -2,3 +2,6 @@ Sample
 docs
 .env
 *.env
+/firebase
+.firebase
+firebase-debug.log
