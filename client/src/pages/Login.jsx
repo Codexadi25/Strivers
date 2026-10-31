@@ -47,7 +47,14 @@ export default function Login() {
         navigate('/products');
       }
     } catch (err) {
-      setError(err.response?.data?.message || err.response?.data?.error || 'Login failed. Check your email and password.');
+      const serverMsg = err.response?.data?.message || err.response?.data?.error;
+      if (serverMsg) {
+        setError(serverMsg);
+      } else if (err.message && (err.message.includes('Network Error') || err.code === 'ERR_NETWORK')) {
+        setError('Cannot reach server at http://localhost:8080. Please ensure the backend server is running.');
+      } else {
+        setError('Login failed. Check your email and password.');
+      }
     } finally {
       setBusy(false);
     }
@@ -94,7 +101,12 @@ export default function Login() {
           </div>
 
           <div>
-            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--ink)' }}>Password</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--ink)' }}>Password</label>
+              <Link to="/forgot-password" style={{ fontSize: '0.82rem', color: '#2563EB', textDecoration: 'none' }}>
+                Forgot password?
+              </Link>
+            </div>
             <input
               type="password"
               placeholder="Your password"

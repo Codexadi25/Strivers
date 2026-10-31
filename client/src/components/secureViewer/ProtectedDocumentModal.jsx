@@ -2,15 +2,84 @@ import React, { useEffect, useState, useMemo } from 'react';
 import '../../assets/styles/secureViewer.css';
 
 export function ProtectedDocumentModal({ material, onClose, userEmail }) {
-  const [decodedContent, setDecodedContent] = useState('');
   const [theme, setTheme] = useState('light'); // 'light' (Paper), 'sepia', 'dark'
-  const [activeTab, setActiveTab] = useState('text'); // 'text' (Reading) | 'canvas' (Secure Canvas)
+  const [activeTab, setActiveTab] = useState('viewport'); // 'viewport' (Native Document Engine) | 'canvas' (Canvas DRM)
   const [fontSize, setFontSize] = useState(16); // 14, 16, 18
+  const [pdfBlobUrl, setPdfBlobUrl] = useState('');
+  const [decodedHtml, setDecodedHtml] = useState('');
+  const [decodedText, setDecodedText] = useState('');
 
   const watermarkLabel = useMemo(() => {
     const email = (userEmail || 'STUDENT').toLowerCase();
-    return `${email} • STRIIVERS LICENSED COPY`;
+    return `${email} • STRIIVERS LICENSED COPY • CONFIDENTIAL`;
   }, [userEmail]);
+
+  // Determine file type strictly
+  const fileTypeLower = (material?.fileType || '').toLowerCase();
+  const mimeTypeLower = (material?.mimeType || '').toLowerCase();
+  const rawData = material?.fileData || '';
+
+  const isPdf = useMemo(() => {
+    if (fileTypeLower === 'pdf' || mimeTypeLower === 'application/pdf') return true;
+    if (typeof rawData === 'string' && (rawData.startsWith('data:application/pdf') || rawData.startsWith('JVBERi0'))) return true;
+    return false;
+  }, [fileTypeLower, mimeTypeLower, rawData]);
+
+  const isHtml = useMemo(() => {
+    if (isPdf) return false;
+    if (fileTypeLower === 'html' || mimeTypeLower.includes('html')) return true;
+    if (typeof rawData === 'string' && rawData.startsWith('data:text/html')) return true;
+    return false;
+  }, [isPdf, fileTypeLower, mimeTypeLower, rawData]);
+
+  // Decode binary / text safely based on format
+  useEffect(() => {
+    if (!rawData) return;
+
+    const base64Data = rawData.includes(',') ? rawData.split(',')[1] : rawData;
+
+    if (isPdf) {
+      try {
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Uint8Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const blob = new Blob([byteNumbers], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        setPdfBlobUrl(url);
+
+        return () => {
+          URL.revokeObjectURL(url);
+        };
+      } catch (err) {
+        console.error('Failed to create PDF blob:', err);
+      }
+    } else {
+      // Decode HTML / Markdown / Text as UTF-8
+      try {
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Uint8Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const text = new TextDecoder('utf-8').decode(byteNumbers);
+
+        if (isHtml || text.includes('<html') || text.includes('<!DOCTYPE') || text.includes('<div style=') || text.includes('<h1>')) {
+          setDecodedHtml(text);
+        }
+        setDecodedText(text);
+      } catch {
+        try {
+          const fallback = atob(base64Data);
+          setDecodedHtml(fallback);
+          setDecodedText(fallback);
+        } catch {
+          setDecodedText(material.description || 'Study Guide & Notes');
+        }
+      }
+    }
+  }, [rawData, isPdf, isHtml, material]);
 
   // Keyboard shortcut interception to block Print, Save, Inspect, Copy
   useEffect(() => {
@@ -59,93 +128,57 @@ export function ProtectedDocumentModal({ material, onClose, userEmail }) {
     };
   }, [onClose]);
 
-  // Decode Base64 content stored in MongoDB
+  // Render Canvas DRM
   useEffect(() => {
-    if (!material?.fileData) return;
-    try {
-      const rawB64 = material.fileData.includes(',')
-        ? material.fileData.split(',')[1]
-        : material.fileData;
-      const decoded = decodeURIComponent(
-        atob(rawB64)
-          .split('')
-          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-          .join('')
-      );
-      setDecodedContent(decoded);
-    } catch {
-      try {
-        const rawB64 = material.fileData.includes(',')
-          ? material.fileData.split(',')[1]
-          : material.fileData;
-        setDecodedContent(atob(rawB64));
-      } catch {
-        setDecodedContent(material.description || 'Confidential Study Guide');
-      }
-    }
-  }, [material]);
-
-  // Render Canvas with High-DPI scaling and clean watermark
-  useEffect(() => {
-    if (activeTab !== 'canvas' || !decodedContent) return;
+    if (activeTab !== 'canvas' || isPdf || !decodedText) return;
     const canvas = document.getElementById('drm-reader-canvas');
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
     const width = 840;
-
-    const rawLines = decodedContent.split('\n');
+    const rawLines = decodedText.split('\n');
     const wrappedLines = [];
     ctx.font = '15px Inter, system-ui, -apple-system, sans-serif';
 
-    rawLines.forEach((line) => {
+    rawLines.forEach((raw) => {
+      const line = raw.trim();
       if (!line) {
         wrappedLines.push({ text: '', type: 'empty' });
         return;
       }
       if (line.startsWith('# ')) {
         wrappedLines.push({ text: line.replace('# ', ''), type: 'h1' });
-      } else if (line.startsWith('## ')) {
-        wrappedLines.push({ text: line.replace('## ', ''), type: 'h2' });
-      } else if (line.startsWith('### ')) {
-        wrappedLines.push({ text: line.replace('### ', ''), type: 'h3' });
-      } else {
-        const words = line.split(' ');
-        let currentLine = '';
-        for (let i = 0; i < words.length; i++) {
-          const testLine = currentLine ? currentLine + ' ' + words[i] : words[i];
-          const metrics = ctx.measureText(testLine);
-          if (metrics.width > 740 && i > 0) {
-            wrappedLines.push({ text: currentLine, type: 'p' });
-            currentLine = words[i];
-          } else {
-            currentLine = testLine;
-          }
-        }
-        if (currentLine) wrappedLines.push({ text: currentLine, type: 'p' });
+        return;
       }
+      if (line.startsWith('## ')) {
+        wrappedLines.push({ text: line.replace('## ', ''), type: 'h2' });
+        return;
+      }
+      if (line.startsWith('### ')) {
+        wrappedLines.push({ text: line.replace('### ', ''), type: 'h3' });
+        return;
+      }
+
+      // Clean HTML tags from canvas lines if present
+      const cleanLine = line.replace(/<[^>]*>/g, '');
+      const words = cleanLine.split(' ');
+      let current = '';
+      words.forEach((w) => {
+        const testLine = current ? current + ' ' + w : w;
+        if (ctx.measureText(testLine).width > width - 80) {
+          wrappedLines.push({ text: current, type: 'p' });
+          current = w;
+        } else {
+          current = testLine;
+        }
+      });
+      if (current) wrappedLines.push({ text: current, type: 'p' });
     });
 
-    let totalHeight = 120;
-    wrappedLines.forEach((l) => {
-      if (l.type === 'h1') totalHeight += 52;
-      else if (l.type === 'h2') totalHeight += 42;
-      else if (l.type === 'h3') totalHeight += 36;
-      else if (l.type === 'empty') totalHeight += 18;
-      else totalHeight += 26;
-    });
-    totalHeight = Math.max(totalHeight, 720);
+    const totalHeight = Math.max(600, wrappedLines.length * 28 + 160);
+    canvas.width = width;
+    canvas.height = totalHeight;
 
-    // High-DPI support (2x resolution)
-    const dpr = 2;
-    canvas.width = width * dpr;
-    canvas.height = totalHeight * dpr;
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${totalHeight}px`;
-
-    ctx.scale(dpr, dpr);
-
-    // Canvas Background depending on theme
     const isDark = theme === 'dark';
     const isSepia = theme === 'sepia';
 
@@ -158,7 +191,6 @@ export function ProtectedDocumentModal({ material, onClose, userEmail }) {
     ctx.fillStyle = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
     ctx.fillRect(0, 63, width, 1);
 
-    // Title in header
     ctx.fillStyle = isDark ? '#38bdf8' : '#2563eb';
     ctx.font = 'bold 16px Inter, system-ui, sans-serif';
     ctx.fillText(material.title || 'Protected Study Material', 32, 38);
@@ -167,7 +199,6 @@ export function ProtectedDocumentModal({ material, onClose, userEmail }) {
     ctx.font = '12px Inter, system-ui, sans-serif';
     ctx.fillText('Protected DRM Reader · In-App Only', width - 260, 38);
 
-    // Draw document lines
     let y = 100;
     wrappedLines.forEach((l) => {
       if (l.type === 'h1') {
@@ -198,7 +229,7 @@ export function ProtectedDocumentModal({ material, onClose, userEmail }) {
       }
     });
 
-    // Draw subtle, elegant watermark across canvas (non-intrusive)
+    // Draw watermark
     ctx.save();
     ctx.rotate((-22 * Math.PI) / 180);
     ctx.fillStyle = isDark
@@ -216,9 +247,63 @@ export function ProtectedDocumentModal({ material, onClose, userEmail }) {
       }
     }
     ctx.restore();
-  }, [activeTab, decodedContent, material, theme, watermarkLabel]);
+  }, [activeTab, decodedText, isPdf, material, theme, watermarkLabel]);
 
-  // Render parsed markdown for Reading Mode
+  // Construct styled HTML document for iframe viewport rendering
+  const styledHtmlDocument = useMemo(() => {
+    if (!decodedHtml && !decodedText) return '';
+    const raw = decodedHtml || decodedText;
+
+    const bg = theme === 'dark' ? '#0F172A' : theme === 'sepia' ? '#FAF5EB' : '#FFFFFF';
+    const text = theme === 'dark' ? '#E2E8F0' : theme === 'sepia' ? '#382B19' : '#0F172A';
+    const border = theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#E2E8F0';
+    const cardBg = theme === 'dark' ? '#1E293B' : theme === 'sepia' ? '#F4ECDC' : '#F8FAFC';
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+          * { box-sizing: border-box; }
+          body {
+            margin: 0;
+            padding: 32px 36px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', Helvetica, Arial, sans-serif;
+            font-size: ${fontSize}px;
+            line-height: 1.68;
+            color: ${text};
+            background-color: ${bg};
+            user-select: none;
+            -webkit-user-select: none;
+          }
+          img { max-width: 100%; height: auto; border-radius: 8px; }
+          h1, h2, h3, h4 { color: ${theme === 'dark' ? '#38BDF8' : '#1D4ED8'}; margin-top: 24px; margin-bottom: 12px; }
+          h1 { font-size: 1.6em; border-bottom: 2px solid ${border}; padding-bottom: 8px; }
+          h2 { font-size: 1.3em; }
+          h3 { font-size: 1.15em; }
+          p { margin: 0 0 16px; }
+          ul, ol { margin: 0 0 18px; padding-left: 24px; }
+          li { margin-bottom: 8px; }
+          table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.95em; }
+          th, td { border: 1px solid ${border}; padding: 10px 14px; text-align: left; }
+          th { background: ${cardBg}; font-weight: 700; }
+          code { font-family: 'IBM Plex Mono', Consolas, monospace; background: ${cardBg}; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+          pre { background: #0B132B; color: #F8FAFC; padding: 16px; border-radius: 8px; overflow-x: auto; font-family: 'IBM Plex Mono', monospace; }
+          pre code { background: transparent; padding: 0; color: inherit; }
+          blockquote { border-left: 4px solid #2563eb; margin: 16px 0; padding: 10px 18px; background: ${cardBg}; border-radius: 0 8px 8px 0; }
+          @media print { body { display: none !important; } }
+        </style>
+      </head>
+      <body oncontextmenu="return false;">
+        ${raw}
+      </body>
+      </html>
+    `;
+  }, [decodedHtml, decodedText, theme, fontSize]);
+
+  // Simple Markdown Block Renderer for Plain Text Notes
   function renderMarkdownBlocks(content) {
     if (!content) return null;
     const lines = content.split('\n');
@@ -230,9 +315,7 @@ export function ProtectedDocumentModal({ material, onClose, userEmail }) {
         elements.push(
           <ul key={`ul-${key}`} style={{ margin: '0 0 16px', paddingLeft: '24px' }}>
             {currentList.map((item, idx) => (
-              <li key={idx} style={{ marginBottom: '6px' }}>
-                {renderInlineFormatting(item)}
-              </li>
+              <li key={idx} style={{ marginBottom: '6px' }}>{item}</li>
             ))}
           </ul>
         );
@@ -242,80 +325,34 @@ export function ProtectedDocumentModal({ material, onClose, userEmail }) {
 
     lines.forEach((line, index) => {
       const trimmed = line.trim();
-
       if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
         currentList.push(trimmed.slice(2));
       } else {
         flushList(index);
-
         if (!trimmed) {
           elements.push(<div key={`empty-${index}`} style={{ height: '10px' }} />);
         } else if (trimmed.startsWith('# ')) {
           elements.push(
-            <h1
-              key={`h1-${index}`}
-              style={{
-                fontSize: '1.5rem',
-                fontWeight: 800,
-                margin: '28px 0 12px',
-                paddingBottom: '8px',
-                borderBottom: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #E2E8F0',
-                color: theme === 'dark' ? '#F8FAFC' : theme === 'sepia' ? '#2C1E0E' : '#0F172A',
-              }}
-            >
+            <h1 key={`h1-${index}`} style={{ fontSize: '1.5rem', fontWeight: 800, margin: '24px 0 12px', color: theme === 'dark' ? '#F8FAFC' : '#0F172A' }}>
               {trimmed.replace('# ', '')}
             </h1>
           );
         } else if (trimmed.startsWith('## ')) {
           elements.push(
-            <h2
-              key={`h2-${index}`}
-              style={{
-                fontSize: '1.25rem',
-                fontWeight: 700,
-                margin: '22px 0 10px',
-                color: theme === 'dark' ? '#38BDF8' : theme === 'sepia' ? '#9A3412' : '#2563EB',
-              }}
-            >
+            <h2 key={`h2-${index}`} style={{ fontSize: '1.25rem', fontWeight: 700, margin: '20px 0 10px', color: theme === 'dark' ? '#38BDF8' : '#2563EB' }}>
               {trimmed.replace('## ', '')}
             </h2>
           );
         } else if (trimmed.startsWith('### ')) {
           elements.push(
-            <h3
-              key={`h3-${index}`}
-              style={{
-                fontSize: '1.05rem',
-                fontWeight: 700,
-                margin: '18px 0 8px',
-                color: theme === 'dark' ? '#E2E8F0' : theme === 'sepia' ? '#451A03' : '#1E293B',
-              }}
-            >
+            <h3 key={`h3-${index}`} style={{ fontSize: '1.05rem', fontWeight: 700, margin: '16px 0 8px' }}>
               {trimmed.replace('### ', '')}
             </h3>
           );
-        } else if (trimmed.startsWith('---')) {
-          elements.push(
-            <hr
-              key={`hr-${index}`}
-              style={{
-                border: 'none',
-                borderTop: theme === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #E2E8F0',
-                margin: '24px 0',
-              }}
-            />
-          );
         } else {
           elements.push(
-            <p
-              key={`p-${index}`}
-              style={{
-                margin: '0 0 12px',
-                lineHeight: 1.75,
-                color: theme === 'dark' ? '#CBD5E1' : theme === 'sepia' ? '#3B2D18' : '#334155',
-              }}
-            >
-              {renderInlineFormatting(trimmed)}
+            <p key={`p-${index}`} style={{ margin: '0 0 12px', lineHeight: 1.75 }}>
+              {trimmed}
             </p>
           );
         }
@@ -326,30 +363,27 @@ export function ProtectedDocumentModal({ material, onClose, userEmail }) {
     return elements;
   }
 
-  // Simple inline parser for **bold** and *italic*
-  function renderInlineFormatting(text) {
-    if (!text) return '';
-    const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g);
-    return parts.map((part, i) => {
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={i} style={{ fontWeight: 700 }}>{part.slice(2, -2)}</strong>;
-      }
-      if (part.startsWith('*') && part.endsWith('*')) {
-        return <em key={i} style={{ fontStyle: 'italic' }}>{part.slice(1, -1)}</em>;
-      }
-      return part;
-    });
-  }
-
   return (
     <div className="drm-modal-backdrop" onContextMenu={(e) => e.preventDefault()}>
-      <div className={`drm-reader-window theme-${theme}`}>
-        {/* CLEAN TOP TOOLBAR */}
-        <div className="drm-reader-toolbar">
-          {/* Document Title & Badge */}
+      <div
+        className={`drm-reader-window theme-${theme}`}
+        style={{
+          maxWidth: '1120px',
+          width: '96vw',
+          maxHeight: '94vh',
+          height: '92vh',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          borderRadius: '16px',
+        }}
+      >
+        {/* TOP CONTROLS & SECURITY TOOLBAR */}
+        <div className="drm-reader-toolbar" style={{ flexShrink: 0 }}>
+          {/* Document Title & Badges */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '1.35rem' }}>
-              {material.fileType === 'cheatsheet' ? '⚡' : material.fileType === 'pdf' ? '📄' : '📝'}
+            <span style={{ fontSize: '1.4rem' }}>
+              {isPdf ? '📄' : isHtml ? '🌐' : material.fileType === 'cheatsheet' ? '⚡' : '📝'}
             </span>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -365,27 +399,31 @@ export function ProtectedDocumentModal({ material, onClose, userEmail }) {
                 </h3>
                 <span
                   style={{
-                    background: theme === 'dark' ? 'rgba(56, 189, 248, 0.15)' : '#EFF6FF',
-                    color: theme === 'dark' ? '#38BDF8' : '#2563EB',
+                    background: isPdf
+                      ? 'rgba(239, 68, 68, 0.15)'
+                      : isHtml
+                      ? 'rgba(16, 185, 129, 0.15)'
+                      : 'rgba(59, 130, 246, 0.15)',
+                    color: isPdf ? '#DC2626' : isHtml ? '#059669' : '#2563EB',
                     fontSize: '0.7rem',
-                    fontWeight: 700,
+                    fontWeight: 800,
                     padding: '2px 8px',
                     borderRadius: '6px',
                     textTransform: 'uppercase',
                   }}
                 >
-                  {material.fileType || 'Notes'}
+                  {isPdf ? 'PDF DOCUMENT' : isHtml ? 'HTML DOCUMENT' : (material.fileType || 'NOTES')}
                 </span>
               </div>
-              <span style={{ fontSize: '0.75rem', color: theme === 'dark' ? '#94A3B8' : '#64748B' }}>
-                🔒 View-Only Study Document · Download Prohibited
+              <span style={{ fontSize: '0.74rem', color: theme === 'dark' ? '#94A3B8' : '#64748B' }}>
+                🔒 Stored in MongoDB · Anti-Download View-Only DRM Enforced
               </span>
             </div>
           </div>
 
-          {/* Controls: Mode, Theme, Font Size & Close */}
+          {/* Viewer Controls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            {/* View Mode Toggle */}
+            {/* Mode Switcher */}
             <div
               style={{
                 background: theme === 'dark' ? '#1E293B' : theme === 'sepia' ? '#EAE0CF' : '#F1F5F9',
@@ -397,11 +435,11 @@ export function ProtectedDocumentModal({ material, onClose, userEmail }) {
             >
               <button
                 type="button"
-                onClick={() => setActiveTab('text')}
+                onClick={() => setActiveTab('viewport')}
                 style={{
-                  background: activeTab === 'text' ? (theme === 'dark' ? '#2563EB' : '#FFFFFF') : 'transparent',
-                  color: activeTab === 'text' ? (theme === 'dark' ? '#FFFFFF' : '#0F172A') : (theme === 'dark' ? '#94A3B8' : '#64748B'),
-                  boxShadow: activeTab === 'text' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  background: activeTab === 'viewport' ? (theme === 'dark' ? '#2563EB' : '#FFFFFF') : 'transparent',
+                  color: activeTab === 'viewport' ? (theme === 'dark' ? '#FFFFFF' : '#0F172A') : (theme === 'dark' ? '#94A3B8' : '#64748B'),
+                  boxShadow: activeTab === 'viewport' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
                   border: 'none',
                   padding: '5px 12px',
                   borderRadius: '6px',
@@ -411,7 +449,7 @@ export function ProtectedDocumentModal({ material, onClose, userEmail }) {
                   transition: 'all 0.15s',
                 }}
               >
-                Reading Mode
+                {isPdf ? '📄 PDF Viewport' : isHtml ? '🌐 Web Viewport' : '📖 Reading View'}
               </button>
               <button
                 type="button"
@@ -429,75 +467,12 @@ export function ProtectedDocumentModal({ material, onClose, userEmail }) {
                   transition: 'all 0.15s',
                 }}
               >
-                Canvas DRM
+                🛡️ Canvas DRM
               </button>
             </div>
 
-            {/* Theme Selector */}
-            <div
-              style={{
-                background: theme === 'dark' ? '#1E293B' : theme === 'sepia' ? '#EAE0CF' : '#F1F5F9',
-                padding: '3px',
-                borderRadius: '8px',
-                display: 'inline-flex',
-                gap: '2px',
-              }}
-            >
-              <button
-                type="button"
-                title="Clean Paper (Light)"
-                onClick={() => setTheme('light')}
-                style={{
-                  background: theme === 'light' ? '#FFFFFF' : 'transparent',
-                  color: theme === 'light' ? '#0F172A' : '#64748B',
-                  boxShadow: theme === 'light' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                  border: 'none',
-                  padding: '5px 8px',
-                  borderRadius: '6px',
-                  fontSize: '0.8rem',
-                  cursor: 'pointer',
-                }}
-              >
-                ☀️ Paper
-              </button>
-              <button
-                type="button"
-                title="Sepia (Eye Comfort)"
-                onClick={() => setTheme('sepia')}
-                style={{
-                  background: theme === 'sepia' ? '#FFFFFF' : 'transparent',
-                  color: theme === 'sepia' ? '#9A3412' : '#64748B',
-                  boxShadow: theme === 'sepia' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                  border: 'none',
-                  padding: '5px 8px',
-                  borderRadius: '6px',
-                  fontSize: '0.8rem',
-                  cursor: 'pointer',
-                }}
-              >
-                📜 Sepia
-              </button>
-              <button
-                type="button"
-                title="Dark (Night)"
-                onClick={() => setTheme('dark')}
-                style={{
-                  background: theme === 'dark' ? '#2563EB' : 'transparent',
-                  color: theme === 'dark' ? '#FFFFFF' : '#64748B',
-                  boxShadow: theme === 'dark' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                  border: 'none',
-                  padding: '5px 8px',
-                  borderRadius: '6px',
-                  fontSize: '0.8rem',
-                  cursor: 'pointer',
-                }}
-              >
-                🌙 Dark
-              </button>
-            </div>
-
-            {/* Font Size Adjusters for Reading Mode */}
-            {activeTab === 'text' && (
+            {/* Theme Selector (Paper / Sepia / Dark) */}
+            {!isPdf && (
               <div
                 style={{
                   background: theme === 'dark' ? '#1E293B' : theme === 'sepia' ? '#EAE0CF' : '#F1F5F9',
@@ -509,8 +484,73 @@ export function ProtectedDocumentModal({ material, onClose, userEmail }) {
               >
                 <button
                   type="button"
-                  title="Smaller text"
-                  onClick={() => setFontSize((s) => Math.max(14, s - 1))}
+                  title="Clean Paper (Light)"
+                  onClick={() => setTheme('light')}
+                  style={{
+                    background: theme === 'light' ? '#FFFFFF' : 'transparent',
+                    color: theme === 'light' ? '#0F172A' : '#64748B',
+                    boxShadow: theme === 'light' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                    border: 'none',
+                    padding: '5px 8px',
+                    borderRadius: '6px',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  ☀️ Paper
+                </button>
+                <button
+                  type="button"
+                  title="Sepia"
+                  onClick={() => setTheme('sepia')}
+                  style={{
+                    background: theme === 'sepia' ? '#FFFFFF' : 'transparent',
+                    color: theme === 'sepia' ? '#9A3412' : '#64748B',
+                    boxShadow: theme === 'sepia' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                    border: 'none',
+                    padding: '5px 8px',
+                    borderRadius: '6px',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  📜 Sepia
+                </button>
+                <button
+                  type="button"
+                  title="Dark"
+                  onClick={() => setTheme('dark')}
+                  style={{
+                    background: theme === 'dark' ? '#2563EB' : 'transparent',
+                    color: theme === 'dark' ? '#FFFFFF' : '#64748B',
+                    boxShadow: theme === 'dark' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                    border: 'none',
+                    padding: '5px 8px',
+                    borderRadius: '6px',
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  🌙 Dark
+                </button>
+              </div>
+            )}
+
+            {/* Font Size Adjusters for text/html */}
+            {!isPdf && (
+              <div
+                style={{
+                  background: theme === 'dark' ? '#1E293B' : theme === 'sepia' ? '#EAE0CF' : '#F1F5F9',
+                  padding: '3px',
+                  borderRadius: '8px',
+                  display: 'inline-flex',
+                  gap: '2px',
+                }}
+              >
+                <button
+                  type="button"
+                  title="Decrease font size"
+                  onClick={() => setFontSize((s) => Math.max(13, s - 1))}
                   style={{
                     background: 'transparent',
                     border: 'none',
@@ -525,8 +565,8 @@ export function ProtectedDocumentModal({ material, onClose, userEmail }) {
                 </button>
                 <button
                   type="button"
-                  title="Larger text"
-                  onClick={() => setFontSize((s) => Math.min(20, s + 1))}
+                  title="Increase font size"
+                  onClick={() => setFontSize((s) => Math.min(22, s + 1))}
                   style={{
                     background: 'transparent',
                     border: 'none',
@@ -542,7 +582,7 @@ export function ProtectedDocumentModal({ material, onClose, userEmail }) {
               </div>
             )}
 
-            {/* Close Button */}
+            {/* Close Modal Button */}
             <button
               type="button"
               onClick={onClose}
@@ -566,15 +606,38 @@ export function ProtectedDocumentModal({ material, onClose, userEmail }) {
           </div>
         </div>
 
-        {/* DOCUMENT READER BODY */}
-        <div className="drm-reader-body" style={{ fontSize: `${fontSize}px` }}>
-          {/* REFINED SVG WATERMARK OVERLAY (Discrete, Clean & Non-Cluttered) */}
-          <svg className="drm-watermark-overlay" width="100%" height="100%">
+        {/* DOCUMENT READER VIEWPORT (Fills available space) */}
+        <div
+          className="drm-reader-body"
+          style={{
+            flex: 1,
+            position: 'relative',
+            overflow: 'hidden',
+            padding: isPdf || isHtml ? '0' : '28px 40px',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          {/* FLOATING REPEATING SVG WATERMARK OVERLAY */}
+          <svg
+            className="drm-watermark-overlay"
+            width="100%"
+            height="100%"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+              zIndex: 25,
+            }}
+          >
             <defs>
               <pattern
                 id="drm-watermark-pattern"
-                width="340"
-                height="170"
+                width="360"
+                height="180"
                 patternUnits="userSpaceOnUse"
                 patternTransform="rotate(-22)"
               >
@@ -583,14 +646,14 @@ export function ProtectedDocumentModal({ material, onClose, userEmail }) {
                   y="90"
                   fill={
                     theme === 'dark'
-                      ? 'rgba(255, 255, 255, 0.05)'
+                      ? 'rgba(255, 255, 255, 0.06)'
                       : theme === 'sepia'
-                      ? 'rgba(120, 70, 30, 0.055)'
-                      : 'rgba(71, 85, 105, 0.055)'
+                      ? 'rgba(120, 70, 30, 0.07)'
+                      : 'rgba(71, 85, 105, 0.07)'
                   }
-                  fontSize="12.5"
+                  fontSize="12"
                   fontFamily="Inter, system-ui, -apple-system, sans-serif"
-                  fontWeight="600"
+                  fontWeight="700"
                   letterSpacing="0.8px"
                 >
                   {watermarkLabel}
@@ -600,67 +663,111 @@ export function ProtectedDocumentModal({ material, onClose, userEmail }) {
             <rect width="100%" height="100%" fill="url(#drm-watermark-pattern)" />
           </svg>
 
-          {/* Header Verification Seal */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '10px 16px',
-              borderRadius: '8px',
-              background: theme === 'dark' ? 'rgba(30, 41, 59, 0.6)' : theme === 'sepia' ? 'rgba(235, 220, 197, 0.5)' : '#F8FAFC',
-              border: theme === 'dark' ? '1px solid rgba(255,255,255,0.06)' : '1px solid #E2E8F0',
-              marginBottom: '28px',
-              fontSize: '0.78rem',
-              color: theme === 'dark' ? '#94A3B8' : '#64748B',
-            }}
-          >
-            <span>🛡️ Official Strivers Study Material · Confidential</span>
-            <span>Licensed to: <strong>{userEmail || 'Student'}</strong></span>
-          </div>
-
-          {activeTab === 'canvas' ? (
-            /* CANVAS DRM RENDERING */
-            <div style={{ maxWidth: '100%', overflowX: 'auto', textAlign: 'center', padding: '10px 0' }}>
-              <canvas
-                id="drm-reader-canvas"
-                style={{
-                  display: 'inline-block',
-                  borderRadius: '10px',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
-                }}
-              />
-            </div>
-          ) : (
-            /* FORMATTED INTERACTIVE READING MODE (Clean Paper Typography) */
-            <div className="drm-markdown-content" style={{ maxWidth: 820, margin: '0 auto' }}>
-              {material.description && (
-                <div className="drm-callout-box">
-                  <strong style={{ display: 'block', fontSize: '0.88rem', marginBottom: '4px' }}>
-                    Document Summary & Instructions:
-                  </strong>
-                  <span style={{ fontSize: '0.85rem', opacity: 0.85 }}>
-                    {material.description}
-                  </span>
+          {/* VIEWPORT MODE: PDF, HTML, OR TEXT */}
+          {activeTab === 'viewport' ? (
+            isPdf ? (
+              /* NATIVE HIGH-RES PDF VIEWPORT */
+              <div style={{ flex: 1, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                {pdfBlobUrl ? (
+                  <iframe
+                    src={`${pdfBlobUrl}#toolbar=0&navpanes=0&scrollbar=1`}
+                    title={material.title}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      flex: 1,
+                      border: 'none',
+                      background: '#334155',
+                    }}
+                  />
+                ) : (
+                  <div style={{ padding: '60px', textAlign: 'center', color: '#64748B' }}>
+                    <div className="spinner" style={{ margin: '0 auto 16px' }}></div>
+                    <p>Loading secure PDF document from MongoDB...</p>
+                  </div>
+                )}
+              </div>
+            ) : isHtml ? (
+              /* NATIVE HTML WEB VIEWPORT */
+              <div style={{ flex: 1, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                <iframe
+                  srcDoc={styledHtmlDocument}
+                  title={material.title}
+                  sandbox="allow-same-origin allow-scripts"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    flex: 1,
+                    border: 'none',
+                    background: theme === 'dark' ? '#0F172A' : theme === 'sepia' ? '#FAF5EB' : '#FFFFFF',
+                  }}
+                />
+              </div>
+            ) : (
+              /* MARKDOWN / TEXT READING MODE */
+              <div style={{ flex: 1, overflowY: 'auto', padding: '10px 8px' }}>
+                {material.description && (
+                  <div className="drm-callout-box" style={{ marginBottom: '20px' }}>
+                    <strong style={{ display: 'block', fontSize: '0.88rem', marginBottom: '4px' }}>
+                      Document Instructions:
+                    </strong>
+                    <span style={{ fontSize: '0.85rem', opacity: 0.85 }}>{material.description}</span>
+                  </div>
+                )}
+                <div className="drm-markdown-content" style={{ maxWidth: 840, margin: '0 auto', fontSize: `${fontSize}px` }}>
+                  {renderMarkdownBlocks(decodedText)}
                 </div>
+              </div>
+            )
+          ) : (
+            /* CANVAS DRM RENDERING */
+            <div style={{ flex: 1, overflowY: 'auto', textAlign: 'center', padding: '16px 0' }}>
+              {isPdf ? (
+                <div style={{ padding: '40px', maxWidth: '600px', margin: '0 auto', color: '#64748B' }}>
+                  <p style={{ fontSize: '1rem', fontWeight: 600, color: '#0F172A', marginBottom: '8px' }}>
+                    🔒 Protected PDF Document Mode
+                  </p>
+                  <p style={{ fontSize: '0.9rem', marginBottom: '18px' }}>
+                    PDF documents are rendered in the high-fidelity Document Viewport with continuous floating student watermark overlays.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => setActiveTab('viewport')}
+                  >
+                    Switch to PDF Viewport →
+                  </button>
+                </div>
+              ) : (
+                <canvas
+                  id="drm-reader-canvas"
+                  style={{
+                    display: 'inline-block',
+                    borderRadius: '10px',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+                  }}
+                />
               )}
-
-              {renderMarkdownBlocks(decodedContent)}
             </div>
           )}
 
-          {/* Footer Security Notice */}
+          {/* SUBTLE FOOTER AUDIT BAR */}
           <div
             style={{
-              marginTop: '40px',
-              paddingTop: '20px',
+              flexShrink: 0,
+              padding: '8px 16px',
               borderTop: theme === 'dark' ? '1px solid rgba(255,255,255,0.08)' : '1px solid #E2E8F0',
-              textAlign: 'center',
-              fontSize: '0.75rem',
+              background: theme === 'dark' ? '#0F172A' : '#F8FAFC',
+              fontSize: '0.74rem',
               color: theme === 'dark' ? '#64748B' : '#94A3B8',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              zIndex: 30,
             }}
           >
-            🔒 Protected by Strivers In-App DRM Architecture · Watermarked for {userEmail || 'Student'} · Unauthorized distribution, downloading, or printing is strictly prohibited.
+            <span>🛡️ Strivers Verified Document · Encrypted in MongoDB</span>
+            <span>Student Watermark: <strong>{userEmail || 'Student'}</strong></span>
           </div>
         </div>
       </div>

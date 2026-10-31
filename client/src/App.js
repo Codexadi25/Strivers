@@ -6,6 +6,8 @@ import ProductAccess from './pages/ProductAccess';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import SetupAccount from './pages/SetupAccount';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import { ViewerPage } from './pages/ViewerPage';
 import PracticeDashboard from './pages/PracticeDashboard';
 
@@ -29,6 +31,8 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/setup-account" element={<SetupAccount />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />

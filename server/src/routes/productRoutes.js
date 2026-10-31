@@ -228,7 +228,36 @@ router.get('/:id/materials/:materialId', verifyFirebaseToken, async (req, res) =
       return res.status(404).json({ success: false, message: 'Course not found.' });
     }
 
-    const material = (targetCourse.notesAndPdfs || []).find((m) => m.materialId === materialId);
+    const targetMaterialId = String(materialId || '').trim();
+    let material = (targetCourse.notesAndPdfs || []).find(
+      (m) => String(m.materialId || '').trim() === targetMaterialId || String(m._id || '').trim() === targetMaterialId
+    );
+
+    // Fallback: Check DownloadableNote collection if not inside course document
+    if (!material) {
+      try {
+        const DownloadableNote = require('../models/DownloadableNote');
+        const dNote = await DownloadableNote.findOne({
+          $or: [
+            { noteId: targetMaterialId.toLowerCase() },
+            { noteId: targetMaterialId },
+            { _id: require('mongoose').isValidObjectId(targetMaterialId) ? targetMaterialId : null },
+          ],
+        });
+        if (dNote) {
+          material = {
+            materialId: dNote.noteId,
+            title: dNote.title,
+            description: dNote.subtitle,
+            fileType: dNote.fileType,
+            mimeType: dNote.mimeType,
+            fileData: dNote.fileData,
+            fileSize: dNote.fileSize,
+          };
+        }
+      } catch (_) {}
+    }
+
     if (!material) {
       return res.status(404).json({ success: false, message: 'Study material document not found.' });
     }

@@ -54,7 +54,14 @@ export default function Register() {
           navigate(redirectUrl);
         }, 1500);
       } else {
-        setError(err.response?.data?.message || err.response?.data?.error || 'Registration failed. Please check your information.');
+        const serverMsg = err.response?.data?.message || err.response?.data?.error;
+        if (serverMsg) {
+          setError(serverMsg);
+        } else if (err.message && (err.message.includes('Network Error') || err.code === 'ERR_NETWORK')) {
+          setError('Cannot reach server at http://localhost:8080. Please ensure the backend server is running.');
+        } else {
+          setError('Registration failed. Please check your information.');
+        }
       }
     } finally {
       setBusy(false);

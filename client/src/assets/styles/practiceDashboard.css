@@ -8,6 +8,8 @@
   background-color: #F8FAFC;
   color: #0F172A;
   font-family: var(--body);
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* Sidebar */
@@ -1511,5 +1513,400 @@
   padding: 30px;
   backdrop-filter: blur(12px);
 }
+
+/* ==========================================================================
+   Comprehensive Small-Screen & Mobile Responsiveness
+   ========================================================================== */
+.mobile-nav-toggle-wrap {
+  display: none;
+}
+
+.mobile-dashboard-tabs-bar {
+  display: none;
+}
+
+.mentorship-schedule-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 24px;
+}
+
+.track-category-selector-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.track-category-btn {
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-radius: 8px;
+  transition: all 0.15s;
+}
+
+@media (max-width: 640px) {
+  .track-category-selector-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .track-category-btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    font-size: 0.88rem;
+    padding: 10px 12px;
+  }
+}
+
+/* Ensure CSS Grid items never refuse to shrink */
+.dsa-content-layout > *,
+.analytics-grid-layout > *,
+.dashboard-main,
+.dashboard-content-container,
+.dsa-sheet-main-column,
+.days-accordion-list,
+.day-accordion-card {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 1024px) {
+  .dsa-content-layout,
+  .analytics-grid-layout {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  .dsa-right-sidebar {
+    position: static !important;
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .dashboard-sidebar {
+    display: none !important;
+  }
+  .mobile-nav-toggle-wrap {
+    display: flex !important;
+    align-items: center;
+  }
+  .dashboard-layout {
+    flex-direction: column !important;
+    overflow-x: hidden !important;
+  }
+  .dashboard-main {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+  .dashboard-topbar {
+    padding: 8px 12px !important;
+    gap: 8px !important;
+  }
+  .topbar-search {
+    max-width: none !important;
+    flex: 1 !important;
+    min-width: 110px !important;
+    padding: 6px 10px !important;
+  }
+  .topbar-actions {
+    gap: 6px !important;
+  }
+  .dashboard-content-container {
+    padding: 12px 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Persistent Mobile Tabs Strip */
+  .mobile-dashboard-tabs-bar {
+    display: flex !important;
+    align-items: center;
+    background: #FFFFFF;
+    border-bottom: 1px solid #E2E8F0;
+    position: sticky;
+    top: 52px;
+    z-index: 15;
+    padding: 0 4px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  }
+
+  .mentorship-schedule-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Remove excessive blank spaces and margins */
+  .sheet-header-card {
+    margin-bottom: 12px !important;
+  }
+  .sheet-title {
+    font-size: 1.25rem !important;
+    margin: 0 0 4px !important;
+    line-height: 1.2 !important;
+  }
+  .sheet-subtitle {
+    font-size: 0.82rem !important;
+    margin: 0 0 10px !important;
+    line-height: 1.4 !important;
+  }
+  .breadcrumb {
+    font-size: 0.74rem !important;
+    margin-bottom: 4px !important;
+  }
+  .social-proof-row {
+    margin-bottom: 12px !important;
+    gap: 8px !important;
+  }
+  .proof-text {
+    font-size: 0.78rem !important;
+  }
+  .sheet-action-btns {
+    gap: 6px !important;
+  }
+  .sheet-btn {
+    padding: 6px 10px !important;
+    font-size: 0.8rem !important;
+    border-radius: 6px !important;
+  }
+
+  /* Compact Plan Banner */
+  .plan-journey-banner {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 12px 14px !important;
+    margin-bottom: 12px !important;
+    gap: 8px !important;
+  }
+  .plan-banner-icon {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 1.1rem !important;
+    border-radius: 8px !important;
+  }
+  .plan-banner-title {
+    font-size: 1rem !important;
+    margin: 0 0 2px !important;
+  }
+  .plan-banner-desc {
+    font-size: 0.78rem !important;
+  }
+
+  /* Compact Accordion */
+  .days-accordion-list {
+    gap: 8px !important;
+  }
+  .day-accordion-card {
+    border-radius: 8px !important;
+  }
+  .day-accordion-header {
+    padding: 10px 12px !important;
+  }
+  .day-title-text {
+    font-size: 0.88rem !important;
+  }
+  .day-progress-pill {
+    font-size: 0.72rem !important;
+    padding: 2px 7px !important;
+  }
+
+  /* Table styling on mobile */
+  .problems-table-wrapper {
+    display: block !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: 6px !important;
+  }
+  .problems-table {
+    min-width: 580px !important;
+    width: 100% !important;
+  }
+  .problems-table th {
+    padding: 8px 8px !important;
+    font-size: 0.72rem !important;
+  }
+  .problems-table td {
+    padding: 8px 8px !important;
+    font-size: 0.8rem !important;
+  }
+  .diff-pill {
+    font-size: 0.68rem !important;
+    padding: 2px 6px !important;
+  }
+  .company-badge {
+    font-size: 0.68rem !important;
+    padding: 1px 5px !important;
+  }
+
+  /* Compact Right Sidebar & Progress Overview */
+  .dsa-right-sidebar {
+    gap: 12px !important;
+  }
+  .progress-overview-card {
+    padding: 14px 12px !important;
+    border-radius: 10px !important;
+    margin-bottom: 10px !important;
+  }
+  .progress-gauge-box {
+    margin: 10px 0 !important;
+    gap: 12px !important;
+  }
+  .gauge-svg-wrap {
+    width: 64px !important;
+    height: 64px !important;
+  }
+  .gauge-svg-wrap svg {
+    width: 64px !important;
+    height: 64px !important;
+  }
+  .gauge-center-text {
+    font-size: 0.95rem !important;
+  }
+  .diff-bars-list {
+    margin-top: 10px !important;
+    gap: 6px !important;
+  }
+
+  /* Live Mentorship Hero Card - Compact & Tight */
+  .mentorship-container {
+    gap: 14px !important;
+  }
+  .live-hero-card {
+    padding: 16px 14px !important;
+    border-radius: 12px !important;
+  }
+  .live-hero-title {
+    font-size: 1.25rem !important;
+    margin: 0 0 4px !important;
+  }
+  .live-hero-desc {
+    font-size: 0.82rem !important;
+    margin: 0 0 14px !important;
+    line-height: 1.4 !important;
+  }
+  .live-join-btn {
+    width: 100% !important;
+    justify-content: center !important;
+    font-size: 0.9rem !important;
+    padding: 10px 14px !important;
+  }
+  .mentors-row-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    margin-bottom: 16px !important;
+  }
+  .mentor-card-bubble {
+    padding: 8px 10px !important;
+    gap: 10px !important;
+    border-radius: 8px !important;
+  }
+  .mentor-card-bubble img {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  .agenda-card {
+    padding: 14px 12px !important;
+    border-radius: 10px !important;
+  }
+  .timeline-list {
+    gap: 10px !important;
+    margin-top: 12px !important;
+  }
+  .timeline-time-badge {
+    font-size: 0.72rem !important;
+    padding: 2px 6px !important;
+  }
+
+  /* Downloadable Notes Grid */
+  .notes-page-header {
+    margin-bottom: 12px !important;
+  }
+  .notes-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  .note-card {
+    border-radius: 10px !important;
+  }
+  .note-card-banner {
+    height: 80px !important;
+    padding: 8px !important;
+  }
+  .note-card-body {
+    padding: 10px 12px !important;
+  }
+  .note-card-title {
+    font-size: 0.92rem !important;
+    margin: 0 0 3px !important;
+  }
+  .note-card-subtitle {
+    font-size: 0.78rem !important;
+    margin: 0 0 8px !important;
+  }
+  .note-card-footer {
+    padding-top: 8px !important;
+    font-size: 0.78rem !important;
+  }
+
+  /* Profile & Analytics Hero */
+  .profile-hero-banner {
+    padding: 14px 12px !important;
+    border-radius: 10px !important;
+    margin-bottom: 12px !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+  .profile-hero-title {
+    font-size: 1.25rem !important;
+    margin: 0 0 2px !important;
+  }
+  .profile-hero-desc {
+    font-size: 0.8rem !important;
+  }
+  .heatmap-card {
+    padding: 12px 10px !important;
+    border-radius: 10px !important;
+    margin-bottom: 12px !important;
+  }
+  .badges-row {
+    gap: 8px !important;
+    margin-top: 8px !important;
+  }
+  .badge-item {
+    flex: 1 1 90px !important;
+    padding: 8px !important;
+    border-radius: 8px !important;
+  }
+  .badge-icon {
+    font-size: 1.4rem !important;
+  }
+  .badge-name {
+    font-size: 0.72rem !important;
+  }
+
+  /* Topbar Buttons */
+  .streak-pill-btn {
+    padding: 3px 6px !important;
+    font-size: 0.72rem !important;
+  }
+  .user-profile-badge span {
+    display: none !important;
+  }
+  .user-avatar-circle {
+    width: 26px !important;
+    height: 26px !important;
+    font-size: 0.72rem !important;
+  }
+}
+
 
 

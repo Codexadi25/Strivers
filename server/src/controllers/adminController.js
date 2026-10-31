@@ -1053,20 +1053,58 @@ exports.uploadStudyMaterial = async (req, res, next) => {
 exports.deleteStudyMaterial = async (req, res, next) => {
   try {
     const { id, materialId } = req.params;
-    const product = await Product.findOne({
-      $or: [{ productId: id }, { _id: mongoose.isValidObjectId(id) ? id : null }],
-    });
+    const targetId = String(materialId || id || '').trim();
 
-    if (!product) {
-      return res.status(404).json({ success: false, message: 'Course/Masterclass not found.' });
+    let product = null;
+    if (id && id !== targetId) {
+      product = await Product.findOne({
+        $or: [{ productId: id }, { _id: mongoose.isValidObjectId(id) ? id : null }],
+      });
     }
 
-    product.notesAndPdfs = (product.notesAndPdfs || []).filter((m) => m.materialId !== materialId);
-    await product.save();
+    if (!product) {
+      // Find whichever course/masterclass contains this material
+      product = await Product.findOne({
+        $or: [
+          { 'notesAndPdfs.materialId': targetId },
+          { 'notesAndPdfs._id': mongoose.isValidObjectId(targetId) ? targetId : null },
+        ],
+      });
+    }
+
+    if (product) {
+      product.notesAndPdfs = (product.notesAndPdfs || []).filter(
+        (m) =>
+          String(m.materialId || '').trim() !== targetId &&
+          String(m._id || '').trim() !== targetId
+      );
+      await product.save();
+    }
+
+    // Also remove from DownloadableNote collection if mirrored
+    try {
+      const DownloadableNote = require('../models/DownloadableNote');
+      await DownloadableNote.deleteMany({
+        $or: [
+          { noteId: targetId.toLowerCase() },
+          { noteId: targetId },
+          { _id: mongoose.isValidObjectId(targetId) ? targetId : null },
+        ],
+      });
+    } catch (_) {}
+
+    await ActivityLog.create({
+      userId: req.user?.uid || 'admin',
+      userEmail: req.user?.email || 'admin@yourdomain.com',
+      action: 'STUDY_MATERIAL_DELETED',
+      ipAddress: req.ip || '127.0.0.1',
+      userAgent: req.headers['user-agent'] || 'Server-Admin-Console',
+      metaData: { productId: product?.productId || id, materialId: targetId },
+    }).catch(() => {});
 
     return res.status(200).json({
       success: true,
-      message: 'Study document removed from MongoDB.',
+      message: 'Study document removed from database.',
       product,
     });
   } catch (error) {

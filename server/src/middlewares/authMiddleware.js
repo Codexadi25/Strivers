@@ -20,9 +20,14 @@ const verifyFirebaseToken = async (req, res, next) => {
     // 1. Check native session token (signed via HMAC-SHA256)
     const sessionPayload = verifySessionToken(token);
     if (sessionPayload) {
-      const userDoc = await UserAccess.findOne({
-        $or: [{ userId: sessionPayload.uid }, { email: sessionPayload.email }],
-      });
+      let userDoc = null;
+      if (require('mongoose').connection.readyState === 1) {
+        try {
+          userDoc = await UserAccess.findOne({
+            $or: [{ userId: sessionPayload.uid }, { email: sessionPayload.email }],
+          }).maxTimeMS(2000);
+        } catch (_) {}
+      }
       const role =
         userDoc?.role ||
         (sessionPayload.email === process.env.ADMIN_EMAIL ? 'admin' : sessionPayload.role || 'user');

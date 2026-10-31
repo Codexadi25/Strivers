@@ -83,6 +83,7 @@ router.delete('/products/:id/slots/:slotId', verifyFirebaseToken, verifyAdmin, d
 // Study Material & Notes DRM (Stored in MongoDB)
 router.post('/products/:id/materials', verifyFirebaseToken, verifyAdmin, uploadStudyMaterial);
 router.delete('/products/:id/materials/:materialId', verifyFirebaseToken, verifyAdmin, deleteStudyMaterial);
+router.delete('/materials/:materialId', verifyFirebaseToken, verifyAdmin, deleteStudyMaterial);
 
 // Aliases for /courses
 router.get('/courses', verifyFirebaseToken, verifyAdmin, getAdminProducts);

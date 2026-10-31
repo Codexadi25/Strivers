@@ -1,5 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import Drawer from '@mui/material/Drawer';
+import IconButton from '@mui/material/IconButton';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import Badge from '@mui/material/Badge';
+import Chip from '@mui/material/Chip';
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import LiveTvIcon from '@mui/icons-material/LiveTv';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+import BarChartIcon from '@mui/icons-material/BarChart';
 import { TOPICS } from '../data/practiceSheetData';
 import { DOWNLOADABLE_NOTES } from '../data/downloadableNotesData';
 import { LIVE_MENTORSHIP } from '../data/mentorshipData';
@@ -13,6 +25,7 @@ export default function PracticeDashboard() {
   const [activeTab, setActiveTab] = useState('dsa'); // 'dsa' | 'mentorship' | 'notes' | 'analytics'
   const [practiceViewMode, setPracticeViewMode] = useState('my'); // 'my' | 'all'
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [difficultyFilter, setDifficultyFilter] = useState('all');
   const [onlySaved, setOnlySaved] = useState(false);
@@ -920,6 +933,24 @@ export default function PracticeDashboard() {
       <div className="dashboard-main">
         {/* Top Header Bar */}
         <header className="dashboard-topbar">
+          <div className="mobile-nav-toggle-wrap">
+            <IconButton
+              size="medium"
+              onClick={() => setMobileDrawerOpen(true)}
+              aria-label="open dashboard menu"
+              sx={{ color: '#0E1B3D', padding: '6px' }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none', marginLeft: 4 }}>
+              <svg width="24" height="24" viewBox="0 0 64 64" aria-hidden="true">
+                <rect width="64" height="64" rx="14" fill="#0E1B3D" />
+                <path d="M20 44l12-24 12 24" fill="none" stroke="#FFB703" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span style={{ fontWeight: 800, fontSize: '1.05rem', color: '#0E1B3D', fontFamily: 'var(--display)' }}>Strivers</span>
+            </Link>
+          </div>
+
           <div className="topbar-search">
             <span>🔍</span>
             <input
@@ -958,6 +989,239 @@ export default function PracticeDashboard() {
           </div>
         </header>
 
+        {/* Mobile Persistent Horizontal Tab Strip using Material UI Tabs */}
+        <div className="mobile-dashboard-tabs-bar">
+          <Tabs
+            value={activeTab}
+            onChange={(e, val) => setActiveTab(val)}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
+            sx={{
+              minHeight: 38,
+              width: '100%',
+              '& .MuiTabs-indicator': { backgroundColor: '#2563EB', height: 2.5, borderRadius: '2px 2px 0 0' },
+              '& .MuiTabs-flexContainer': { gap: '2px' },
+              '& .MuiTab-root': {
+                minHeight: 38,
+                minWidth: 'auto',
+                padding: '4px 10px',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                textTransform: 'none',
+                color: '#64748B',
+                borderRadius: '6px 6px 0 0',
+                '&.Mui-selected': { color: '#2563EB', background: 'rgba(37, 99, 235, 0.06)' },
+              },
+            }}
+          >
+            <Tab
+              value="dsa"
+              icon={<AssignmentIcon sx={{ fontSize: 16 }} />}
+              iconPosition="start"
+              label="Sheets"
+            />
+            <Tab
+              value="mentorship"
+              icon={
+                <Badge
+                  badgeContent="LIVE"
+                  color="error"
+                  sx={{
+                    '& .MuiBadge-badge': {
+                      fontSize: '0.58rem',
+                      height: 13,
+                      minWidth: 13,
+                      padding: '0 3px',
+                      fontWeight: 800,
+                      right: -6,
+                      top: 4,
+                    },
+                  }}
+                >
+                  <LiveTvIcon sx={{ fontSize: 16 }} />
+                </Badge>
+              }
+              iconPosition="start"
+              label="Mentorship"
+            />
+            <Tab
+              value="notes"
+              icon={<MenuBookIcon sx={{ fontSize: 16 }} />}
+              iconPosition="start"
+              label="Notes"
+            />
+            <Tab
+              value="analytics"
+              icon={<BarChartIcon sx={{ fontSize: 16 }} />}
+              iconPosition="start"
+              label="Stats"
+            />
+          </Tabs>
+        </div>
+
+        {/* Mobile Material UI Sidebar Drawer */}
+        <Drawer
+          anchor="left"
+          open={mobileDrawerOpen}
+          onClose={() => setMobileDrawerOpen(false)}
+          ModalProps={{ keepMounted: true }}
+          PaperProps={{
+            sx: {
+              width: 'min(82vw, 300px)',
+              background: '#FFFFFF',
+              boxSizing: 'border-box',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              boxShadow: '4px 0 24px rgba(0,0,0,0.12)',
+            },
+          }}
+        >
+          <div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '18px 20px',
+                borderBottom: '1px solid #E2E8F0',
+              }}
+            >
+              <Link to="/" className="sidebar-logo" onClick={() => setMobileDrawerOpen(false)}>
+                <svg width="26" height="26" viewBox="0 0 64 64" aria-hidden="true">
+                  <rect width="64" height="64" rx="14" fill="#0E1B3D" />
+                  <path d="M20 44l12-24 12 24" fill="none" stroke="#FFB703" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <span>Strivers</span>
+              </Link>
+
+              <IconButton
+                size="small"
+                onClick={() => setMobileDrawerOpen(false)}
+                aria-label="close navigation drawer"
+                sx={{ color: '#64748B' }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </div>
+
+            <nav style={{ padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <button
+                className={`nav-item-btn ${activeTab === 'dsa' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveTab('dsa');
+                  setMobileDrawerOpen(false);
+                }}
+                style={{ width: '100%' }}
+              >
+                <span style={{ fontSize: '1.2rem' }}>📑</span>
+                <span>Sheets & Tracks</span>
+              </button>
+
+              {activeTab === 'dsa' && (
+                <div style={{ paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <button
+                    className={`subnav-btn ${practiceViewMode === 'my' ? 'active' : ''}`}
+                    onClick={() => {
+                      setPracticeViewMode('my');
+                      setMobileDrawerOpen(false);
+                    }}
+                  >
+                    📑 My Practice Sheets ({userEnrolledSheets.length})
+                  </button>
+                  <button
+                    className={`subnav-btn ${practiceViewMode === 'all' ? 'active' : ''}`}
+                    onClick={() => {
+                      setPracticeViewMode('all');
+                      setMobileDrawerOpen(false);
+                    }}
+                  >
+                    📚 All Practice Sheets ({practiceSheets.length})
+                  </button>
+                </div>
+              )}
+
+              <button
+                className={`nav-item-btn ${activeTab === 'mentorship' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveTab('mentorship');
+                  setMobileDrawerOpen(false);
+                }}
+                style={{ width: '100%' }}
+              >
+                <span style={{ fontSize: '1.2rem' }}>🔴</span>
+                <span style={{ flex: 1, textAlign: 'left' }}>Live Mentorship</span>
+                <span className="nav-item-badge">LIVE</span>
+              </button>
+
+              <button
+                className={`nav-item-btn ${activeTab === 'notes' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveTab('notes');
+                  setMobileDrawerOpen(false);
+                }}
+                style={{ width: '100%' }}
+              >
+                <span style={{ fontSize: '1.2rem' }}>📝</span>
+                <span>Downloadable Notes</span>
+              </button>
+
+              <button
+                className={`nav-item-btn ${activeTab === 'analytics' ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveTab('analytics');
+                  setMobileDrawerOpen(false);
+                }}
+                style={{ width: '100%' }}
+              >
+                <span style={{ fontSize: '1.2rem' }}>📊</span>
+                <span>Profile & Stats</span>
+              </button>
+            </nav>
+          </div>
+
+          <div style={{ padding: '16px', borderTop: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+            <div
+              className="streak-card-mini"
+              onClick={() => {
+                setIsStreakModalOpen(true);
+                setMobileDrawerOpen(false);
+              }}
+              style={{ cursor: 'pointer' }}
+            >
+              <span style={{ fontSize: '1.6rem' }}>🔥</span>
+              <div>
+                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#92400E' }}>
+                  {streakData.currentStreak}{streakData.streakSuffix} Day Streak
+                </div>
+                <div style={{ fontSize: '0.75rem', color: '#B45309' }}>
+                  {streakData.totalActiveDays} days active · Tap for details
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+              <Link
+                to="/"
+                onClick={() => setMobileDrawerOpen(false)}
+                className="btn btn-ghost btn-block"
+                style={{ fontSize: '0.82rem', padding: '8px' }}
+              >
+                Home
+              </Link>
+              <Link
+                to="/products"
+                onClick={() => setMobileDrawerOpen(false)}
+                className="btn btn-primary btn-block"
+                style={{ fontSize: '0.82rem', padding: '8px' }}
+              >
+                My Access
+              </Link>
+            </div>
+          </div>
+        </Drawer>
+
         {/* Dashboard Content Container */}
         <div className="dashboard-content-container">
           {/* ================================================================
@@ -968,20 +1232,18 @@ export default function PracticeDashboard() {
               {/* Left Main: Problem Accordions & Header */}
               <div className="dsa-sheet-main-column">
                 {/* Track Category Selector: Non-Tech Active vs Tech Template */}
-                <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+                <div className="track-category-selector-row">
                   <button
-                    className={`sheet-btn ${selectedTrackCategory === 'non-tech' ? 'primary' : ''}`}
-                    style={{ padding: '10px 18px', fontSize: '0.95rem', fontWeight: 700 }}
+                    className={`sheet-btn track-category-btn ${selectedTrackCategory === 'non-tech' ? 'primary' : ''}`}
                     onClick={() => setSelectedTrackCategory('non-tech')}
                   >
-                    🏢 Non-Tech Operations Mentorship (Active Track)
+                    🏢 Non-Tech Operations (Active)
                   </button>
                   <button
-                    className={`sheet-btn ${selectedTrackCategory === 'tech' ? 'primary' : ''}`}
-                    style={{ padding: '10px 18px', fontSize: '0.95rem', fontWeight: 700 }}
+                    className={`sheet-btn track-category-btn ${selectedTrackCategory === 'tech' ? 'primary' : ''}`}
                     onClick={() => setSelectedTrackCategory('tech')}
                   >
-                    💻 Technical SDE Track (Template Mode)
+                    💻 Technical SDE (Template)
                   </button>
                 </div>
 
@@ -1055,7 +1317,7 @@ export default function PracticeDashboard() {
                       </div>
 
                       {/* Quota & Access Status */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#F1F5F9', padding: '10px 16px', borderRadius: 8, marginTop: 14 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, background: '#F1F5F9', padding: '10px 16px', borderRadius: 8, marginTop: 14 }}>
                         <div>
                           <strong style={{ fontSize: '0.9rem', color: '#0F172A' }}>Practice Sheet Quota:</strong>{' '}
                           <span style={{ fontSize: '0.85rem', color: '#475569' }}>
@@ -1069,11 +1331,11 @@ export default function PracticeDashboard() {
 
                       {/* Practice Sheet Selector Cards - Filtered by My Practice Sheets vs All Practice Sheets */}
                       <div style={{ marginTop: 16 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 10 }}>
                           <h3 style={{ fontSize: '1.05rem', margin: 0, color: '#0E1B3D' }}>
                             {practiceViewMode === 'my' ? '📑 My Enrolled Practice Sheets' : '📚 All Practice Sheets Catalog'}
                           </h3>
-                          <div style={{ display: 'flex', gap: 8 }}>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                             <button
                               className={`sheet-btn ${practiceViewMode === 'my' ? 'primary' : ''}`}
                               style={{ padding: '4px 12px', fontSize: '0.82rem' }}
@@ -1103,7 +1365,7 @@ export default function PracticeDashboard() {
                             </button>
                           </div>
                         ) : (
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))', gap: 12 }}>
                             {nonTechSheets
                               .filter((sheet) => (practiceViewMode === 'my' ? userEnrolledSheets.some((s) => s.sheetId === sheet.sheetId) : true))
                               .map((sheet) => {
@@ -1893,7 +2155,7 @@ export default function PracticeDashboard() {
               <PlacementDisclaimer />
 
               {/* Agenda & Schedule */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 24 }}>
+              <div className="mentorship-schedule-grid">
                 {/* Agenda */}
                 <div className="agenda-card">
                   <h3 style={{ margin: '0 0 6px', fontSize: '1.25rem' }}>Masterclass Live Agenda</h3>

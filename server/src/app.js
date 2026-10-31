@@ -60,6 +60,7 @@ app.use('/api/v1', paymentRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/v1/tickets', ticketRoutes);
 app.use('/api/v1/auth', authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/v1/profile', profileRoutes);
 app.use('/api/v1/practice', practiceRoutes);
 app.use('/api/v1/notes', noteRoutes);

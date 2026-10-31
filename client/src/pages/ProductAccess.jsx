@@ -64,7 +64,8 @@ export default function ProductAccess() {
   async function handleOpenMaterial(mat) {
     setLoadingMaterial(true);
     try {
-      const res = await api.get(`/products/${courseId}/materials/${mat.materialId}`);
+      const matId = mat.materialId || mat._id;
+      const res = await api.get(`/products/${courseId}/materials/${matId}`);
       if (res.data.success && res.data.material) {
         setActiveMaterial(res.data.material);
       } else {
@@ -92,7 +93,7 @@ export default function ProductAccess() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: '#F8FAFC' }}>
       <Navbar />
 
-      <main style={{ flex: 1, maxWidth: 1060, margin: '32px auto 60px', padding: '0 20px', width: '100%' }}>
+      <main className="product-access-main" style={{ flex: 1, maxWidth: 1060, margin: '32px auto 60px', padding: '0 20px', width: '100%' }}>
         {loading ? (
           <div style={{ textAlign: 'center', padding: '80px 20px' }}>
             <div className="spinner" style={{ margin: '0 auto 16px' }}></div>
@@ -490,7 +491,7 @@ export default function ProductAccess() {
                   No study materials uploaded for this course yet.
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+                <div className="materials-grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))', gap: '14px' }}>
                   {materials.map((mat) => {
                     const icons = {
                       pdf: '📄',
@@ -503,7 +504,8 @@ export default function ProductAccess() {
 
                     return (
                       <div
-                        key={mat.materialId}
+                        key={mat.materialId || mat._id}
+                        className="material-card-item"
                         style={{
                           background: '#FFFFFF',
                           border: '1px solid #E2E8F0',

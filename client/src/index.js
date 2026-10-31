@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import './assets/styles/global.css';
 import './assets/styles/strivers.css';
+import './assets/styles/responsive.css';
 import App from './App';
 import { wakeServer } from './utils/ping';
 import reportWebVitals from './reportWebVitals';

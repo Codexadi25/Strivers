@@ -40,7 +40,7 @@
 /* Reader Window */
 .drm-reader-window {
   width: 100%;
-  max-width: 900px;
+  max-width: 1140px;
   border-radius: 16px;
   display: flex;
   flex-direction: column;
@@ -49,6 +49,8 @@
   transition: background-color 0.25s ease, color 0.25s ease;
   margin-top: 10px;
   margin-bottom: 20px;
+  height: 92vh;
+  max-height: 900px;
 }
 
 /* Theme Variations */

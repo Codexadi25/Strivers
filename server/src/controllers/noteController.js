@@ -140,6 +140,9 @@ exports.getNotes = async (req, res, next) => {
       notes = DEFAULT_SEED_NOTES.map(({ fileData, ...rest }) => rest);
     }
 
+    // Filter out deleted notes
+    notes = notes.filter((n) => !deletedNoteIds.has(String(n.noteId || '').toLowerCase()));
+
     // Determine access for each note based on free/paid, masterclass enrollment, and secret code redemption
     const formattedNotes = notes.map((n) => {
       const noteObj = n.toObject ? n.toObject() : { ...n };
@@ -515,15 +518,36 @@ exports.adminUpdateNote = async (req, res, next) => {
   }
 };
 
+// In-memory set of deleted note IDs to prevent seeds or fallback from resurrecting
+const deletedNoteIds = new Set();
+
 /**
  * 6. Admin: Delete Note
  */
 exports.adminDeleteNote = async (req, res, next) => {
   try {
     const { noteId } = req.params;
-    const note = await DownloadableNote.findOneAndDelete({ noteId: noteId.toLowerCase() });
-    if (!note) {
-      return res.status(404).json({ success: false, message: 'Note not found.' });
+    const targetId = String(noteId || '').trim();
+    deletedNoteIds.add(targetId.toLowerCase());
+
+    let note = null;
+    if (mongoose.connection.readyState === 1) {
+      note = await DownloadableNote.findOneAndDelete({
+        $or: [
+          { noteId: targetId.toLowerCase() },
+          { noteId: targetId },
+          { _id: mongoose.isValidObjectId(targetId) ? targetId : null },
+        ],
+      });
+    }
+
+    // Also remove from in-memory seed list if present
+    const seedIdx = DEFAULT_SEED_NOTES.findIndex(
+      (n) => n.noteId.toLowerCase() === targetId.toLowerCase() || n.noteId === targetId
+    );
+    if (seedIdx >= 0) {
+      note = note || DEFAULT_SEED_NOTES[seedIdx];
+      DEFAULT_SEED_NOTES.splice(seedIdx, 1);
     }
 
     await ActivityLog.create({
@@ -532,12 +556,12 @@ exports.adminDeleteNote = async (req, res, next) => {
       action: 'NOTE_DELETED',
       ipAddress: req.ip || '127.0.0.1',
       userAgent: req.headers['user-agent'] || 'Admin-Console',
-      metaData: { noteId: note.noteId, title: note.title },
-    });
+      metaData: { noteId: targetId, title: note?.title || targetId },
+    }).catch(() => {});
 
     return res.status(200).json({
       success: true,
-      message: `Note "${note.title}" deleted from database.`,
+      message: `Note "${note?.title || targetId}" deleted from database.`,
     });
   } catch (error) {
     next(error);

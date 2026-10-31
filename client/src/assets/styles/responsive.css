@@ -1,0 +1,410 @@
+/* ==========================================================================
+   Strivers Application - Strict Small-Screen & Mobile Responsiveness
+   Enforces fluid scaling down to 320px viewport without horizontal overflow.
+   Breakpoints: Mobile (<= 480px), Phablet/Tablet (<= 768px), Laptop (<= 1024px)
+   ========================================================================== */
+
+/* Universal Overflow Protection */
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Ensure images, svgs, and iframes never burst out of parent containers */
+img,
+svg,
+iframe,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Prevent iOS Safari auto-zoom on input focus */
+input,
+select,
+textarea {
+  font-size: 16px !important;
+}
+
+/* Products & Access Catalog Global Layout */
+.products-main-wrapper {
+  flex: 1;
+  max-width: 880px;
+  margin: 32px auto 48px;
+  padding: 0 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.product-access-main {
+  flex: 1;
+  max-width: 1060px;
+  margin: 32px auto 60px;
+  padding: 0 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Company Marquee Responsive Containment */
+.marquee-wrapper-section {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.marquee-ribbon-container {
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+  position: relative;
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+
+/* ==========================================================================
+   TABLET & MOBILE BREAKPOINTS (<= 1024px)
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .section,
+  .hero,
+  .mentors {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 36px;
+    padding-top: 36px;
+  }
+
+  .receipt {
+    transform: rotate(0deg);
+    margin: 0 auto;
+    width: 100%;
+    max-width: 380px;
+  }
+}
+
+/* ==========================================================================
+   MEDIUM MOBILE & TABLET (<= 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Navigation */
+  .nav {
+    padding: 8px 16px !important;
+  }
+
+  .desktop-nav {
+    display: none !important;
+  }
+
+  .mobile-menu-trigger {
+    display: flex !important;
+    align-items: center;
+  }
+
+  /* Typography Scaling */
+  h1 {
+    font-size: clamp(1.85rem, 8vw, 2.6rem) !important;
+  }
+
+  h2 {
+    font-size: clamp(1.4rem, 6vw, 1.9rem) !important;
+  }
+
+  /* Hero Section */
+  .hero {
+    padding-top: 24px;
+    padding-bottom: 24px;
+    gap: 28px;
+  }
+
+  .lede {
+    font-size: 1.02rem;
+  }
+
+  .cta-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .cta-row .btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* Cards Grid */
+  .cards,
+  .topics,
+  .pillars,
+  .reviews,
+  .ads {
+    grid-template-columns: 1fr !important;
+    gap: 16px;
+  }
+
+  .course,
+  .topic,
+  .ad {
+    padding: 18px 16px !important;
+  }
+
+  /* Dashboard View */
+  .dashboard-sidebar {
+    display: none !important;
+  }
+
+  .mobile-nav-toggle-wrap {
+    display: flex !important;
+  }
+
+  .dashboard-main {
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: hidden;
+  }
+
+  .dashboard-topbar {
+    padding: 10px 14px;
+  }
+
+  .dashboard-content-container {
+    padding: 16px 12px;
+  }
+
+  /* Tables */
+  .problems-table-wrapper {
+    display: block !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: 8px;
+  }
+
+  .problems-table,
+  .data-table {
+    display: table !important;
+    width: 100% !important;
+    min-width: 620px !important;
+  }
+
+  /* Modals */
+  .modal-overlay {
+    padding: 12px;
+  }
+
+  .modal-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0;
+  }
+
+  /* DRM Viewer Modal */
+  .drm-modal-backdrop {
+    padding: 8px 6px 16px;
+  }
+
+  .drm-reader-window {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 94vh !important;
+    margin: 0 !important;
+    border-radius: 12px !important;
+  }
+
+  .drm-reader-toolbar {
+    padding: 10px 12px;
+  }
+
+  .drm-reader-body {
+    padding: 18px 14px !important;
+  }
+
+  /* Products & Access Pages on Tablets & Mobile */
+  .products-main-wrapper,
+  .product-access-main {
+    margin: 16px auto 32px !important;
+    padding: 0 14px !important;
+  }
+
+  .products-header-row {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
+  .product-action-btn-wrap {
+    width: 100% !important;
+  }
+
+  .product-action-btn-wrap button {
+    width: 100% !important;
+  }
+
+  .product-card-bottom-row {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 14px !important;
+  }
+}
+
+/* ==========================================================================
+   SMALL PHONES (<= 480px down to 320px)
+   ========================================================================== */
+@media (max-width: 480px) {
+  /* Global Spacing */
+  main > section,
+  .foot,
+  .section {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  /* Receipt Widget on Landing */
+  .receipt {
+    transform: none !important;
+    padding: 18px 14px 24px !important;
+    font-size: 0.88rem !important;
+    box-shadow: 0 4px 14px rgba(14, 27, 61, 0.12) !important;
+  }
+
+  .receipt-total {
+    padding: 8px 10px;
+  }
+
+  .receipt-total strong {
+    font-size: 1.6rem !important;
+  }
+
+  /* Mentors List */
+  .mentors ul {
+    gap: 6px 14px;
+    font-size: 1rem;
+  }
+
+  /* Dashboard Topbar Elements */
+  .streak-pill-btn {
+    padding: 4px 8px;
+    font-size: 0.74rem;
+  }
+
+  .user-profile-badge span {
+    display: none;
+  }
+
+  .user-avatar-circle {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+
+  /* Filter Bar in Practice Dashboard */
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .filter-chips-row {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+  }
+
+  /* Buttons & Action Controls */
+  .btn {
+    padding: 10px 14px;
+    font-size: 0.95rem;
+  }
+
+  .btn-lg {
+    padding: 12px 18px;
+    font-size: 0.98rem;
+  }
+
+  /* Practice Dashboard Compact Fluid Sizing on Small Devices */
+  .dashboard-content-container {
+    padding: 8px 6px !important;
+  }
+  .sheet-title {
+    font-size: 1.15rem !important;
+    margin: 0 0 3px !important;
+  }
+  .sheet-subtitle {
+    font-size: 0.78rem !important;
+    margin: 0 0 6px !important;
+  }
+  .plan-journey-banner {
+    padding: 10px 12px !important;
+    margin-bottom: 8px !important;
+  }
+  .day-accordion-header {
+    padding: 8px 10px !important;
+  }
+  .day-title-text {
+    font-size: 0.84rem !important;
+  }
+  .dsa-content-layout {
+    gap: 10px !important;
+  }
+  .progress-overview-card {
+    padding: 12px 10px !important;
+  }
+
+  /* Code / Txn / Ref IDs Wrapping */
+  .code-cell,
+  code,
+  .copyable-id {
+    word-break: break-all;
+    white-space: normal;
+  }
+
+  /* Auth forms */
+  .auth-wrap {
+    margin: 30px auto !important;
+    padding: 0 14px !important;
+  }
+
+  /* Products & Access Pages on Small Phones */
+  .products-main-wrapper,
+  .product-access-main {
+    margin: 10px auto 20px !important;
+    padding: 0 10px !important;
+  }
+
+  .material-card-item {
+    padding: 14px 12px !important;
+  }
+
+  .material-card-item h4 {
+    font-size: 0.95rem !important;
+  }
+
+  .material-card-item p {
+    font-size: 0.8rem !important;
+    margin-bottom: 12px !important;
+  }
+
+  .material-card-item button {
+    padding: 9px !important;
+    font-size: 0.84rem !important;
+  }
+}

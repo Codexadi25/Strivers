@@ -250,7 +250,7 @@ async function seedProductsIfEmpty() {
             existing.timingSlots = defP.timingSlots;
             needsSave = true;
           }
-          if (!existing.notesAndPdfs || existing.notesAndPdfs.length === 0) {
+          if (existing.notesAndPdfs === undefined || existing.notesAndPdfs === null) {
             existing.notesAndPdfs = defP.notesAndPdfs;
             needsSave = true;
           }

@@ -194,6 +194,7 @@ export class AppController {
     window.openMaterialsModal = (id) => MasterclassesController.openMaterialsModal(id);
     window.closeMaterialsModal = () => MasterclassesController.closeMaterialsModal();
     window.submitUploadMaterial = (e) => MasterclassesController.submitUploadMaterial(e);
+    window.previewStudyMaterial = (cId, mId) => MasterclassesController.previewStudyMaterial(cId, mId);
     window.deleteStudyMaterial = (cId, mId) => MasterclassesController.deleteStudyMaterial(cId, mId);
 
     // Orders & Transactions (including Exact Transaction Details Popup)

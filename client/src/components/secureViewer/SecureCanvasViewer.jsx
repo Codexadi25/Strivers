@@ -29,11 +29,18 @@ export const SecureCanvasViewer = ({ contentData, watermarkText }) => {
     // Draw Content Paragraphs
     ctx.fillStyle = '#e2e8f0';
     ctx.font = '16px system-ui';
-    const lines = contentData.sections || [];
+    let lines = [];
+    if (Array.isArray(contentData.sections)) {
+      lines = contentData.sections;
+    } else if (typeof contentData === 'string') {
+      lines = contentData.split('\n');
+    } else if (contentData.content) {
+      lines = String(contentData.content).split('\n');
+    }
     let yOffset = 130;
 
     lines.forEach((line) => {
-      ctx.fillText(line, 40, yOffset);
+      ctx.fillText(String(line), 40, yOffset);
       yOffset += 45;
     });
 

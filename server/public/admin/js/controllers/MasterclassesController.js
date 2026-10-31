@@ -368,9 +368,14 @@ export class MasterclassesController {
                 ${escapeHtml(mat.description || 'No summary')} · Size: <code>${sizeFormatted}</code> · DRM: In-App View Only
               </div>
             </div>
-            <button class="btn btn-outline-danger btn-xs" onclick="deleteStudyMaterial('${course.productId}', '${mat._id}')">
-              Delete
-            </button>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <button type="button" class="btn btn-secondary btn-xs" onclick="previewStudyMaterial('${course.productId}', '${mat.materialId || mat._id}')">
+                👁️ View
+              </button>
+              <button type="button" class="btn btn-outline-danger btn-xs" onclick="deleteStudyMaterial('${course.productId}', '${mat.materialId || mat._id}')">
+                Delete
+              </button>
+            </div>
           </div>
         `;
       })
@@ -412,6 +417,8 @@ export class MasterclassesController {
       let mimeType = 'text/plain';
       let fileSize = 0;
 
+      let effectiveFileType = fileType;
+
       if (file) {
         fileData = await new Promise((resolve, reject) => {
           const reader = new FileReader();
@@ -419,9 +426,14 @@ export class MasterclassesController {
           reader.onerror = (err) => reject(err);
           reader.readAsDataURL(file);
         });
-        mimeType = file.type || (fileType === 'pdf' ? 'application/pdf' : 'text/html');
+        const isPdfFile = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf' || fileType === 'pdf';
+        const isHtmlFile = file.name.toLowerCase().endsWith('.html') || file.name.toLowerCase().endsWith('.htm') || file.type === 'text/html' || fileType === 'html';
+
+        effectiveFileType = isPdfFile ? 'pdf' : isHtmlFile ? 'html' : (fileType || 'notes');
+        mimeType = file.type || (isPdfFile ? 'application/pdf' : isHtmlFile ? 'text/html' : 'text/plain');
         fileSize = file.size;
       } else {
+        effectiveFileType = fileType === 'html' ? 'html' : (fileType || 'notes');
         fileData = 'data:text/html;base64,' + btoa(unescape(encodeURIComponent(textInput)));
         mimeType = 'text/html';
         fileSize = textInput.length;
@@ -431,7 +443,7 @@ export class MasterclassesController {
       const res = await MasterclassModel.uploadStudyMaterial(courseId, {
         title,
         description,
-        fileType: fileType === 'pdf' ? 'pdf' : 'notes',
+        fileType: effectiveFileType,
         mimeType,
         fileData,
         fileSize,
@@ -448,7 +460,7 @@ export class MasterclassesController {
             subtitle: description || 'Masterclass Study Guide & Engineering Notes',
             tag: tier === 'paid' ? 'VIP Masterclass' : 'Core Academic',
             type: tier,
-            fileType: fileType === 'pdf' ? 'pdf' : 'html',
+            fileType: effectiveFileType === 'pdf' ? 'pdf' : 'html',
             mimeType,
             fileData: rawBase64,
             fileSize,
@@ -473,6 +485,47 @@ export class MasterclassesController {
         submitBtn.disabled = false;
         submitBtn.querySelector('span').textContent = 'Save Note to MongoDB (10MB Limit · View-Only DRM)';
       }
+    }
+  }
+
+  static previewStudyMaterial(courseId, materialId) {
+    const course = this.currentMasterclasses.find((x) => x.productId === courseId);
+    if (!course) return;
+    const mat = (course.notesAndPdfs || []).find((m) => (m.materialId || m._id) === materialId);
+    if (!mat || !mat.fileData) {
+      showToast('Document payload not found in MongoDB record.', 'error');
+      return;
+    }
+
+    try {
+      const base64Data = mat.fileData.includes(',') ? mat.fileData.split(',')[1] : mat.fileData;
+      const isPdf = mat.fileType === 'pdf' || (mat.mimeType && mat.mimeType.includes('pdf'));
+
+      if (isPdf) {
+        const byteChars = atob(base64Data);
+        const byteNums = new Uint8Array(byteChars.length);
+        for (let i = 0; i < byteChars.length; i++) byteNums[i] = byteChars.charCodeAt(i);
+        const blob = new Blob([byteNums], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+      } else {
+        let htmlText = '';
+        try {
+          const byteChars = atob(base64Data);
+          const byteNums = new Uint8Array(byteChars.length);
+          for (let i = 0; i < byteChars.length; i++) byteNums[i] = byteChars.charCodeAt(i);
+          htmlText = new TextDecoder('utf-8').decode(byteNums);
+        } catch {
+          htmlText = atob(base64Data);
+        }
+        const previewWin = window.open('', '_blank');
+        if (previewWin) {
+          previewWin.document.write(htmlText);
+          previewWin.document.close();
+        }
+      }
+    } catch (err) {
+      showToast('Failed to preview document: ' + err.message, 'error');
     }
   }
 
