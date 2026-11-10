@@ -77,11 +77,111 @@ app.use('/api', adminRoutes);
 app.use('/api/v1/lifeline', lifelineRoutes);
 app.use('/api/lifeline', lifelineRoutes);
 
+function normalizeSearchType(type, val = '') {
+  const t = (type || '').toLowerCase().replace(/[-_]/g, '');
+  if (t.includes('email')) return 'email';
+  if (t.includes('cust') || t.includes('user')) return 'customerId';
+  if (t.includes('phone') || t.includes('mobile') || t.includes('contact')) return 'phone';
+  if (t.includes('txn') || t.includes('pay')) return 'txnId';
+  if (t.includes('ref') || t.includes('rcpt') || t.includes('receipt')) return 'refId';
+  if (t.includes('order')) return 'orderId';
+
+  if (val && typeof val === 'string') {
+    if (val.includes('@')) return 'email';
+    if (val.startsWith('pay_')) return 'txnId';
+    if (val.startsWith('rcpt_')) return 'refId';
+    if (val.startsWith('order_')) return 'orderId';
+  }
+
+  return 'orderId';
+}
+
+function extractLifelineParams(req) {
+  let paramType = req.params.searchParameter || req.query.type || '';
+  let paramVal = req.params.value || req.query.value || req.query.q || '';
+
+  // 1. Support ?=value (empty key in req.query when URL has ?=artisahu6880@gmail.com)
+  if (!paramVal && req.query[''] !== undefined) {
+    paramVal = req.query[''];
+  }
+
+  // 2. Support direct query keys (?email=..., ?orderId=..., etc.)
+  if (!paramVal) {
+    const knownKeys = [
+      'email', 'orderid', 'order_id', 'order',
+      'customerid', 'customer_id', 'customer', 'cust', 'userid', 'user_id', 'user',
+      'phone', 'phoneno', 'phone_no', 'mobile', 'contact',
+      'txnid', 'txn_id', 'txn', 'paymentid', 'payment_id', 'payment',
+      'refid', 'ref_id', 'ref', 'receipt'
+    ];
+    for (const key of Object.keys(req.query)) {
+      const lower = key.toLowerCase();
+      if (knownKeys.includes(lower)) {
+        paramVal = req.query[key];
+        if (!paramType) paramType = key;
+        break;
+      }
+    }
+  }
+
+  // 3. Raw URL fallback for ?= or ?value without key (e.g. /templates/lifeline/email?=artisahu6880@gmail.com)
+  if (!paramVal && req.url.includes('?=')) {
+    const parts = req.url.split('?=');
+    if (parts[1]) {
+      paramVal = parts[1].split('&')[0];
+      try { paramVal = decodeURIComponent(paramVal); } catch (_) {}
+    }
+  } else if (!paramVal && req.url.includes('?')) {
+    const rawQuery = req.url.split('?')[1];
+    if (rawQuery && !rawQuery.includes('=')) {
+      paramVal = rawQuery.split('&')[0];
+      try { paramVal = decodeURIComponent(paramVal); } catch (_) {}
+    }
+  }
+
+  const normalizedType = normalizeSearchType(paramType, paramVal);
+
+  return {
+    type: normalizedType,
+    q: (paramVal || '').trim(),
+  };
+}
+
 // Server-Side React Lifeline Template Endpoints (React View Engine)
-app.get(['/templates/lifeline', '/practice/lifeline', '/lifeline'], async (req, res) => {
+const lifelineRoutePaths = [
+  '/templates/lifeline/:searchParameter/:value',
+  '/templates/lifeline/:searchParameter',
+  '/templates/lifeline',
+  '/lifeline/:searchParameter/:value',
+  '/lifeline/:searchParameter',
+  '/lifeline',
+  '/practice/lifeline/:searchParameter/:value',
+  '/practice/lifeline/:searchParameter',
+  '/practice/lifeline',
+];
+
+app.get(lifelineRoutePaths, async (req, res) => {
   try {
-    const q = req.query.q || req.query.orderId || req.query.email || '';
-    const type = req.query.type || (req.query.orderId ? 'orderId' : (req.query.email ? 'email' : 'orderId'));
+    const searchParam = (req.params.searchParameter || '').toLowerCase();
+    
+    // Check if this route is requesting a practice sheet track (e.g. tech-dsa-striver-template)
+    if (searchParam && (searchParam.startsWith('tech-') || searchParam.startsWith('non-tech-') || searchParam.startsWith('sheet-'))) {
+      const PracticeSheet = require('./models/PracticeSheet');
+      const sheet = await PracticeSheet.findOne({ sheetId: searchParam }).catch(() => null);
+      if (sheet) {
+        return res.render('LifelineTemplate', {
+          sheet,
+          initialQuery: { type: 'orderId', q: '' },
+          user: {
+            name: req.user?.name || 'Aditya Sahu',
+            email: req.user?.email || 'creedracer111@gmail.com',
+            watermark: `${req.user?.email || 'creedracer111@gmail.com'} | VERIFIED LIFELINE TRACK`,
+          },
+        });
+      }
+    }
+
+    const { type, q } = extractLifelineParams(req);
 
     res.render('LifelineTemplate', {
       initialQuery: { type, q },
@@ -96,7 +196,7 @@ app.get(['/templates/lifeline', '/practice/lifeline', '/lifeline'], async (req, 
   }
 });
 
-app.get(['/templates/lifeline/:sheetId', '/practice/sheets/:sheetId/template'], async (req, res) => {
+app.get(['/practice/sheets/:sheetId/template', '/templates/sheets/:sheetId'], async (req, res) => {
   try {
     const PracticeSheet = require('./models/PracticeSheet');
     const sheet = await PracticeSheet.findOne({ sheetId: req.params.sheetId.toLowerCase() });
@@ -110,7 +210,7 @@ app.get(['/templates/lifeline/:sheetId', '/practice/sheets/:sheetId/template'], 
       },
     });
   } catch (err) {
-    res.status(500).send(`Failed to render Lifeline Template: ${err.message}`);
+    res.status(500).send(`Failed to render Practice Sheet: ${err.message}`);
   }
 });
 
