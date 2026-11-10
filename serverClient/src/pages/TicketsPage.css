@@ -1,0 +1,272 @@
+/* Strivers Server Client Tickets Page Styles */
+
+.tickets-page-root {
+  padding: 24px 32px 48px;
+  max-width: 1540px;
+  margin: 0 auto;
+  font-family: inherit;
+}
+
+.tickets-header {
+  margin-bottom: 22px;
+}
+
+.tickets-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0 0 6px;
+  letter-spacing: -0.3px;
+}
+
+.tickets-desc {
+  font-size: 0.88rem;
+  color: #64748B;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.tickets-status-banner {
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  background-color: #ECFDF5;
+  color: #065F46;
+  border: 1px solid #A7F3D0;
+  margin-bottom: 20px;
+}
+
+/* FILTERS */
+.tickets-filters-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.tickets-search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  padding: 9px 14px;
+  max-width: 680px;
+}
+
+.tickets-search-icon {
+  color: #94A3B8;
+  font-size: 1.2rem !important;
+}
+
+.tickets-search-input {
+  border: none;
+  outline: none;
+  font-size: 0.86rem;
+  color: #0F172A;
+  width: 100%;
+  background: transparent;
+  font-family: inherit;
+}
+
+.tickets-dropdowns-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tickets-select {
+  padding: 8px 14px;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  background-color: #FFFFFF;
+  font-size: 0.84rem;
+  color: #0F172A;
+  font-weight: 600;
+  font-family: inherit;
+  outline: none;
+  min-width: 220px;
+}
+
+/* POLICY BANNER */
+.tickets-policy-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-left: 4px solid #F59E0B;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+}
+
+.tickets-policy-icon-col {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.tickets-info-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background-color: #EFF6FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tickets-policy-text strong {
+  display: block;
+  font-size: 0.9rem;
+  color: #0F172A;
+  margin-bottom: 4px;
+}
+
+.tickets-policy-text p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #475569;
+  line-height: 1.55;
+}
+
+.tickets-policy-text code {
+  background-color: #F1F5F9;
+  color: #0F172A;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-family: monospace;
+}
+
+/* TABLE CARD */
+.tickets-table-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 18px 22px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+}
+
+.tickets-table-wrapper {
+  overflow-x: auto;
+}
+
+.tickets-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.82rem;
+}
+
+.tickets-table th {
+  padding: 10px 14px;
+  background-color: #F8FAFC;
+  color: #64748B;
+  font-weight: 700;
+  border-bottom: 1px solid #E2E8F0;
+  white-space: nowrap;
+}
+
+.tickets-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #F1F5F9;
+  vertical-align: middle;
+}
+
+.tickets-id-link {
+  font-family: monospace;
+  font-weight: 700;
+  color: #2563EB;
+}
+
+.tickets-order-ref {
+  display: block;
+  font-family: monospace;
+  color: #0F172A;
+  font-size: 0.8rem;
+}
+
+.tickets-utr-ref {
+  display: block;
+  font-family: monospace;
+  color: #64748B;
+  font-size: 0.72rem;
+  margin-top: 2px;
+}
+
+.tickets-amount {
+  color: #059669;
+  font-size: 0.92rem;
+}
+
+.tickets-category-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #475569;
+  background-color: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  padding: 2px 7px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.tickets-status-pill {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.status-pill-resolved {
+  background-color: #ECFDF5;
+  color: #065F46;
+  border: 1px solid #A7F3D0;
+}
+
+.status-pill-pending {
+  background-color: #FEF3C7;
+  color: #D97706;
+  border: 1px solid #FDE68A;
+}
+
+.tickets-btn-resolve {
+  background-color: #2563EB;
+  color: #FFFFFF;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tickets-btn-resolve:hover {
+  background-color: #1D4ED8;
+}
+
+.tickets-badge-done {
+  color: #059669;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.tickets-empty-cell {
+  text-align: center;
+  padding: 48px;
+  color: #64748B;
+  font-size: 0.88rem;
+}
+
+.display-block {
+  display: block;
+}
+
+.text-xs {
+  font-size: 0.74rem;
+}

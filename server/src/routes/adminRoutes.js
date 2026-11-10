@@ -7,14 +7,15 @@ const {
   grantAccess,
   revokeAccess,
   updateUserRole,
+  deleteUser,
   getRefunds,
   processRefund,
   getActivityLogs,
-  getAdminProducts,
+  getAdminCourses,
   getAdminMasterclasses,
-  updateProductPrice,
-  createOrUpdateProduct,
-  deleteProduct,
+  updateCoursePrice,
+  createOrUpdateCourse,
+  deleteCourse,
   updateMasterclassSession,
   addOrUpdateTimingSlot,
   deleteTimingSlot,
@@ -58,7 +59,7 @@ router.patch('/tickets/:id', verifyFirebaseToken, verifyAdmin, updateAdminTicket
 
 // Specifically Get Only Masterclasses (Distinguished from Courses in Schema)
 router.get('/masterclasses', verifyFirebaseToken, verifyAdmin, getAdminMasterclasses);
-router.delete('/masterclasses/:id', verifyFirebaseToken, verifyAdmin, deleteProduct);
+router.delete('/masterclasses/:id', verifyFirebaseToken, verifyAdmin, deleteCourse);
 router.put('/masterclasses/:id/session', verifyFirebaseToken, verifyAdmin, updateMasterclassSession);
 router.post('/masterclasses/:id/timing-slots', verifyFirebaseToken, verifyAdmin, addOrUpdateTimingSlot);
 router.delete('/masterclasses/:id/timing-slots/:slotId', verifyFirebaseToken, verifyAdmin, deleteTimingSlot);
@@ -67,29 +68,11 @@ router.delete('/masterclasses/:id/slots/:slotId', verifyFirebaseToken, verifyAdm
 router.post('/masterclasses/:id/materials', verifyFirebaseToken, verifyAdmin, uploadStudyMaterial);
 router.delete('/masterclasses/:id/materials/:materialId', verifyFirebaseToken, verifyAdmin, deleteStudyMaterial);
 
-// Products & Courses / Masterclass Management
-router.get('/products', verifyFirebaseToken, verifyAdmin, getAdminProducts);
-router.post('/products', verifyFirebaseToken, verifyAdmin, createOrUpdateProduct);
-router.put('/products/:id/price', verifyFirebaseToken, verifyAdmin, updateProductPrice);
-router.delete('/products/:id', verifyFirebaseToken, verifyAdmin, deleteProduct);
-
-// Masterclass Live Session & Timing Slots Customization
-router.put('/products/:id/session', verifyFirebaseToken, verifyAdmin, updateMasterclassSession);
-router.post('/products/:id/timing-slots', verifyFirebaseToken, verifyAdmin, addOrUpdateTimingSlot);
-router.delete('/products/:id/timing-slots/:slotId', verifyFirebaseToken, verifyAdmin, deleteTimingSlot);
-router.post('/products/:id/slots', verifyFirebaseToken, verifyAdmin, addOrUpdateTimingSlot);
-router.delete('/products/:id/slots/:slotId', verifyFirebaseToken, verifyAdmin, deleteTimingSlot);
-
-// Study Material & Notes DRM (Stored in MongoDB)
-router.post('/products/:id/materials', verifyFirebaseToken, verifyAdmin, uploadStudyMaterial);
-router.delete('/products/:id/materials/:materialId', verifyFirebaseToken, verifyAdmin, deleteStudyMaterial);
-router.delete('/materials/:materialId', verifyFirebaseToken, verifyAdmin, deleteStudyMaterial);
-
-// Aliases for /courses
-router.get('/courses', verifyFirebaseToken, verifyAdmin, getAdminProducts);
-router.post('/courses', verifyFirebaseToken, verifyAdmin, createOrUpdateProduct);
-router.put('/courses/:id/price', verifyFirebaseToken, verifyAdmin, updateProductPrice);
-router.delete('/courses/:id', verifyFirebaseToken, verifyAdmin, deleteProduct);
+// Courses / Masterclass Management
+router.get('/courses', verifyFirebaseToken, verifyAdmin, getAdminCourses);
+router.post('/courses', verifyFirebaseToken, verifyAdmin, createOrUpdateCourse);
+router.put('/courses/:id/price', verifyFirebaseToken, verifyAdmin, updateCoursePrice);
+router.delete('/courses/:id', verifyFirebaseToken, verifyAdmin, deleteCourse);
 router.put('/courses/:id/session', verifyFirebaseToken, verifyAdmin, updateMasterclassSession);
 router.post('/courses/:id/timing-slots', verifyFirebaseToken, verifyAdmin, addOrUpdateTimingSlot);
 router.delete('/courses/:id/timing-slots/:slotId', verifyFirebaseToken, verifyAdmin, deleteTimingSlot);
@@ -97,6 +80,7 @@ router.post('/courses/:id/slots', verifyFirebaseToken, verifyAdmin, addOrUpdateT
 router.delete('/courses/:id/slots/:slotId', verifyFirebaseToken, verifyAdmin, deleteTimingSlot);
 router.post('/courses/:id/materials', verifyFirebaseToken, verifyAdmin, uploadStudyMaterial);
 router.delete('/courses/:id/materials/:materialId', verifyFirebaseToken, verifyAdmin, deleteStudyMaterial);
+router.delete('/materials/:materialId', verifyFirebaseToken, verifyAdmin, deleteStudyMaterial);
 
 router.get('/orders', verifyFirebaseToken, verifyAdmin, getOrders);
 router.get('/users', verifyFirebaseToken, verifyAdmin, getUsers);
@@ -104,6 +88,7 @@ router.post('/users/grant-access', verifyFirebaseToken, verifyAdmin, grantAccess
 router.post('/users/revoke-access', verifyFirebaseToken, verifyAdmin, revokeAccess);
 router.post('/users/set-role', verifyFirebaseToken, verifyAdmin, updateUserRole);
 router.post('/users/reset-password', verifyFirebaseToken, verifyAdmin, resetUserPassword);
+router.delete('/users/:id', verifyFirebaseToken, verifyAdmin, deleteUser);
 
 // Practice Sheet Curriculum & Pricing Management Endpoints
 router.get('/practice/sheets', verifyFirebaseToken, verifyAdmin, getAdminPracticeSheets);

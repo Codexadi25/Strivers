@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import api from '../utils/api';
-import Navbar from '../components/common/Navbar';
+import Header from '../components/common/Header';
+import Footer from '../components/common/Footer';
+import './Auth.css';
 
 export default function Register() {
   const [params] = useSearchParams();
   const plan = params.get('plan') || '';
-  const redirect = params.get('redirect') || (plan ? `/products?checkout=${encodeURIComponent(plan)}` : '/products');
+  const redirect = params.get('redirect') || (plan ? `/courses?checkout=${encodeURIComponent(plan)}` : '/courses');
 
   const [form, setForm] = useState({
     name: '',
@@ -32,15 +34,16 @@ export default function Register() {
       if (res.data?.user) {
         localStorage.setItem('auth_user', JSON.stringify(res.data.user));
       }
+      window.dispatchEvent(new Event('auth_state_change'));
 
       setDoneMsg('✓ Account created successfully! Setting up your course...');
 
       setTimeout(() => {
         if (plan) {
           if (res.data?.alreadyPaid) {
-            navigate(`/products/${plan}/access`);
+            navigate(`/courses/${plan}/access`);
           } else {
-            navigate(`/products?checkout=${encodeURIComponent(plan)}`);
+            navigate(`/courses?checkout=${encodeURIComponent(plan)}`);
           }
         } else {
           navigate(redirect);
@@ -69,8 +72,8 @@ export default function Register() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <Navbar />
+    <div className="auth-page-root">
+      <Header />
 
       <main className="auth-wrap" style={{ flex: 1, maxWidth: 420, margin: '60px auto', width: '100%' }}>
         <h2>Create an Account</h2>
@@ -157,6 +160,7 @@ export default function Register() {
           Already have an account? <Link to="/login">Sign in here</Link>.
         </p>
       </main>
+      <Footer />
     </div>
   );
 }

@@ -22,6 +22,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import ShareIcon from '@mui/icons-material/Share';
 import { BRAND, adTemplates, nextSessionLabel } from '../../config/strivers';
+import './ShareAds.css';
 
 export default function ShareAds({ price = 21, early = false }) {
   const [copiedLink, setCopiedLink] = useState(false);
@@ -119,7 +120,7 @@ export default function ShareAds({ price = 21, early = false }) {
         }}
       >
         {/* Header / Subtitle */}
-        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2 }}>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mb: 2 }}>
           <Box
             sx={{
               width: 36,
@@ -148,11 +149,13 @@ export default function ShareAds({ price = 21, early = false }) {
         <Stack
           direction="row"
           spacing={{ xs: 1.5, sm: 2 }}
-          alignItems="center"
-          justifyContent="center"
-          flexWrap="wrap"
           useFlexGap
-          sx={{ py: 1.5 }}
+          sx={{
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+            py: 1.5,
+          }}
         >
           {/* 1. WhatsApp Button */}
           <Tooltip title="Share on WhatsApp" arrow>
@@ -290,53 +293,55 @@ export default function ShareAds({ price = 21, early = false }) {
             fullWidth
             size="small"
             value={courseUrl}
-            readOnly
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <LinkIcon sx={{ color: '#64748B', fontSize: 20 }} />
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <InputAdornment position="end">
-                  <Button
-                    variant="contained"
-                    size="small"
-                    startIcon={copiedLink ? <CheckIcon /> : <ContentCopyIcon />}
-                    onClick={() => copyToClipboard(courseUrl, 'link')}
-                    sx={{
-                      bgcolor: copiedLink ? '#16A34A' : '#2563EB',
-                      color: '#FFFFFF',
-                      textTransform: 'none',
-                      fontWeight: 700,
-                      borderRadius: 2,
-                      px: 2,
-                      py: 0.6,
-                      boxShadow: 'none',
-                      '&:hover': {
-                        bgcolor: copiedLink ? '#15803D' : '#1D4ED8',
+            slotProps={{
+              input: {
+                readOnly: true,
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <LinkIcon sx={{ color: '#64748B', fontSize: 20 }} />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Button
+                      variant="contained"
+                      size="small"
+                      startIcon={copiedLink ? <CheckIcon /> : <ContentCopyIcon />}
+                      onClick={() => copyToClipboard(courseUrl, 'link')}
+                      sx={{
+                        bgcolor: copiedLink ? '#16A34A' : '#2563EB',
+                        color: '#FFFFFF',
+                        textTransform: 'none',
+                        fontWeight: 700,
+                        borderRadius: 2,
+                        px: 2,
+                        py: 0.6,
                         boxShadow: 'none',
-                      },
-                    }}
-                  >
-                    {copiedLink ? 'Copied' : 'Copy Link'}
-                  </Button>
-                </InputAdornment>
-              ),
-              sx: {
-                bgcolor: '#FFFFFF',
-                borderRadius: 2.5,
-                fontSize: '0.9rem',
-                fontFamily: 'monospace',
-                pr: 0.75,
-                '& fieldset': {
-                  borderColor: '#CBD5E1',
-                },
-                '&:hover fieldset': {
-                  borderColor: '#94A3B8',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#2563EB',
+                        '&:hover': {
+                          bgcolor: copiedLink ? '#15803D' : '#1D4ED8',
+                          boxShadow: 'none',
+                        },
+                      }}
+                    >
+                      {copiedLink ? 'Copied' : 'Copy Link'}
+                    </Button>
+                  </InputAdornment>
+                ),
+                sx: {
+                  bgcolor: '#FFFFFF',
+                  borderRadius: 2.5,
+                  fontSize: '0.9rem',
+                  fontFamily: 'monospace',
+                  pr: 0.75,
+                  '& fieldset': {
+                    borderColor: '#CBD5E1',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#94A3B8',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#2563EB',
+                  },
                 },
               },
             }}
@@ -344,7 +349,7 @@ export default function ShareAds({ price = 21, early = false }) {
         </Box>
 
         {/* Quick info chip */}
-        <Stack direction="row" justifyContent="center" sx={{ mt: 2 }}>
+        <Stack direction="row" sx={{ justifyContent: 'center', mt: 2 }}>
           <Chip
             size="small"
             label="✓ Verified placement session link · Direct 1-tap invite"

@@ -1,0 +1,565 @@
+[
+  {
+    "productId": "masterclass",
+    "title": "Strivers Placement Masterclass",
+    "description": "Live interactive weekend workshop with unicorn mentors. ATS resume blueprints, portfolio hosting, cold emails, and interview unit economics.",
+    "price": 74,
+    "priceInPaise": 7400,
+    "originalPrice": 399,
+    "badge": "Live Session Every Sunday",
+    "currency": "INR",
+    "category": "masterclass",
+    "isMasterclass": true,
+    "productType": "masterclass",
+    "activeMeetingLink": "https://meet.google.com/dynamic-test-session",
+    "meetingCode": "dynamic-test-session",
+    "meetingPlatform": "Google Meet",
+    "sessionStatus": "upcoming",
+    "sessionDate": "Sunday, 15 Nov, 11:00 AM IST",
+    "secretPasscode": "SECURETEST2026",
+    "mentors": [
+      {
+        "name": "Aditya Sahu",
+        "company": "Ex Startek: Zomato Executive & Ex Tech. Mahindra: Flipkart L1 CRM",
+        "role": "Ex Startek: Zomato Executive & Ex Tech. Mahindra: Flipkart L1 CRM"
+      },
+      {
+        "name": "Aishwarya Bhatia",
+        "company": "Ex American Express Executive, Ex Startek: Zomato/Blinkit Team Lead, V5 Global: Blinkit Ops. Manager",
+        "role": "Ex American Express Executive, Ex Startek: Zomato/Blinkit Team Lead, V5 Global: Blinkit Ops. Manager"
+      }
+    ],
+    "features": [
+      "Live online session every Sunday with working mentors",
+      "ATS-friendly resume structure & quantitative bullet formulas",
+      "Live portfolio hosting blueprint with personal domain",
+      "Cold email templates & Naukri/LinkedIn algorithm hacks",
+      "Curated study notes, cheat sheets & interview Q&A",
+      "Permanent lifetime account access & session notes"
+    ],
+    "timingSlots": [
+      {
+        "slotId": "slot_sun_masterclass",
+        "title": "Sunday Unicorn Placement Masterclass",
+        "date": "Sunday, 15 Nov 2026",
+        "startTime": "11:00 AM",
+        "endTime": "01:30 PM",
+        "timezone": "IST",
+        "mentorName": "Aditya & Guest Unicorn Leads",
+        "mentorRole": "Operations & Engineering Mentors",
+        "agenda": [
+          {
+            "time": "11:00 AM - 11:45 AM",
+            "topic": "Live ATS Resume Roast & Keyword Architecture"
+          },
+          {
+            "time": "11:45 AM - 12:30 PM",
+            "topic": "Naukri & LinkedIn Recruiter Search Algorithm Hacks"
+          },
+          {
+            "time": "12:30 PM - 01:15 PM",
+            "topic": "Cold Outreach Templates & Direct HR Escalation"
+          },
+          {
+            "time": "01:15 PM - 01:30 PM",
+            "topic": "Live Student Q&A and 1-on-1 Mock Breakdown"
+          }
+        ],
+        "isActive": true
+      },
+      {
+        "slotId": "slot_1794251685202",
+        "dateTime": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "capacity": 150,
+        "active": true,
+        "addedAt": "2026-11-09T19:14:45.203Z"
+      },
+      {
+        "slotId": "slot_1794251934571",
+        "dateTime": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "capacity": 150,
+        "active": true,
+        "addedAt": "2026-11-09T19:18:54.571Z"
+      },
+      {
+        "slotId": "slot_1794253186422",
+        "dateTime": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "capacity": 150,
+        "active": true,
+        "addedAt": "2026-11-09T19:39:46.422Z"
+      },
+      {
+        "slotId": "slot_1794312456852",
+        "title": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "date": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "dateTime": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "startTime": "11:00 AM",
+        "endTime": "01:00 PM",
+        "timezone": "IST",
+        "mentorName": "Unicorn Mentors",
+        "capacity": 150,
+        "active": true,
+        "addedAt": "2026-11-10T12:07:36.852Z"
+      },
+      {
+        "slotId": "slot_1794312498785",
+        "title": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "date": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "dateTime": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "startTime": "11:00 AM",
+        "endTime": "01:00 PM",
+        "timezone": "IST",
+        "mentorName": "Unicorn Mentors",
+        "capacity": 150,
+        "active": true,
+        "addedAt": "2026-11-10T12:08:18.785Z"
+      },
+      {
+        "slotId": "slot_1794323960125",
+        "title": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "date": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "dateTime": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "startTime": "11:00 AM",
+        "endTime": "01:00 PM",
+        "timezone": "IST",
+        "mentorName": "Unicorn Mentors",
+        "capacity": 150,
+        "active": true,
+        "addedAt": "2026-11-10T15:19:20.125Z"
+      },
+      {
+        "slotId": "slot_1794324071046",
+        "title": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "date": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "dateTime": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "startTime": "11:00 AM",
+        "endTime": "01:00 PM",
+        "timezone": "IST",
+        "mentorName": "Unicorn Mentors",
+        "capacity": 150,
+        "active": true,
+        "addedAt": "2026-11-10T15:21:11.046Z"
+      },
+      {
+        "slotId": "slot_1794324115971",
+        "title": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "date": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "dateTime": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "startTime": "11:00 AM",
+        "endTime": "01:00 PM",
+        "timezone": "IST",
+        "mentorName": "Unicorn Mentors",
+        "capacity": 150,
+        "active": true,
+        "addedAt": "2026-11-10T15:21:55.971Z"
+      },
+      {
+        "slotId": "slot_1794324147480",
+        "title": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "date": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "dateTime": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "startTime": "11:00 AM",
+        "endTime": "01:00 PM",
+        "timezone": "IST",
+        "mentorName": "Unicorn Mentors",
+        "capacity": 150,
+        "active": true,
+        "addedAt": "2026-11-10T15:22:27.480Z"
+      },
+      {
+        "slotId": "slot_1794325830476",
+        "title": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "date": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "dateTime": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "startTime": "11:00 AM",
+        "endTime": "01:00 PM",
+        "timezone": "IST",
+        "mentorName": "Unicorn Mentors",
+        "capacity": 150,
+        "active": true,
+        "addedAt": "2026-11-10T15:50:30.476Z"
+      },
+      {
+        "slotId": "slot_1794326796697",
+        "title": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "date": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "dateTime": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "startTime": "11:00 AM",
+        "endTime": "01:00 PM",
+        "timezone": "IST",
+        "mentorName": "Unicorn Mentors",
+        "capacity": 150,
+        "active": true,
+        "addedAt": "2026-11-10T16:06:36.697Z"
+      }
+    ],
+    "notesAndPdfs": [
+      {
+        "materialId": "mat_ats_blueprint",
+        "title": "ATS Resume Blueprint & Action Verb Matrix",
+        "description": "Single-column parsing guide with 50+ metric-driven bullet points for operations & tech candidates.",
+        "fileType": "notes",
+        "mimeType": "text/markdown",
+        "fileData": "CiMgU1RSSVZFUlMgTUFTVEVSQ0xBU1M6IEFUUyBSRVNVTUUgQkxVRVBSSU5UIChDT05GSURFTlRJQUwpCipBdXRob3I6IFNlbmlvciBNZW50b3JzIChleC1ab21hdG8sIEJsaW5raXQsIENvZm9yZ2UpKgoKIyMgMS4gVGhlIDYtU2Vjb25kIFNjcmVlbiBSdWxlClJlY3J1aXRlcnMgZmlsdGVyIG92ZXIgNDAwKyBhcHBsaWNhdGlvbnMgcGVyIGRheSB1c2luZyBBcHBsaWNhbnQgVHJhY2tpbmcgU3lzdGVtcyAoQVRTKS4gSWYgeW91ciBmaWxlIGlzIGEgZ3JhcGhpYyBjYW52YXMgb3IgbXVsdGktY29sdW1uIHRhYmxlLCBwYXJzaW5nIGZhaWx1cmUgcmF0ZSBleGNlZWRzIDY1JS4KCiMjIyBHb2xkZW4gRm9ybWF0dGluZyBEaXJlY3RpdmVzOgoxLiBTaW5nbGUtY29sdW1uLCBjbGVhbiBsaW5lYXIgZmxvdyAoSGVhZGVyIC0+IFN1bW1hcnkgLT4gRXhwZXJpZW5jZSAtPiBQcm9qZWN0cyAtPiBTa2lsbHMgLT4gRWR1Y2F0aW9uKS4KMi4gU3RhbmRhcmQgU2VjdGlvbiBUaXRsZXM6IFVzZSAiV29yayBFeHBlcmllbmNlIiBOT1QgIkNhcmVlciBNaWxlc3RvbmVzIi4KMy4gRm9udCBzdGFuZGFyZDogQXJpYWwsIENhbGlicmksIG9yIEludGVyLiBNaW5pbXVtIDEwcHQuCjQuIEZvcm1hdDogUGxhaW4gdGV4dCBjb21wYXRpYmxlLiBOZXZlciB1c2UgdGV4dCBib3hlcywgaWNvbnMsIG9yIHByb2dyZXNzIGJhcnMgZm9yIHNraWxscy4KCiMjIDIuIEhpZ2gtSW1wYWN0IEFjdGlvbiBWZXJiIE1hdHJpeDoKLSAqKk9wZXJhdGlvbnMgJiBMb2dpc3RpY3MqKjogU3BlYXJoZWFkZWQsIFN0cmVhbWxpbmVkLCBPcmNoZXN0cmF0ZWQsIE9wdGltaXplZCwgQWNjZWxlcmF0ZWQuCi0gKipUZWNoICYgU0RFKio6IEFyY2hpdGVjdGVkLCBFbmdpbmVlcmVkLCBEZXBsb3llZCwgQmVuY2htYXJrZWQsIFJlZmFjdG9yZWQuCi0gKipNZXRyaWNzIEZvcm11bGEqKjogQWNjb21wbGlzaGVkIFtYXSwgYXMgbWVhc3VyZWQgYnkgW1ldLCBieSBkb2luZyBbWl0uCiAgKkV4YW1wbGUqOiAiUmVkdWNlZCBhdmVyYWdlIGRhcmstc3RvcmUgb3JkZXIgZGlzcGF0Y2ggbGF0ZW5jeSBieSAzMiUgKGZyb20gNC4ybSB0byAyLjhtKSBieSByZW9yZ2FuaXppbmcgaGlnaC12ZWxvY2l0eSBTS1UgcGlja2luZyBzdGF0aW9ucy4iCgotLS0KKlBST1RFQ1RFRCBTVFVEWSBNQVRFUklBTCDigJQgUkVQUk9EVUNUSU9OIE9SIERPV05MT0FEIFNUUklDVExZIFBST0hJQklURUQqCg==",
+        "fileSize": 1608,
+        "viewOnly": true,
+        "uploadedAt": "2026-11-09T18:40:46.028Z"
+      },
+      {
+        "materialId": "mat_darkstore_playbook",
+        "title": "Quick Commerce & Dark Store Operations Playbook",
+        "description": "Key metrics, unit economics, rider balancing, and case study solutions for Zomato/Blinkit/Swiggy.",
+        "fileType": "cheatsheet",
+        "mimeType": "text/markdown",
+        "fileData": "CiMgUVVJQ0sgQ09NTUVSQ0UgJiBEQVJLIFNUT1JFIE9QRVJBVElPTlMgUExBWUJPT0sKKkNvbmZpZGVudGlhbCBQcmVwIEd1aWRlIGZvciBab21hdG8sIEJsaW5raXQsIEh5cGVycHVyZSAmIFN3aWdneSBJbnRlcnZpZXdzKgoKIyMgMS4gQ29yZSBLUElzIEV2ZXJ5IENhbmRpZGF0ZSBNdXN0IEtub3c6CjEuICoqT1REIChPbi1UaW1lIERlbGl2ZXJ5KSoqOiBQZXJjZW50YWdlIG9mIG9yZGVycyBkZWxpdmVyZWQgd2l0aGluIHRhcmdldCBTTEEgKHR5cGljYWxseSAxMC0xNSBtaW5zKS4gVGFyZ2V0OiA+OTguOCUuCjIuICoqUGlja2VyIFRpbWUqKjogVGltZSB0YWtlbiBmcm9tIG9yZGVyIHBpbmcgdG8gYmFnIGhhbmRlZCB0byByaWRlci4gVGFyZ2V0OiA8IDkwIHNlY29uZHMuCjMuICoqRmlsbCBSYXRlICYgU3RvY2tvdXQgUmF0ZSoqOiBQZXJjZW50YWdlIG9mIGN1c3RvbWVyIGNhcnQgaXRlbXMgZnVsZmlsbGVkIHdpdGhvdXQgc3Vic3RpdHV0aW9uLiBUYXJnZXQ6ID4gOTklLgo0LiAqKk9yZGVyIEJ1cm4gQ29zdCB2cyBEZWxpdmVyeSBSYWRpdXMqKjogR2VvLWZlbmNpbmcgZHluYW1pY2FsbHkgc2NhbGVzIGJldHdlZW4gMS44a20gYW5kIDMuNWttIGJhc2VkIG9uIGFjdGl2ZSByaWRlciBmbGVldCBkZW5zaXR5IGFuZCB3ZWF0aGVyIGFsZXJ0cy4KCiMjIDIuIFRoZSAzLUJ1Y2tldCBFc2NhbGF0aW9uIEZyYW1ld29yazoKV2hlbiBhbiBpbnRlcnZpZXdlciBhc2tzOiAqIkRhcmsgc3RvcmUgb3JkZXIgZGVsYXlzIGp1bXBlZCA0MCUgaW4gU291dGggRGVsaGkgZHVyaW5nIDctOSBQTSByYWluLiBIb3cgZG8geW91IHJlc3BvbmQ/IioKLSAqKlN0ZXAgMTogR2VvZmVuY2UgQ29udHJhY3Rpb24qKjogUmVkdWNlIHJhZGl1cyB0byAxLjVrbSBpbW1lZGlhdGVseSB0byBwcm90ZWN0IHJpZGVyIHNhZmV0eSBhbmQgY29udGFpbiBTTEEgYmxvd291dC4KLSAqKlN0ZXAgMjogU0tVIFRocm90dGxpbmcqKjogVGVtcG9yYXJpbHkgaGlkZSBoZWF2eS9idWxreSBTS1VzICg+NWtnIHdhdGVyL2Zsb3VyKSB0byBhbGxvdyB0d28td2hlZWxlciBmbGVldCBmYXN0ZXIgdHJhbnNpdC4KLSAqKlN0ZXAgMzogQ3VzdG9tZXIgQ29tbXVuaWNhdGlvbioqOiBQcm9hY3RpdmUgcHVzaCBub3RpZmljYXRpb24gYXBvbG9naXppbmcgd2l0aCBhdXRvLWFwcGxpZWQg4oK5NTAgY29udmVuaWVuY2Ugd2FsbGV0IGNyZWRpdC4KCi0tLQoqU1RSSVZFUlMgTElDRU5TRUQgUkVTT1VSQ0Ug4oCUIEZPUiBJTi1BUFAgUkVWSUVXIE9OTFkqCg==",
+        "fileSize": 1672,
+        "viewOnly": true,
+        "uploadedAt": "2026-11-09T18:40:46.030Z"
+      },
+      {
+        "materialId": "mat_1794251685199",
+        "title": "Dynamic Testing & Security Cheatsheet (Automated)",
+        "fileType": "pdf",
+        "drmLevel": "HIGH_SECURITY",
+        "addedAt": "2026-11-09T19:14:45.199Z"
+      },
+      {
+        "materialId": "mat_1794251934568",
+        "title": "Dynamic Testing & Security Cheatsheet (Automated)",
+        "fileType": "pdf",
+        "drmLevel": "HIGH_SECURITY",
+        "addedAt": "2026-11-09T19:18:54.568Z"
+      },
+      {
+        "materialId": "mat_1794253186418",
+        "title": "Dynamic Testing & Security Cheatsheet (Automated)",
+        "fileType": "pdf",
+        "drmLevel": "HIGH_SECURITY",
+        "addedAt": "2026-11-09T19:39:46.418Z"
+      },
+      {
+        "materialId": "mat_1794312456848",
+        "title": "Dynamic Testing & Security Cheatsheet (Automated)",
+        "description": "DRM Protected Study Resource",
+        "fileType": "pdf",
+        "mimeType": "text/markdown",
+        "fileData": "IyBEeW5hbWljIFRlc3RpbmcgJiBTZWN1cml0eSBDaGVhdHNoZWV0IChBdXRvbWF0ZWQpCgpQcm90ZWN0ZWQgRFJNIFN0dWR5IEd1aWRlLg==",
+        "fileSize": 108,
+        "drmLevel": "HIGH_SECURITY",
+        "viewOnly": true,
+        "addedAt": "2026-11-10T12:07:36.848Z"
+      },
+      {
+        "materialId": "mat_1794312498779",
+        "title": "Dynamic Testing & Security Cheatsheet (Automated)",
+        "description": "DRM Protected Study Resource",
+        "fileType": "pdf",
+        "mimeType": "text/markdown",
+        "fileData": "IyBEeW5hbWljIFRlc3RpbmcgJiBTZWN1cml0eSBDaGVhdHNoZWV0IChBdXRvbWF0ZWQpCgpQcm90ZWN0ZWQgRFJNIFN0dWR5IEd1aWRlLg==",
+        "fileSize": 108,
+        "drmLevel": "HIGH_SECURITY",
+        "viewOnly": true,
+        "addedAt": "2026-11-10T12:08:18.779Z"
+      },
+      {
+        "materialId": "mat_1794323960120",
+        "title": "Dynamic Testing & Security Cheatsheet (Automated)",
+        "description": "DRM Protected Study Resource",
+        "fileType": "pdf",
+        "mimeType": "text/markdown",
+        "fileData": "IyBEeW5hbWljIFRlc3RpbmcgJiBTZWN1cml0eSBDaGVhdHNoZWV0IChBdXRvbWF0ZWQpCgpQcm90ZWN0ZWQgRFJNIFN0dWR5IEd1aWRlLg==",
+        "fileSize": 108,
+        "drmLevel": "HIGH_SECURITY",
+        "viewOnly": true,
+        "addedAt": "2026-11-10T15:19:20.120Z"
+      },
+      {
+        "materialId": "mat_1794324071041",
+        "title": "Dynamic Testing & Security Cheatsheet (Automated)",
+        "description": "DRM Protected Study Resource",
+        "fileType": "pdf",
+        "mimeType": "text/markdown",
+        "fileData": "IyBEeW5hbWljIFRlc3RpbmcgJiBTZWN1cml0eSBDaGVhdHNoZWV0IChBdXRvbWF0ZWQpCgpQcm90ZWN0ZWQgRFJNIFN0dWR5IEd1aWRlLg==",
+        "fileSize": 108,
+        "drmLevel": "HIGH_SECURITY",
+        "viewOnly": true,
+        "addedAt": "2026-11-10T15:21:11.041Z"
+      },
+      {
+        "materialId": "mat_1794324115966",
+        "title": "Dynamic Testing & Security Cheatsheet (Automated)",
+        "description": "DRM Protected Study Resource",
+        "fileType": "pdf",
+        "mimeType": "text/markdown",
+        "fileData": "IyBEeW5hbWljIFRlc3RpbmcgJiBTZWN1cml0eSBDaGVhdHNoZWV0IChBdXRvbWF0ZWQpCgpQcm90ZWN0ZWQgRFJNIFN0dWR5IEd1aWRlLg==",
+        "fileSize": 108,
+        "drmLevel": "HIGH_SECURITY",
+        "viewOnly": true,
+        "addedAt": "2026-11-10T15:21:55.966Z"
+      },
+      {
+        "materialId": "mat_1794324147474",
+        "title": "Dynamic Testing & Security Cheatsheet (Automated)",
+        "description": "DRM Protected Study Resource",
+        "fileType": "pdf",
+        "mimeType": "text/markdown",
+        "fileData": "IyBEeW5hbWljIFRlc3RpbmcgJiBTZWN1cml0eSBDaGVhdHNoZWV0IChBdXRvbWF0ZWQpCgpQcm90ZWN0ZWQgRFJNIFN0dWR5IEd1aWRlLg==",
+        "fileSize": 108,
+        "drmLevel": "HIGH_SECURITY",
+        "viewOnly": true,
+        "addedAt": "2026-11-10T15:22:27.474Z"
+      },
+      {
+        "materialId": "mat_1794325830472",
+        "title": "Dynamic Testing & Security Cheatsheet (Automated)",
+        "description": "DRM Protected Study Resource",
+        "fileType": "pdf",
+        "mimeType": "text/markdown",
+        "fileData": "IyBEeW5hbWljIFRlc3RpbmcgJiBTZWN1cml0eSBDaGVhdHNoZWV0IChBdXRvbWF0ZWQpCgpQcm90ZWN0ZWQgRFJNIFN0dWR5IEd1aWRlLg==",
+        "fileSize": 108,
+        "drmLevel": "HIGH_SECURITY",
+        "viewOnly": true,
+        "addedAt": "2026-11-10T15:50:30.472Z"
+      },
+      {
+        "materialId": "mat_1794326796679",
+        "title": "Dynamic Testing & Security Cheatsheet (Automated)",
+        "description": "DRM Protected Study Resource",
+        "fileType": "pdf",
+        "mimeType": "text/markdown",
+        "fileData": "IyBEeW5hbWljIFRlc3RpbmcgJiBTZWN1cml0eSBDaGVhdHNoZWV0IChBdXRvbWF0ZWQpCgpQcm90ZWN0ZWQgRFJNIFN0dWR5IEd1aWRlLg==",
+        "fileSize": 108,
+        "drmLevel": "HIGH_SECURITY",
+        "viewOnly": true,
+        "addedAt": "2026-11-10T16:06:36.679Z"
+      }
+    ],
+    "isActive": true,
+    "updatedAt": "2026-11-10T16:06:36.697Z",
+    "meetingLink": "https://meet.google.com/dynamic-test-session",
+    "imageUrl": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80",
+    "duration": "Weekend Live Cohort",
+    "level": "Freshers & Professionals",
+    "whatYouWillLearn": [
+      "Craft ATS-compliant single-column resumes using recruiter-tested impact formulas",
+      "Build and launch a live personal portfolio with recruiter-friendly project breakdowns",
+      "Master LinkedIn & Naukri search algorithms to multiply inbound interview calls",
+      "Write high-response cold outreach messages for hiring managers and founders",
+      "Solve real-world operations, analytics & product case rounds with confidence"
+    ],
+    "curriculum": [
+      {
+        "moduleTitle": "Module 1: ATS Resume Architecture & Action Verbs",
+        "duration": "Week 1 • 45 Mins",
+        "lessons": [
+          "Why 65% of multi-column templates fail automated screening",
+          "Converting academic/work tasks into quantitative business bullets",
+          "Live ATS audit and line-by-line resume teardown"
+        ]
+      },
+      {
+        "moduleTitle": "Module 2: Portfolio & Recruiter Search Optimization",
+        "duration": "Week 1 • 45 Mins",
+        "lessons": [
+          "Structuring capstone projects for 6-second hiring scans",
+          "Optimizing LinkedIn headline, skills & recruiter keywords",
+          "Setting up high-signal job alert workflows"
+        ]
+      },
+      {
+        "moduleTitle": "Module 3: Cold Outreach & Case Study Frameworks",
+        "duration": "Week 2 • 60 Mins",
+        "lessons": [
+          "Proven cold email templates with direct HR response tactics",
+          "Dark store unit economics & SLA escalation breakdowns",
+          "Live Q&A and 1-on-1 mock screening feedback"
+        ]
+      }
+    ]
+  },
+  {
+    "productId": "channel",
+    "title": "Paid Job Channel",
+    "description": "Curated vacancy feed with direct HR interview meeting links, targeted company case study guides, and mentor shortlisting reviews.",
+    "price": 174,
+    "priceInPaise": 17400,
+    "originalPrice": 1999,
+    "badge": "Direct Vacancy Feed",
+    "currency": "INR",
+    "category": "channel",
+    "activeMeetingLink": "https://meet.google.com/strivers-channel-interviews",
+    "meetingCode": "strivers-channel-interviews",
+    "meetingPlatform": "Google Meet",
+    "sessionStatus": "upcoming",
+    "sessionDate": "Active Vacancy Feed Updated Daily",
+    "secretPasscode": "STRIVERS2026",
+    "mentors": [
+      {
+        "name": "Alex Morgan",
+        "role": "Ex-Google · SDE-2 @ Blinkit",
+        "company": "Blinkit",
+        "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80"
+      },
+      {
+        "name": "Priya Sharma",
+        "role": "Staff Engineer @ Zomato",
+        "company": "Zomato",
+        "avatar": "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&h=200&q=80"
+      }
+    ],
+    "features": [
+      "Curated job vacancies with direct HR interview meeting links",
+      "Enrol per upcoming vacancy with tailored prep packs",
+      "Prepare directly with the same unicorn mentor network",
+      "Unit economics & dark store logistics problem breakdowns",
+      "Early-bird notification feed for high-intent applications",
+      "1-on-1 shortlist guidance and offer negotiation tips"
+    ],
+    "timingSlots": [
+      {
+        "slotId": "slot_channel_weekly",
+        "title": "Upcoming Vacancies & Direct Walk-in Briefing",
+        "date": "Wednesday & Saturday",
+        "startTime": "07:00 PM",
+        "endTime": "08:00 PM",
+        "timezone": "IST",
+        "mentorName": "HR Coordination Team",
+        "mentorRole": "Talent Acquisition Partners",
+        "agenda": [
+          {
+            "time": "07:00 PM - 07:25 PM",
+            "topic": "Review of 8+ Active Immediate Joining Roles"
+          },
+          {
+            "time": "07:25 PM - 07:50 PM",
+            "topic": "Meeting Links & Direct Interview Schedule Distribution"
+          },
+          {
+            "time": "07:50 PM - 08:00 PM",
+            "topic": "Rapid Document Verification Checklist"
+          }
+        ],
+        "isActive": true
+      }
+    ],
+    "notesAndPdfs": [
+      {
+        "materialId": "mat_channel_briefing",
+        "title": "Verified Hiring Roster & Interview Tips",
+        "description": "Comprehensive hiring criteria, CTC packages, and interview round breakdown.",
+        "fileType": "notes",
+        "mimeType": "text/markdown",
+        "fileData": "CiMgU1RSSVZFUlMgTUFTVEVSQ0xBU1M6IEFUUyBSRVNVTUUgQkxVRVBSSU5UIChDT05GSURFTlRJQUwpCipBdXRob3I6IFNlbmlvciBNZW50b3JzIChleC1ab21hdG8sIEJsaW5raXQsIENvZm9yZ2UpKgoKIyMgMS4gVGhlIDYtU2Vjb25kIFNjcmVlbiBSdWxlClJlY3J1aXRlcnMgZmlsdGVyIG92ZXIgNDAwKyBhcHBsaWNhdGlvbnMgcGVyIGRheSB1c2luZyBBcHBsaWNhbnQgVHJhY2tpbmcgU3lzdGVtcyAoQVRTKS4gSWYgeW91ciBmaWxlIGlzIGEgZ3JhcGhpYyBjYW52YXMgb3IgbXVsdGktY29sdW1uIHRhYmxlLCBwYXJzaW5nIGZhaWx1cmUgcmF0ZSBleGNlZWRzIDY1JS4KCiMjIyBHb2xkZW4gRm9ybWF0dGluZyBEaXJlY3RpdmVzOgoxLiBTaW5nbGUtY29sdW1uLCBjbGVhbiBsaW5lYXIgZmxvdyAoSGVhZGVyIC0+IFN1bW1hcnkgLT4gRXhwZXJpZW5jZSAtPiBQcm9qZWN0cyAtPiBTa2lsbHMgLT4gRWR1Y2F0aW9uKS4KMi4gU3RhbmRhcmQgU2VjdGlvbiBUaXRsZXM6IFVzZSAiV29yayBFeHBlcmllbmNlIiBOT1QgIkNhcmVlciBNaWxlc3RvbmVzIi4KMy4gRm9udCBzdGFuZGFyZDogQXJpYWwsIENhbGlicmksIG9yIEludGVyLiBNaW5pbXVtIDEwcHQuCjQuIEZvcm1hdDogUGxhaW4gdGV4dCBjb21wYXRpYmxlLiBOZXZlciB1c2UgdGV4dCBib3hlcywgaWNvbnMsIG9yIHByb2dyZXNzIGJhcnMgZm9yIHNraWxscy4KCiMjIDIuIEhpZ2gtSW1wYWN0IEFjdGlvbiBWZXJiIE1hdHJpeDoKLSAqKk9wZXJhdGlvbnMgJiBMb2dpc3RpY3MqKjogU3BlYXJoZWFkZWQsIFN0cmVhbWxpbmVkLCBPcmNoZXN0cmF0ZWQsIE9wdGltaXplZCwgQWNjZWxlcmF0ZWQuCi0gKipUZWNoICYgU0RFKio6IEFyY2hpdGVjdGVkLCBFbmdpbmVlcmVkLCBEZXBsb3llZCwgQmVuY2htYXJrZWQsIFJlZmFjdG9yZWQuCi0gKipNZXRyaWNzIEZvcm11bGEqKjogQWNjb21wbGlzaGVkIFtYXSwgYXMgbWVhc3VyZWQgYnkgW1ldLCBieSBkb2luZyBbWl0uCiAgKkV4YW1wbGUqOiAiUmVkdWNlZCBhdmVyYWdlIGRhcmstc3RvcmUgb3JkZXIgZGlzcGF0Y2ggbGF0ZW5jeSBieSAzMiUgKGZyb20gNC4ybSB0byAyLjhtKSBieSByZW9yZ2FuaXppbmcgaGlnaC12ZWxvY2l0eSBTS1UgcGlja2luZyBzdGF0aW9ucy4iCgotLS0KKlBST1RFQ1RFRCBTVFVEWSBNQVRFUklBTCDigJQgUkVQUk9EVUNUSU9OIE9SIERPV05MT0FEIFNUUklDVExZIFBST0hJQklURUQqCg==",
+        "fileSize": 1608,
+        "viewOnly": true,
+        "uploadedAt": "2026-11-09T18:40:46.030Z"
+      }
+    ],
+    "isActive": true,
+    "isMasterclass": false,
+    "updatedAt": "2026-11-09T18:47:47.187Z",
+    "imageUrl": "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=900&q=80",
+    "duration": "Ongoing Access",
+    "level": "Job Seekers",
+    "whatYouWillLearn": [
+      "Gain early visibility into active high-intent engineering and operations openings",
+      "Prepare tailored role briefs matching each company interview rubric",
+      "Refine interview pitches and salary negotiation strategies with mentors"
+    ],
+    "curriculum": [
+      {
+        "moduleTitle": "Module 1: Verified Vacancy Feed & Role Briefing",
+        "duration": "Updated Daily",
+        "lessons": [
+          "Curated hiring openings across product & quick-commerce firms",
+          "Direct scheduling links & coordinator briefings"
+        ]
+      },
+      {
+        "moduleTitle": "Module 2: Company Case Packs & Interview Prep",
+        "duration": "Twice Weekly Live",
+        "lessons": [
+          "Role-specific problem walkthroughs with working mentors",
+          "Shortlist resume calibration & offer negotiation playbook"
+        ]
+      }
+    ]
+  },
+  {
+    "productId": "course_fullstack",
+    "title": "Full-Stack Software Engineering",
+    "description": "Comprehensive modular program covering MERN stack, database design, system architecture, scalable APIs, and production deployments.",
+    "price": 499,
+    "priceInPaise": 49900,
+    "originalPrice": 2999,
+    "badge": "Self-Paced Track",
+    "currency": "INR",
+    "category": "course",
+    "isMasterclass": false,
+    "productType": "course",
+    "sessionDate": "Instant Self-Paced Access",
+    "mentors": [
+      {
+        "name": "Alex Morgan",
+        "company": "Blinkit",
+        "role": "Blinkit"
+      },
+      {
+        "name": "Rahul Verma",
+        "company": "Porter",
+        "role": "Porter"
+      }
+    ],
+    "features": [
+      "200+ modular self-paced video lessons & source repositories",
+      "Full-stack architecture: React, Node, Express, Structured Backend, Docker",
+      "Curated coding problems with editorial solutions",
+      "Curated architecture blueprints & system design guides",
+      "Lifetime course access & video replays",
+      "Verified Certificate of Completion"
+    ],
+    "isActive": false,
+    "imageUrl": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=900&q=80",
+    "duration": "16 Weeks • Self-Paced",
+    "level": "Beginner to Advanced",
+    "whatYouWillLearn": [
+      "Architect modern component-driven frontends with responsive UI patterns",
+      "Design scalable REST APIs, database schemas, and caching strategies",
+      "Build end-to-end authentication, validation, and cloud deployments",
+      "Practice structured problem solving with curated engineering sheets"
+    ],
+    "curriculum": [
+      {
+        "moduleTitle": "Module 1: Modern UI & State Architecture",
+        "duration": "Weeks 1 – 5",
+        "lessons": [
+          "Semantic HTML, Responsive Layouts & Accessible UI Components",
+          "Component Composition, Hooks & Client-Side Routing",
+          "Performance Profiling & Production Bundling"
+        ]
+      },
+      {
+        "moduleTitle": "Module 2: Backend Systems & Data Modeling",
+        "duration": "Weeks 6 – 11",
+        "lessons": [
+          "RESTful API Design, Validation & Error Handling",
+          "Relational & Document Data Modeling at Scale",
+          "Session Security, Role-Based Access & Rate Limiting"
+        ]
+      },
+      {
+        "moduleTitle": "Module 3: System Design & Capstone Deployment",
+        "duration": "Weeks 12 – 16",
+        "lessons": [
+          "Caching, Message Queues & High-Availability Patterns",
+          "Containerization, CI/CD & Production Monitoring",
+          "End-to-End Portfolio Capstone Project Review"
+        ]
+      }
+    ],
+    "secretPasscode": "STRIVERS2026",
+    "timingSlots": [],
+    "notesAndPdfs": [],
+    "updatedAt": "2026-11-10T16:01:39.600Z"
+  }
+]

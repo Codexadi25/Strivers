@@ -1,0 +1,16 @@
+/* Strivers Quick Share Ads Styles */
+
+.share-ads-container {
+  width: 100%;
+  max-width: 760px;
+  margin: 16px auto 0;
+}
+
+.share-ads-paper {
+  border-radius: 14px;
+  border: 1.5px solid #E2E8F0;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+  box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.06);
+  padding: 24px;
+}
+

@@ -1,66 +1,19 @@
 import React from 'react';
+import './CompanyMarquee.css';
 
 const COMPANIES = [
-  {
-    name: 'Zomato',
-    logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/zomato.svg`,
-    style: { height: 40},
-  },
-  {
-    name: 'Blinkit',
-    logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/blinkit.svg`,
-    style: { height: 40},
-  },
-  {
-    name: 'Coforge',
-    logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/coforge.svg`,
-    style: { height: 40},
-  },
-  {
-    name: 'Flipkart',
-    logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/flipkart.svg`,
-    style: { height: 40},
-  },
-  {
-    name: 'Amazon',
-    logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/amazon.svg`,
-    style: { height: 40}
-  },
-  {
-    name: 'American Express',
-    logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/american-express.svg`,
-    style: { height: 40}
-  },
-  {
-    name: 'Teleperformance',
-    logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/teleperformance.svg`,
-    style: { height: 40}
-  },
-  {
-    name: 'Cognizant',
-    logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/cognizant.svg`,
-    style: { height: 40}
-  },
-  {
-    name: 'Genpact',
-    logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/genpact.png`,
-    style: { height: 40}
-  },
-  {
-    name: 'Accenture',
-    logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/accenture.svg`,
-    style: { height: 40}
-  },
-  {
-    name: 'TCS',
-    logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/tcs.svg`,
-    style: { height: 40}
-  },
-  {
-    name: 'W3Villa',
-    logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/w3villa.webp`,
-    style: { height: 40}
-  },
+  { name: 'Zomato', logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/zomato.svg` },
+  { name: 'Blinkit', logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/blinkit.svg` },
+  { name: 'Coforge', logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/coforge.svg` },
+  { name: 'Flipkart', logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/flipkart.svg` },
+  { name: 'Amazon', logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/amazon.svg` },
+  { name: 'American Express', logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/american-express.svg` },
+  { name: 'Teleperformance', logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/teleperformance.svg` },
+  { name: 'Cognizant', logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/cognizant.svg` },
+  { name: 'Genpact', logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/genpact.png` },
+  { name: 'Accenture', logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/accenture.svg` },
+  { name: 'TCS', logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/tcs.svg` },
+  { name: 'W3Villa', logoSrc: `${process.env.PUBLIC_URL || ''}/assets/companies/w3villa.webp` },
 ];
 
 export const CompanyMarquee = ({ title = 'Mentors from India’s Leading Tech Teams' }) => {
@@ -91,11 +44,6 @@ export const CompanyMarquee = ({ title = 'Mentors from India’s Leading Tech Te
                   src={c.logoSrc}
                   alt={`${c.name} logo`}
                   className="company-original-logo-img"
-                  style={{
-                    objectFit: 'contain',
-                    display: 'block',
-                    ...c.style,
-                  }}
                 />
               </div>
             ))}
@@ -113,11 +61,6 @@ export const CompanyMarquee = ({ title = 'Mentors from India’s Leading Tech Te
                   src={c.logoSrc}
                   alt={`${c.name} logo`}
                   className="company-original-logo-img"
-                  style={{
-                    objectFit: 'contain',
-                    display: 'block',
-                    ...c.style,
-                  }}
                 />
               </div>
             ))}

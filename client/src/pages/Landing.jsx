@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
-import Navbar from '../components/common/Navbar';
+import Header from '../components/common/Header';
+import Footer from '../components/common/Footer';
 import CheckoutModal from '../components/checkout/CheckoutModal';
 import ShareAds from '../components/checkout/ShareAds';
 import CompanyMarquee from '../components/common/CompanyMarquee';
 import PlacementDisclaimer from '../components/common/PlacementDisclaimer';
+import './Landing.css';
 import {
-  BRAND,
   PRICES,
   PLANS,
-  TOPICS,
   PILLARS,
   REVIEWS,
   RECEIPT_ITEMS,
@@ -38,9 +38,10 @@ export default function Landing() {
   const navigate = useNavigate();
   const [livePrices, setLivePrices] = useState(PRICES);
   const [courseList, setCourseList] = useState([]);
+  const [masterclassProduct, setMasterclassProduct] = useState(null);
+  const [channelProduct, setChannelProduct] = useState(null);
   const left = useCountdown(EARLY_BIRD_ENDS_AT);
   const early = left > 0;
-  const price = early ? livePrices.early : livePrices.regular;
   const session = useMemo(() => nextSessionLabel(), []);
   const [user, setUser] = useState(null);
   const [checkout, setCheckout] = useState(null); // { plan, price }
@@ -55,32 +56,51 @@ export default function Landing() {
   const isMasterclassOwned = isCourseOwned('masterclass');
   const isChannelOwned = isCourseOwned('channel');
 
+  // Dynamic values resolved from live database catalog
+  const displayPrice = masterclassProduct?.price !== undefined ? masterclassProduct.price : (livePrices.regular || 21);
+  const displaySession = masterclassProduct?.sessionDate || session;
+
   useEffect(() => {
-    api
-      .get('/products')
-      .then((res) => {
-        if (res.data?.products && res.data.products.length > 0) {
-          // Display active products (filtering out any old temporary test products)
-          const validCourses = res.data.products.filter((p) => p.productId !== 'placement_masterclass');
-          setCourseList(validCourses);
+    const syncData = () => {
+      api
+        .get('/courses')
+        .then((res) => {
+          const list = res.data?.courses || res.data?.products;
+          if (Array.isArray(list) && list.length > 0) {
+            const validCourses = list.filter((p) => p.isActive !== false);
+            setCourseList(validCourses);
 
-          const m = res.data.products.find((p) => p._id === 'masterclass' || p.productId === 'masterclass');
-          const c = res.data.products.find((p) => p._id === 'channel' || p.productId === 'channel');
-          if (m || c) {
-            setLivePrices((prev) => ({
-              ...prev,
-              ...(m ? { regular: m.price, early: m.price } : {}),
-              ...(c ? { channel: c.price } : {}),
-            }));
+            const m = list.find((p) => p._id === 'masterclass' || p.productId === 'masterclass' || p.category === 'masterclass');
+            const c = list.find((p) => p._id === 'channel' || p.productId === 'channel' || p.category === 'channel');
+
+            if (m) setMasterclassProduct(m);
+            if (c) setChannelProduct(c);
+
+            if (m || c) {
+              setLivePrices((prev) => ({
+                ...prev,
+                ...(m ? { regular: m.price, early: m.price } : {}),
+                ...(c ? { channel: c.price } : {}),
+              }));
+            }
           }
-        }
-      })
-      .catch(() => {});
+        })
+        .catch(() => {});
 
-    api
-      .get('/auth/me')
-      .then((r) => setUser(r.data.user))
-      .catch(() => setUser(null));
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        setUser(null);
+      } else {
+        api
+          .get('/auth/me')
+          .then((r) => setUser(r.data.user))
+          .catch(() => setUser(null));
+      }
+    };
+
+    syncData();
+    window.addEventListener('auth_state_change', syncData);
+    return () => window.removeEventListener('auth_state_change', syncData);
   }, []);
 
   const open = (planId, p, customPlan) => {
@@ -91,7 +111,7 @@ export default function Landing() {
     }
     // 2. If already owned, do not proceed to payment; route directly to course!
     if (isCourseOwned(planId)) {
-      navigate(`/products/${planId}/access`);
+      navigate(`/courses/${planId}/access`);
       return;
     }
     const resolvedPlan = customPlan || PLANS[planId] || { id: planId, title: planId, blurb: '' };
@@ -100,7 +120,7 @@ export default function Landing() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <Navbar user={user} />
+      <Header user={user} />
 
       <main style={{ flex: 1 }}>
         {/* HERO: The bill receipt with ₹9 next to a pizza */}
@@ -116,36 +136,34 @@ export default function Landing() {
               {isMasterclassOwned ? (
                 <Link
                   className="btn btn-secondary btn-lg"
-                  to="/products/masterclass/access"
+                  to="/courses/masterclass/access"
                   style={{ background: '#ecfdf5', color: '#065f46', borderColor: '#a7f3d0', fontWeight: 700 }}
                 >
                   ✓ Start Learning →
                 </Link>
               ) : (
-                <button className="btn btn-primary btn-lg" onClick={() => open('masterclass', price)}>
-                  Join for ₹{price}
+                <button className="btn btn-primary btn-lg" onClick={() => open('masterclass', displayPrice, masterclassProduct)}>
+                  Join for ₹{displayPrice}
                 </button>
               )}
               <Link className="btn btn-ghost btn-lg" to="/practice">
-                🎯 Practice Sheet & Live Mentorship
+                Practice Sheet & Mentorship
               </Link>
             </div>
             <p className="session">
-              Live online session: <strong>
-                {session}
-                </strong>
+              Live online session: <strong>{displaySession}</strong>
             </p>
             {early && (
               <p className="early" role="timer" aria-live="off">
-                Early-bird ₹{PRICES.early} ends in <strong>{fmt(left)}</strong>. Then ₹{PRICES.regular}.
+                Early-bird ₹{PRICES.early} ends in <strong>{fmt(left)}</strong>. Then ₹{displayPrice}.
               </p>
             )}
           </div>
 
           <div
-            className="receipt"
+            className="receipt landing-mobile-hide"
             role="img"
-            aria-label={`Price comparison: pizza, burger and coffee cost more than the Strivers masterclass at ₹${price}`}
+            aria-label={`Price comparison: pizza, burger and coffee cost more than the Strivers masterclass at ₹${displayPrice}`}
           >
             <p className="receipt-head">Strivers · today’s bill</p>
             <ul>
@@ -158,17 +176,19 @@ export default function Landing() {
             </ul>
             <div className="receipt-total">
               <span>Placement masterclass</span>
-              <strong>₹{price}</strong>
+              <strong>₹{displayPrice}</strong>
             </div>
-            <p className="receipt-foot">{early ? 'Early-bird: first 2 days' : 'This Sunday session'}</p>
+            <p className="receipt-foot">{masterclassProduct?.badge || (early ? 'Early-bird: first 2 days' : 'This Sunday session')}</p>
           </div>
         </section>
 
-        {/* CONTINUOUS LOOP LOGO MARQUEE RIBBON */}
-        <CompanyMarquee title="Mentors from India’s Leading Unicorns & Tech Teams" />
+        {/* CONTINUOUS LOOP LOGO MARQUEE RIBBON (Desktop Only) */}
+        <div className="landing-mobile-hide">
+          <CompanyMarquee title="Mentors from India’s Leading Unicorns & Tech Teams" />
+        </div>
 
-        {/* GUIDANCE & PLACEMENT DISCLAIMER */}
-        <section className="section" style={{ paddingTop: 0, paddingBottom: 16 }}>
+        {/* GUIDANCE & PLACEMENT DISCLAIMER (Desktop Only) */}
+        <section className="section landing-mobile-hide" style={{ paddingTop: 0, paddingBottom: 16 }}>
           <PlacementDisclaimer />
         </section>
 
@@ -183,19 +203,26 @@ export default function Landing() {
                   course.features && course.features.length > 0
                     ? course.features
                     : PLANS[course.productId]?.points || [];
-                const buttonText =
-                  course.category === 'channel'
-                    ? 'Enroll in Job Channel'
-                    : course.productId === 'masterclass'
-                    ? 'Join Masterclass'
-                    : `Enroll in ${course.title}`;
 
                 return (
-                  <article key={course.productId} className="course">
+                  <article
+                    key={course.productId}
+                    className="course landing-course-card"
+                    onClick={() => navigate(`/courses/${encodeURIComponent(course.productId)}`)}
+                  >
+                    {course.imageUrl && (
+                      <div className="landing-course-cover-wrap">
+                        <img
+                          src={course.imageUrl}
+                          alt={course.title}
+                          className="landing-course-cover-img"
+                        />
+                      </div>
+                    )}
                     <h3>{course.title}</h3>
                     <p className="muted">{course.description || PLANS[course.productId]?.blurb}</p>
-                    <ul className="ticks">
-                      {points.map((pt, i) => (
+                    <ul className="ticks landing-mobile-hide">
+                      {points.slice(0, 3).map((pt, i) => (
                         <li key={i}>{pt}</li>
                       ))}
                     </ul>
@@ -209,7 +236,8 @@ export default function Landing() {
                     {owned ? (
                       <Link
                         className="btn btn-secondary btn-block"
-                        to={`/products/${course.productId}/access`}
+                        to={`/courses/${course.productId}/access`}
+                        onClick={(e) => e.stopPropagation()}
                         style={{
                           background: '#ecfdf5',
                           color: '#065f46',
@@ -218,45 +246,53 @@ export default function Landing() {
                           textAlign: 'center',
                         }}
                       >
-                        ✓ Start Learning →
+                        Start Learning →
                       </Link>
                     ) : (
-                      <button
+                      <Link
                         className="btn btn-primary btn-block"
-                        onClick={() =>
-                          open(course.productId, course.price, {
-                            id: course.productId,
-                            title: course.title,
-                            blurb: course.description,
-                            points,
-                          })
-                        }
+                        to={`/courses/${course.productId}`}
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ textAlign: 'center' }}
                       >
-                        {buttonText}
-                      </button>
+                        View Course & Enroll →
+                      </Link>
                     )}
                   </article>
                 );
               })
             ) : (
               <>
-                <article className="course">
-                  <h3>{PLANS.masterclass.title}</h3>
-                  <p className="muted">{PLANS.masterclass.blurb}</p>
-                  <ul className="ticks">
-                    {PLANS.masterclass.points.map((p) => (
+                <article
+                  className="course landing-course-card"
+                  onClick={() => navigate('/courses/masterclass')}
+                >
+                  <h3>{masterclassProduct?.title || PLANS.masterclass.title}</h3>
+                  <p className="muted">{masterclassProduct?.description || PLANS.masterclass.blurb}</p>
+                  <ul className="ticks landing-mobile-hide">
+                    {(masterclassProduct?.features && masterclassProduct.features.length > 0
+                      ? masterclassProduct.features
+                      : PLANS.masterclass.points
+                    ).map((p) => (
                       <li key={p}>{p}</li>
                     ))}
                   </ul>
                   <div className="price-row">
-                    <span className="price">₹{price}</span>
-                    {early && <s className="was">₹{PRICES.regular}</s>}
-                    {early && <span className="off">Early-bird</span>}
+                    <span className="price">₹{displayPrice}</span>
+                    {masterclassProduct?.originalPrice ? (
+                      <s className="was">₹{masterclassProduct.originalPrice}</s>
+                    ) : early ? (
+                      <s className="was">₹{PRICES.regular}</s>
+                    ) : null}
+                    {(masterclassProduct?.badge || (early ? 'Early-bird' : '')) && (
+                      <span className="off">{masterclassProduct?.badge || 'Early-bird'}</span>
+                    )}
                   </div>
                   {isMasterclassOwned ? (
                     <Link
                       className="btn btn-secondary btn-block"
-                      to="/products/masterclass/access"
+                      to="/courses/masterclass/access"
+                      onClick={(e) => e.stopPropagation()}
                       style={{
                         background: '#ecfdf5',
                         color: '#065f46',
@@ -265,30 +301,46 @@ export default function Landing() {
                         textAlign: 'center',
                       }}
                     >
-                      ✓ Start Learning →
+                      Start Learning →
                     </Link>
                   ) : (
-                    <button className="btn btn-primary btn-block" onClick={() => open('masterclass', price)}>
-                      Join Masterclass
-                    </button>
+                    <Link
+                      className="btn btn-primary btn-block"
+                      to="/courses/masterclass"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{ textAlign: 'center' }}
+                    >
+                      View Course & Enroll →
+                    </Link>
                   )}
                 </article>
 
-                <article className="course">
-                  <h3>{PLANS.channel.title}</h3>
-                  <p className="muted">{PLANS.channel.blurb}</p>
-                  <ul className="ticks">
-                    {PLANS.channel.points.map((p) => (
+                <article
+                  className="course landing-course-card"
+                  onClick={() => navigate('/courses/channel')}
+                >
+                  <h3>{channelProduct?.title || PLANS.channel.title}</h3>
+                  <p className="muted">{channelProduct?.description || PLANS.channel.blurb}</p>
+                  <ul className="ticks landing-mobile-hide">
+                    {(channelProduct?.features && channelProduct.features.length > 0
+                      ? channelProduct.features
+                      : PLANS.channel.points
+                    ).map((p) => (
                       <li key={p}>{p}</li>
                     ))}
                   </ul>
                   <div className="price-row">
-                    <span className="price">₹{livePrices.channel}</span>
+                    <span className="price">₹{channelProduct?.price !== undefined ? channelProduct.price : livePrices.channel}</span>
+                    {channelProduct?.originalPrice && (
+                      <s className="was">₹{channelProduct.originalPrice}</s>
+                    )}
+                    {channelProduct?.badge && <span className="off">{channelProduct.badge}</span>}
                   </div>
                   {isChannelOwned ? (
                     <Link
                       className="btn btn-secondary btn-block"
-                      to="/products/channel/access"
+                      to="/courses/channel/access"
+                      onClick={(e) => e.stopPropagation()}
                       style={{
                         background: '#ecfdf5',
                         color: '#065f46',
@@ -297,33 +349,21 @@ export default function Landing() {
                         textAlign: 'center',
                       }}
                     >
-                      ✓ Access Job Channel →
+                      Access Job Channel →
                     </Link>
                   ) : (
-                    <button className="btn btn-primary btn-block" onClick={() => open('channel', livePrices.channel)}>
-                      Enroll in Job Channel
-                    </button>
+                    <Link
+                      className="btn btn-primary btn-block"
+                      to="/courses/channel"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{ textAlign: 'center' }}
+                    >
+                      View Course & Enroll →
+                    </Link>
                   )}
                 </article>
               </>
             )}
-          </div>
-        </section>
-
-        {/* WHAT YOU WILL LEARN */}
-        <section id="learn" className="section">
-          <h2>What you will learn</h2>
-          <div className="topics">
-            {TOPICS.map((t) => (
-              <article key={t.title} className="topic">
-                <h3>{t.title}</h3>
-                <ul>
-                  {t.points.map((p) => (
-                    <li key={p}>{p}</li>
-                  ))}
-                </ul>
-              </article>
-            ))}
           </div>
         </section>
 
@@ -372,19 +412,17 @@ export default function Landing() {
           </section>
         )}
 
-        {/* VIRAL SHARE ADS */}
-        <section id="share" className="section">
+        {/* VIRAL SHARE ADS (Desktop Only) */}
+        <section id="share" className="section landing-mobile-hide">
           <h2>Share it with a friend</h2>
           <p className="muted">
             Share this masterclass with friends via WhatsApp, Instagram, Facebook, Twitter, or copy the direct course link.
           </p>
-          <ShareAds price={price} early={early} />
+          <ShareAds price={displayPrice} early={early} />
         </section>
       </main>
 
-      <footer className="foot">
-        © {new Date().getFullYear()} {BRAND.name}. Mentorship and practical guidance for ambitious strivers.
-      </footer>
+      <Footer />
 
       {checkout && <CheckoutModal plan={checkout.plan} price={checkout.price} onClose={() => setCheckout(null)} />}
     </div>

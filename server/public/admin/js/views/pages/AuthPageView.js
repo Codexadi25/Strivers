@@ -30,13 +30,8 @@ export class AuthPageView {
 
       <div class="auth-card">
         <div class="auth-header">
-          <div class="auth-logo-chip">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
-              <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
-              <line x1="6" y1="6" x2="6.01" y2="6"></line>
-              <line x1="6" y1="18" x2="6.01" y2="18"></line>
-            </svg>
+          <div class="auth-logo-chip" style="background: transparent; box-shadow: none;">
+            <img src="/admin/favicon.ico" alt="Strivers logo" style="width: 52px; height: 52px; border-radius: 12px; object-fit: contain;" />
           </div>
           <h2>Strivers Backend Console</h2>
           <p class="auth-sub">Internal Server Administration & Product Pricing Engine</p>

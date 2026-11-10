@@ -1,5 +1,7 @@
 import React from 'react';
 import { useAntiCapture } from '../../hooks/useAntiCapture';
+import '../../assets/styles/secureViewer.css';
+import './DRMProtectionWrapper.css';
 
 export const DRMProtectionWrapper = ({ children }) => {
   const { isProtected, setIsProtected } = useAntiCapture();
@@ -9,7 +11,7 @@ export const DRMProtectionWrapper = ({ children }) => {
       {isProtected && (
         <div className="drm-obfuscation-screen" onClick={() => setIsProtected(false)}>
           <h2>Protected Content Hidden</h2>
-          <p style={{ marginTop: '8px', color: '#94a3b8' }}>
+          <p className="drm-obfuscation-note">
             Screen capture, developer tools, or tab de-focus detected. Click here to resume.
           </p>
         </div>

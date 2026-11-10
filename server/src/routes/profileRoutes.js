@@ -1,93 +1,109 @@
 const router = require('express').Router();
+const mongoose = require('mongoose');
 const UserProfile = require('../models/UserProfile');
-const UserAccess = require('../models/UserAccess');
 const { verifyFirebaseToken } = require('../middlewares/authMiddleware');
+const { loadJsonFile, saveJsonFile } = require('../utils/jsonStore');
 
-// Middleware to optionally extract user if token exists, but not fail if not authenticated
-const optionalAuth = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (authHeader && (authHeader.startsWith('Bearer ') || authHeader.startsWith('Session '))) {
-    return verifyFirebaseToken(req, res, next);
+const PROFILES_FILE = 'profiles.json';
+
+function isMongoReady() {
+  return mongoose.connection && mongoose.connection.readyState === 1;
+}
+
+function defaultStreak() {
+  return {
+    currentStreak: 0,
+    bestStreak: 0,
+    totalActiveDays: 0,
+    lastActiveDate: null,
+    weeklyMinutes: 0,
+    activeDates: [],
+    dailySubmissions: {},
+    weeklyDistribution: [
+      { day: 'S', dayIndex: 0, minutes: 0, time: '0h 0m' },
+      { day: 'M', dayIndex: 1, minutes: 0, time: '0h 0m' },
+      { day: 'T', dayIndex: 2, minutes: 0, time: '0h 0m' },
+      { day: 'W', dayIndex: 3, minutes: 0, time: '0h 0m' },
+      { day: 'T', dayIndex: 4, minutes: 0, time: '0h 0m' },
+      { day: 'F', dayIndex: 5, minutes: 0, time: '0h 0m' },
+      { day: 'S', dayIndex: 6, minutes: 0, time: '0h 0m' },
+    ],
+    currentWeek: 0,
+    bestWeek: 0,
+    currentMonth: 0,
+    bestMonth: 0,
+  };
+}
+
+function buildDefaultProfile(user) {
+  const email = (user.email || '').trim().toLowerCase();
+  return {
+    userId: user.uid || user.id || email,
+    email,
+    name: user.name || email.split('@')[0] || 'Student',
+    handle: `@${email.split('@')[0] || 'student'}`,
+    roleTitle: 'Software Development Engineer',
+    college: '',
+    graduationYear: 2026,
+    targetCompanies: ['Zomato', 'Blinkit', 'Swiggy', 'Porter', 'Flipkart', 'Amazon'],
+    solvedProblems: [],
+    starredProblems: [],
+    problemNotes: {},
+    streak: defaultStreak(),
+  };
+}
+
+function readLocalProfiles() {
+  const data = loadJsonFile(PROFILES_FILE, () => []);
+  return Array.isArray(data) ? data : [];
+}
+
+function findLocalProfile(userId, email) {
+  const profiles = readLocalProfiles();
+  return profiles.find(
+    (p) => (email && p.email === email) || (userId && p.userId === userId)
+  );
+}
+
+function upsertLocalProfile(userId, email, patchFn) {
+  const profiles = readLocalProfiles();
+  const idx = profiles.findIndex(
+    (p) => (email && p.email === email) || (userId && p.userId === userId)
+  );
+  const existing = idx >= 0 ? profiles[idx] : { userId, email };
+  const updated = patchFn(existing);
+  if (idx >= 0) {
+    profiles[idx] = updated;
+  } else {
+    profiles.push(updated);
   }
-  return next();
-};
+  saveJsonFile(PROFILES_FILE, profiles);
+  return updated;
+}
 
-// GET /api/v1/profile/me - Fetch user profile (cached / fetched once on mount)
-router.get('/me', optionalAuth, async (req, res) => {
+// GET /api/v1/profile/me - Requires valid authenticated student/admin session
+router.get('/me', verifyFirebaseToken, async (req, res) => {
   try {
-    const userId = req.user?.uid || req.user?.id || 'demo_student';
-    const email = req.user?.email || req.headers['x-user-email'] || 'creedracer111@gmail.com';
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
+    const userId = req.user.uid || req.user.id || req.user.email;
+    const email = (req.user.email || '').trim().toLowerCase();
 
-    let profile = await UserProfile.findOne({
-      $or: [{ userId }, { email }],
-    });
+    let profile = null;
+    if (isMongoReady()) {
+      profile = await UserProfile.findOne({ $or: [{ userId }, { email }] }).lean();
+      if (!profile) {
+        const created = await UserProfile.create(buildDefaultProfile(req.user));
+        profile = created.toObject ? created.toObject() : created;
+      }
+    }
 
     if (!profile) {
-      // Create initial profile for the user with verified dynamic stats
-      profile = await UserProfile.create({
-        userId,
-        email,
-        name: req.user?.name || 'Aditya Sahu',
-        handle: `@${email.split('@')[0] || 'aditya'}`,
-        roleTitle: 'Software Development Engineer (SDE-1)',
-        college: 'Indian Institute of Technology',
-        graduationYear: 2026,
-        targetCompanies: ['Zomato', 'Blinkit', 'Swiggy', 'Porter', 'Flipkart', 'Amazon'],
-        solvedProblems: ['dsa-1-1', 'dsa-1-2', 'dsa-2-1'],
-        starredProblems: ['dsa-1-1', 'dsa-3-1'],
-        streak: {
-          currentStreak: 8,
-          bestStreak: 14,
-          totalActiveDays: 16,
-          lastActiveDate: new Date(),
-          weeklyMinutes: 1355, // 22h 35m
-          activeDates: [
-            '2026-10-02',
-            '2026-10-05',
-            '2026-10-08',
-            '2026-10-12',
-            '2026-10-15',
-            '2026-10-19',
-            '2026-10-22',
-            '2026-10-23',
-            '2026-10-24',
-            '2026-10-25',
-            '2026-10-26',
-            '2026-10-27',
-            '2026-10-28',
-            '2026-10-29',
-          ],
-          dailySubmissions: {
-            '2026-10-29': 4,
-            '2026-10-28': 3,
-            '2026-10-27': 5,
-            '2026-10-26': 2,
-            '2026-10-25': 6,
-            '2026-10-24': 3,
-            '2026-10-23': 4,
-            '2026-10-22': 2,
-            '2026-10-19': 3,
-            '2026-10-15': 2,
-            '2026-10-12': 4,
-            '2026-10-08': 1,
-            '2026-10-05': 3,
-            '2026-10-02': 2,
-          },
-          weeklyDistribution: [
-            { day: 'S', dayIndex: 0, minutes: 90, time: '1h 30m' },
-            { day: 'M', dayIndex: 1, minutes: 195, time: '3h 15m' },
-            { day: 'T', dayIndex: 2, minutes: 160, time: '2h 40m' },
-            { day: 'W', dayIndex: 3, minutes: 250, time: '4h 10m' },
-            { day: 'T', dayIndex: 4, minutes: 170, time: '2h 50m' },
-            { day: 'F', dayIndex: 5, minutes: 210, time: '3h 30m' },
-            { day: 'S', dayIndex: 6, minutes: 270, time: '4h 30m' },
-          ],
-          currentWeek: 5,
-          bestWeek: 7,
-          currentMonth: 14,
-          bestMonth: 28,
-        },
-      });
+      profile = findLocalProfile(userId, email);
+      if (!profile) {
+        profile = upsertLocalProfile(userId, email, () => buildDefaultProfile(req.user));
+      }
     }
 
     return res.json({
@@ -104,11 +120,14 @@ router.get('/me', optionalAuth, async (req, res) => {
   }
 });
 
-// PUT /api/v1/profile/me - Update profile metadata (target companies, role, name, etc.)
-router.put('/me', optionalAuth, async (req, res) => {
+// PUT /api/v1/profile/me - Update authenticated profile metadata
+router.put('/me', verifyFirebaseToken, async (req, res) => {
   try {
-    const userId = req.user?.uid || req.user?.id || 'demo_student';
-    const email = req.user?.email || 'aditya.sahu@example.com';
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
+    const userId = req.user.uid || req.user.id || req.user.email;
+    const email = (req.user.email || '').trim().toLowerCase();
 
     const {
       name,
@@ -131,11 +150,20 @@ router.put('/me', optionalAuth, async (req, res) => {
     if (studyPlan !== undefined) updateFields.studyPlan = studyPlan;
     if (preferences !== undefined) updateFields.preferences = preferences;
 
-    const profile = await UserProfile.findOneAndUpdate(
-      { $or: [{ userId }, { email }] },
-      { $set: updateFields },
-      { new: true, upsert: true }
-    );
+    const localUpdated = upsertLocalProfile(userId, email, (existing) => ({
+      ...buildDefaultProfile(req.user),
+      ...existing,
+      ...updateFields,
+    }));
+
+    let profile = localUpdated;
+    if (isMongoReady()) {
+      profile = await UserProfile.findOneAndUpdate(
+        { $or: [{ userId }, { email }] },
+        { $set: updateFields },
+        { new: true, upsert: true }
+      ).lean();
+    }
 
     return res.json({
       success: true,
@@ -152,12 +180,14 @@ router.put('/me', optionalAuth, async (req, res) => {
   }
 });
 
-// POST /api/v1/profile/progress - On-demand sync for solved/starred problems and notes (NO polling loops)
-router.post('/progress', optionalAuth, async (req, res) => {
+// POST /api/v1/profile/progress - Sync solved/starred problems for authenticated user
+router.post('/progress', verifyFirebaseToken, async (req, res) => {
   try {
-    const userId = req.user?.uid || req.user?.id || 'demo_student';
-    const email = req.user?.email || req.headers['x-user-email'] || 'creedracer111@gmail.com';
-
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
+    const userId = req.user.uid || req.user.id || req.user.email;
+    const email = (req.user.email || '').trim().toLowerCase();
     const { solvedProblems, starredProblems, problemNotes } = req.body;
 
     const updateFields = {};
@@ -165,63 +195,66 @@ router.post('/progress', optionalAuth, async (req, res) => {
     if (Array.isArray(starredProblems)) updateFields.starredProblems = starredProblems;
     if (problemNotes && typeof problemNotes === 'object') updateFields.problemNotes = problemNotes;
 
-    // Check & advance streak active day if problem was marked solved today
-    const profile = await UserProfile.findOne({ $or: [{ userId }, { email }] });
-    if (profile) {
+    const localUpdated = upsertLocalProfile(userId, email, (existing) => {
+      const base = existing.streak ? existing : buildDefaultProfile(req.user);
+      const streak = { ...(base.streak || defaultStreak()) };
       const today = new Date().setHours(0, 0, 0, 0);
       const todayDateStr = new Date().toISOString().slice(0, 10);
-      const lastActive = profile.streak?.lastActiveDate
-        ? new Date(profile.streak.lastActiveDate).setHours(0, 0, 0, 0)
+      const lastActive = streak.lastActiveDate
+        ? new Date(streak.lastActiveDate).setHours(0, 0, 0, 0)
         : null;
 
-      // Ensure activeDates includes today
-      const currentActiveDates = profile.streak?.activeDates || [];
-      if (!currentActiveDates.includes(todayDateStr)) {
-        updateFields['streak.activeDates'] = [...currentActiveDates, todayDateStr];
+      const activeDates = Array.isArray(streak.activeDates) ? [...streak.activeDates] : [];
+      if (!activeDates.includes(todayDateStr)) {
+        activeDates.push(todayDateStr);
       }
+      streak.activeDates = activeDates;
 
-      // Increment dailySubmissions for today
-      const currentSubmissions = profile.streak?.dailySubmissions
-        ? Object.fromEntries(profile.streak.dailySubmissions instanceof Map ? profile.streak.dailySubmissions : Object.entries(profile.streak.dailySubmissions))
-        : {};
-      currentSubmissions[todayDateStr] = (currentSubmissions[todayDateStr] || 0) + 1;
-      updateFields['streak.dailySubmissions'] = currentSubmissions;
+      const dailySubmissions = { ...(streak.dailySubmissions || {}) };
+      dailySubmissions[todayDateStr] = (dailySubmissions[todayDateStr] || 0) + 1;
+      streak.dailySubmissions = dailySubmissions;
 
-      // Add minutes to weeklyDistribution
-      const dayIndex = new Date().getDay(); // 0 = Sunday
-      const weeklyDist = profile.streak?.weeklyDistribution && profile.streak.weeklyDistribution.length === 7
-        ? [...profile.streak.weeklyDistribution]
-        : [
-            { day: 'S', dayIndex: 0, minutes: 90, time: '1h 30m' },
-            { day: 'M', dayIndex: 1, minutes: 195, time: '3h 15m' },
-            { day: 'T', dayIndex: 2, minutes: 160, time: '2h 40m' },
-            { day: 'W', dayIndex: 3, minutes: 250, time: '4h 10m' },
-            { day: 'T', dayIndex: 4, minutes: 170, time: '2h 50m' },
-            { day: 'F', dayIndex: 5, minutes: 210, time: '3h 30m' },
-            { day: 'S', dayIndex: 6, minutes: 270, time: '4h 30m' },
-          ];
+      const dayIndex = new Date().getDay();
+      const weeklyDist = Array.isArray(streak.weeklyDistribution) && streak.weeklyDistribution.length === 7
+        ? streak.weeklyDistribution.map((d) => ({ ...d }))
+        : defaultStreak().weeklyDistribution;
       weeklyDist[dayIndex].minutes = (weeklyDist[dayIndex].minutes || 0) + 15;
       const h = Math.floor(weeklyDist[dayIndex].minutes / 60);
       const m = weeklyDist[dayIndex].minutes % 60;
       weeklyDist[dayIndex].time = `${h}h ${m}m`;
-      updateFields['streak.weeklyDistribution'] = weeklyDist;
-      updateFields['streak.weeklyMinutes'] = (profile.streak?.weeklyMinutes || 1355) + 15;
+      streak.weeklyDistribution = weeklyDist;
+      streak.weeklyMinutes = (streak.weeklyMinutes || 0) + 15;
 
       if (!lastActive || today > lastActive) {
-        updateFields['streak.totalActiveDays'] = (profile.streak?.totalActiveDays || 0) + 1;
-        updateFields['streak.currentStreak'] = (profile.streak?.currentStreak || 0) + 1;
-        if (updateFields['streak.currentStreak'] > (profile.streak?.bestStreak || 0)) {
-          updateFields['streak.bestStreak'] = updateFields['streak.currentStreak'];
+        streak.totalActiveDays = (streak.totalActiveDays || 0) + 1;
+        streak.currentStreak = (streak.currentStreak || 0) + 1;
+        if (streak.currentStreak > (streak.bestStreak || 0)) {
+          streak.bestStreak = streak.currentStreak;
         }
-        updateFields['streak.lastActiveDate'] = new Date();
+        streak.lastActiveDate = new Date().toISOString();
       }
-    }
 
-    const updated = await UserProfile.findOneAndUpdate(
-      { $or: [{ userId }, { email }] },
-      { $set: updateFields },
-      { new: true, upsert: true }
-    );
+      return {
+        ...base,
+        ...updateFields,
+        streak,
+      };
+    });
+
+    let updated = localUpdated;
+    if (isMongoReady()) {
+      const mongoDoc = await UserProfile.findOneAndUpdate(
+        { $or: [{ userId }, { email }] },
+        {
+          $set: {
+            ...updateFields,
+            streak: localUpdated.streak,
+          },
+        },
+        { new: true, upsert: true }
+      ).lean();
+      if (mongoDoc) updated = mongoDoc;
+    }
 
     return res.json({
       success: true,

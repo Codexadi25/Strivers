@@ -16,7 +16,7 @@ export const BRAND = {
 };
 
 // ---- Pricing (display only; the server is the source of truth) ----
-export const PRICES = { early: 9, regular: 21, channel: 174 };
+export const PRICES = { early: 21, regular: 21, channel: 174 };
 export const EARLY_BIRD_HOURS = 48;
 export const LAUNCH_AT = getEnv('LAUNCH_AT') ? new Date(getEnv('LAUNCH_AT')).getTime() : null;
 export const EARLY_BIRD_ENDS_AT = LAUNCH_AT ? LAUNCH_AT + EARLY_BIRD_HOURS * 3600e3 : null;

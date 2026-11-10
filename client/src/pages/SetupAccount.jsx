@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import api from '../utils/api';
-import Navbar from '../components/common/Navbar';
+import Header from '../components/common/Header';
+import Footer from '../components/common/Footer';
+import './Auth.css';
 
 export default function SetupAccount() {
   const [params] = useSearchParams();
@@ -33,7 +35,7 @@ export default function SetupAccount() {
     setBusy(true);
     try {
       const { data } = await api.post('/auth/setup-account', { token, password });
-      navigate(data.accessUrl || '/products');
+      navigate(data.accessUrl || '/courses');
     } catch (err) {
       const d = err.response?.data?.details;
       setError(
@@ -44,8 +46,8 @@ export default function SetupAccount() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <Navbar />
+    <div className="auth-page-root">
+      <Header />
 
       <main className="auth-wrap" style={{ flex: 1, maxWidth: 440, margin: '60px auto', width: '100%' }}>
         <h1>Payment Received. Set Your Password</h1>
@@ -89,6 +91,7 @@ export default function SetupAccount() {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   );
 }

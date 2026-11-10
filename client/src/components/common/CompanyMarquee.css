@@ -1,0 +1,106 @@
+/* Strivers Company Marquee Styles */
+
+.marquee-wrapper-section {
+  padding: 40px 0 32px;
+  background: #FFFFFF;
+  border-top: 1px solid #E2E8F0;
+  border-bottom: 1px solid #E2E8F0;
+  overflow: hidden;
+}
+
+.marquee-header-row {
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto 24px;
+  padding: 0 20px;
+}
+
+.marquee-flashing-badge {
+  display: inline-block;
+  background: #EEF2FF;
+  color: #2F4BFF;
+  border: 1px solid #C7D2FE;
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.marquee-title {
+  font-size: clamp(1.2rem, 3.5vw, 1.55rem);
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0 0 6px;
+  font-family: var(--font-heading, inherit);
+}
+
+.marquee-subtitle {
+  font-size: 0.88rem;
+  color: #64748B;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.marquee-ribbon-container {
+  display: flex;
+  overflow: hidden;
+  user-select: none;
+  position: relative;
+  width: 100%;
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll 32s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+.marquee-content-group {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding-right: 32px;
+  flex-shrink: 0;
+}
+
+.company-pill-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 10px 20px;
+  min-width: 130px;
+  height: 60px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.company-pill-item:hover {
+  transform: translateY(-2px);
+  border-color: #CBD5E1;
+  background: #FFFFFF;
+}
+
+.company-original-logo-img {
+  max-height: 38px;
+  max-width: 110px;
+  object-fit: contain;
+  display: block;
+}
+
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+

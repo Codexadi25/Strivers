@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Landing from './pages/Landing';
-import Products from './pages/Products';
-import ProductAccess from './pages/ProductAccess';
+import Courses from './pages/Courses';
+import CourseDetail from './pages/CourseDetail';
+import CourseAccess from './pages/CourseAccess';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import SetupAccount from './pages/SetupAccount';
@@ -42,9 +43,10 @@ function App() {
         <Route path="/practice" element={<PracticeDashboard />} />
         <Route path="/dashboard" element={<PracticeDashboard />} />
 
-        {/* Member Courses & DRM Gated Viewer */}
-        <Route path="/products" element={<Products />} />
-        <Route path="/products/:id/access" element={<ProductAccess />} />
+        {/* Member Courses, Course Details & Classroom Viewer */}
+        <Route path="/courses" element={<Courses />} />
+        <Route path="/courses/:id" element={<CourseDetail />} />
+        <Route path="/courses/:id/access" element={<CourseAccess />} />
         <Route path="/viewer" element={<ViewerPage />} />
 
         {/* Auth & Member Onboarding */}

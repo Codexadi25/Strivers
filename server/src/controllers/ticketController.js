@@ -3,7 +3,7 @@ const Payment = require('../models/Payment');
 const SupportTicket = require('../models/SupportTicket');
 const ActivityLog = require('../models/ActivityLog');
 const UserAccess = require('../models/UserAccess');
-const Product = require('../models/Product');
+const Course = require('../models/Course');
 
 // In-memory fallback caches for high-availability local testing & dev
 const inMemoryTickets = [];

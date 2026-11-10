@@ -4,15 +4,45 @@ import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
-import Badge from '@mui/material/Badge';
+import Paper from '@mui/material/Paper';
+import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
+import CircularProgress from '@mui/material/CircularProgress';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import LiveTvIcon from '@mui/icons-material/LiveTv';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import BarChartIcon from '@mui/icons-material/BarChart';
+import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import SearchIcon from '@mui/icons-material/Search';
+import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
+import BusinessCenterOutlinedIcon from '@mui/icons-material/BusinessCenterOutlined';
+import CodeOutlinedIcon from '@mui/icons-material/CodeOutlined';
+import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
+import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import PlayCircleOutlinedIcon from '@mui/icons-material/PlayCircleOutlined';
+import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
+import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined';
+import BoltOutlinedIcon from '@mui/icons-material/BoltOutlined';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import BookmarkBorderOutlinedIcon from '@mui/icons-material/BookmarkBorderOutlined';
+import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
+import Header from '../components/common/Header';
+import Footer from '../components/common/Footer';
+import StudentWatermarkOverlay from '../components/secureViewer/StudentWatermarkOverlay';
 import { TOPICS } from '../data/practiceSheetData';
 import { DOWNLOADABLE_NOTES } from '../data/downloadableNotesData';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../services/firebase';
 import { LIVE_MENTORSHIP } from '../data/mentorshipData';
 import CompanyMarquee from '../components/common/CompanyMarquee';
 import PlacementDisclaimer from '../components/common/PlacementDisclaimer';
@@ -22,7 +52,7 @@ import '../assets/styles/practiceDashboard.css';
 export default function PracticeDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dsa'); // 'dsa' | 'mentorship' | 'notes' | 'analytics'
-  const [practiceViewMode, setPracticeViewMode] = useState('my'); // 'my' | 'all'
+  const [practiceViewMode, setPracticeViewMode] = useState('all'); // 'my' | 'all'
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,6 +61,7 @@ export default function PracticeDashboard() {
   const [onlyRevision, setOnlyRevision] = useState(false);
 
   // User Profile & Authentication loaded from backend (fetched ONCE on mount, NO continuous polling)
+  const [authChecked, setAuthChecked] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const [userAuthData, setUserAuthData] = useState(null);
   const [userEnrolledSheets, setUserEnrolledSheets] = useState([]);
@@ -47,7 +78,7 @@ export default function PracticeDashboard() {
   const [passwordResetStatus, setPasswordResetStatus] = useState(null);
   const [enrollmentNotice, setEnrollmentNotice] = useState(null);
 
-  // Downloadable Notes & Strict DRM Anti-Screenshot Engine
+  // Downloadable Notes & Strict In-App Viewer Engine
   const [dbNotes, setDbNotes] = useState([]);
   const [activeSecretCodeNote, setActiveSecretCodeNote] = useState(null);
   const [inputSecretCode, setInputSecretCode] = useState('');
@@ -60,106 +91,140 @@ export default function PracticeDashboard() {
   const [isDocumentObfuscated, setIsDocumentObfuscated] = useState(false);
   const [screenshotWarningNotice, setScreenshotWarningNotice] = useState(false);
 
-  // Solved state persistent in localStorage + backend
-  const [solvedMap, setSolvedMap] = useState(() => {
-    try {
-      const stored = localStorage.getItem('strivers_solved_problems');
-      return stored ? JSON.parse(stored) : { 'dsa-1-1': true, 'dsa-1-2': true, 'dsa-2-1': true };
-    } catch {
-      return {};
-    }
-  });
+  // Solved, revision, and notes maps strictly synced from logged-in user profile
+  const [solvedMap, setSolvedMap] = useState({});
+  const [revisionMap, setRevisionMap] = useState({});
+  const [notesMap, setNotesMap] = useState({});
 
-  // Revision / bookmarked problems
-  const [revisionMap, setRevisionMap] = useState(() => {
-    try {
-      const stored = localStorage.getItem('strivers_revision_problems');
-      return stored ? JSON.parse(stored) : { 'dsa-1-1': true, 'dsa-3-1': true };
-    } catch {
-      return {};
-    }
-  });
-
-  // Personal notes
-  const [notesMap, setNotesMap] = useState(() => {
-    try {
-      const stored = localStorage.getItem('strivers_problem_notes');
-      return stored ? JSON.parse(stored) : {
-        'dsa-1-1': 'Used first row and first column as flag markers in-place.',
-        'dsa-1-2': 'Pascal Triangle row generation in O(N) using comb formula.',
-      };
-    } catch {
-      return {};
-    }
-  });
-
-  // Fetch original user profile data & practice sheets ONCE on component mount (No repeated API calls)
+  // Fetch user profile & practice sheets cleanly on mount and auth transitions
   useEffect(() => {
     let isMounted = true;
 
-    // 1. Fetch Profile
-    api
-      .get('/profile/me')
-      .then((res) => {
-        if (!isMounted) return;
-        if (res.data?.success && res.data.profile) {
-          const profile = res.data.profile;
-          setUserProfile(profile);
+    const clearAuthenticatedState = () => {
+      if (!isMounted) return;
+      setUserProfile(null);
+      setUserAuthData(null);
+      setUserEnrolledSheets([]);
+      setUserEnrolledCourses([]);
+      setDbNotes([]);
+      setSolvedMap({});
+      setRevisionMap({});
+      setNotesMap({});
+    };
 
-          if (Array.isArray(profile.solvedProblems) && profile.solvedProblems.length > 0) {
-            setSolvedMap((prev) => {
-              const updated = { ...prev };
-              profile.solvedProblems.forEach((pid) => {
-                updated[pid] = true;
-              });
-              try {
-                localStorage.setItem('strivers_solved_problems', JSON.stringify(updated));
-              } catch {}
-              return updated;
+    const syncAuthAndProfile = (fbUserOverride) => {
+      const storedToken = localStorage.getItem('auth_token');
+      const storedUserRaw = localStorage.getItem('auth_user');
+      const firebaseUser = fbUserOverride !== undefined ? fbUserOverride : auth?.currentUser;
+
+      if (storedUserRaw && (storedToken || firebaseUser)) {
+        try {
+          const parsedUser = JSON.parse(storedUserRaw);
+          if (parsedUser && isMounted) {
+            setUserAuthData((prev) => prev || parsedUser);
+          }
+        } catch (_) {}
+      }
+
+      const fetchProfileAndNotes = () => {
+        api
+          .get('/profile/me')
+          .then((res) => {
+            if (!isMounted) return;
+            if (res.data?.success && res.data.profile) {
+              const profile = res.data.profile;
+              setUserProfile(profile);
+
+              const solvedNext = {};
+              if (Array.isArray(profile.solvedProblems)) {
+                profile.solvedProblems.forEach((pid) => {
+                  solvedNext[pid] = true;
+                });
+              }
+              setSolvedMap(solvedNext);
+
+              const revNext = {};
+              if (Array.isArray(profile.starredProblems)) {
+                profile.starredProblems.forEach((pid) => {
+                  revNext[pid] = true;
+                });
+              }
+              setRevisionMap(revNext);
+
+              setNotesMap(
+                profile.problemNotes && typeof profile.problemNotes === 'object'
+                  ? { ...profile.problemNotes }
+                  : {}
+              );
+            }
+          })
+          .catch(() => {});
+
+        api
+          .get('/notes')
+          .then((res) => {
+            if (!isMounted) return;
+            if (res.data?.success && Array.isArray(res.data.notes)) {
+              setDbNotes(res.data.notes);
+            }
+          })
+          .catch(() => {});
+      };
+
+      api
+        .get('/auth/me')
+        .then((res) => {
+          if (!isMounted) return;
+          if (res.data?.success && res.data.user) {
+            setUserAuthData(res.data.user);
+            const enrolled = res.data.user.enrolledPracticeSheets || [];
+            setUserEnrolledSheets(enrolled);
+            if (enrolled.length > 0) {
+              setPracticeViewMode('my');
+            }
+            setUserEnrolledCourses(res.data.user.enrolledCourses || []);
+            try {
+              localStorage.setItem('auth_user', JSON.stringify(res.data.user));
+            } catch {}
+            fetchProfileAndNotes();
+          } else {
+            clearAuthenticatedState();
+          }
+        })
+        .catch(() => {
+          if (!isMounted) return;
+          if (firebaseUser) {
+            setUserAuthData({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Student',
+              role: 'user',
             });
+            fetchProfileAndNotes();
+          } else {
+            clearAuthenticatedState();
           }
+        })
+        .finally(() => {
+          if (isMounted) setAuthChecked(true);
+        });
+    };
 
-          if (Array.isArray(profile.starredProblems) && profile.starredProblems.length > 0) {
-            setRevisionMap((prev) => {
-              const updated = { ...prev };
-              profile.starredProblems.forEach((pid) => {
-                updated[pid] = true;
-              });
-              try {
-                localStorage.setItem('strivers_revision_problems', JSON.stringify(updated));
-              } catch {}
-              return updated;
-            });
+    syncAuthAndProfile();
+    window.addEventListener('auth_state_change', syncAuthAndProfile);
+
+    let unsubscribeFirebase = () => {};
+    try {
+      if (auth && typeof onAuthStateChanged === 'function') {
+        unsubscribeFirebase = onAuthStateChanged(auth, (fbUser) => {
+          if (fbUser || localStorage.getItem('auth_token')) {
+            syncAuthAndProfile(fbUser);
           }
+        });
+      }
+    } catch (_) {}
 
-          if (profile.problemNotes && typeof profile.problemNotes === 'object') {
-            setNotesMap((prev) => ({
-              ...prev,
-              ...profile.problemNotes,
-            }));
-          }
-        }
-      })
-      .catch((err) => {
-        console.warn('Profile loaded with fallback defaults:', err?.message || err);
-      });
-
-    // 2. Fetch User Auth & Permanent Enrolled Courses / Sheets
-    api
-      .get('/auth/me')
-      .then((res) => {
-        if (!isMounted) return;
-        if (res.data?.success && res.data.user) {
-          setUserAuthData(res.data.user);
-          setUserEnrolledSheets(res.data.user.enrolledPracticeSheets || []);
-          setUserEnrolledCourses(res.data.user.enrolledCourses || []);
-        }
-      })
-      .catch((err) => {
-        console.warn('Auth session check:', err?.message || err);
-      });
-
-    // 3. Fetch Live Practice Sheets
+    // 3. Fetch Live Practice Sheets (Public Catalog)
     api
       .get('/practice/sheets')
       .then((res) => {
@@ -178,30 +243,20 @@ export default function PracticeDashboard() {
 
     // 4. Fetch Live Courses & Masterclasses for Live Mentorship Room
     api
-      .get('/products')
+      .get('/courses')
       .then((res) => {
         if (!isMounted) return;
-        if (res.data?.products) {
-          setLiveProducts(res.data.products);
+        const raw = res.data?.courses || res.data?.products;
+        if (raw) {
+          setLiveProducts(raw);
         }
       })
       .catch(() => {});
 
-    // 5. Fetch Downloadable Notes (Protected by Auth)
-    api
-      .get('/notes')
-      .then((res) => {
-        if (!isMounted) return;
-        if (res.data?.success && Array.isArray(res.data.notes)) {
-          setDbNotes(res.data.notes);
-        }
-      })
-      .catch((err) => {
-        console.warn('Notes fetch note:', err?.message || err);
-      });
-
     return () => {
       isMounted = false;
+      window.removeEventListener('auth_state_change', syncAuthAndProfile);
+      unsubscribeFirebase();
     };
   }, []);
 
@@ -406,13 +461,37 @@ export default function PracticeDashboard() {
     }
   };
 
+  // Dynamic Tech sheets from backend (with baseline fallback if offline)
+  const techTopicsSource = useMemo(() => {
+    const techSheets = practiceSheets.filter((s) => s.roleType === 'tech' && Array.isArray(s.topics) && s.topics.length > 0);
+    if (techSheets.length > 0) {
+      return techSheets[0].topics.map((t, idx) => ({
+        id: t.topicId || `day-${idx + 1}`,
+        dayNumber: idx + 1,
+        title: t.topicTitle || t.title || `Module ${idx + 1}`,
+        category: t.summary || 'DSA',
+        problems: (t.problems || []).map((p) => ({
+          id: p.id,
+          title: p.title,
+          difficulty: p.difficulty || 'Medium',
+          articleUrl: p.resourceLink || p.articleUrl || '#',
+          videoUrl: p.videoUrl || '#',
+          practiceUrl: p.resourceLink || p.practiceUrl || '#',
+          companies: p.companies || (p.company ? [p.company] : ['Top Tech']),
+          note: p.keyTakeaway || p.solutionGuidance || '',
+        })),
+      }));
+    }
+    return TOPICS;
+  }, [practiceSheets]);
+
   // Metrics calculation
   const allProblems = useMemo(() => {
     if (selectedTrackCategory === 'non-tech') {
       return activeNonTechProblems;
     }
-    return TOPICS.flatMap((t) => t.problems);
-  }, [selectedTrackCategory, activeNonTechProblems]);
+    return techTopicsSource.flatMap((t) => t.problems);
+  }, [selectedTrackCategory, activeNonTechProblems, techTopicsSource]);
 
   const totalProblemsCount = allProblems.length;
   const totalSolvedCount = useMemo(() => {
@@ -431,7 +510,7 @@ export default function PracticeDashboard() {
 
   // Filtered Topics
   const filteredTopics = useMemo(() => {
-    return TOPICS.map((day) => {
+    return techTopicsSource.map((day) => {
       const filtered = day.problems.filter((p) => {
         const matchesSearch =
           !searchQuery ||
@@ -449,7 +528,7 @@ export default function PracticeDashboard() {
 
       return { ...day, problems: filtered };
     }).filter((day) => day.problems.length > 0);
-  }, [searchQuery, difficultyFilter, onlySaved, onlyRevision, revisionMap]);
+  }, [techTopicsSource, searchQuery, difficultyFilter, onlySaved, onlyRevision, revisionMap]);
 
   // Downloadable notes (Dynamic from MongoDB with Free & Paid classification)
   const combinedNotesList = useMemo(() => {
@@ -497,10 +576,10 @@ export default function PracticeDashboard() {
   // Dynamic Streak & Calendar Computations from User Activity
   const streakData = useMemo(() => {
     const rawStreak = userProfile?.streak || {};
-    const currentStreak = rawStreak.currentStreak || 8;
-    const totalActiveDays = rawStreak.totalActiveDays || 16;
-    const bestStreak = rawStreak.bestStreak || 14;
-    const weeklyMinutes = rawStreak.weeklyMinutes || 1355;
+    const currentStreak = rawStreak.currentStreak ?? 0;
+    const totalActiveDays = rawStreak.totalActiveDays ?? 0;
+    const bestStreak = rawStreak.bestStreak ?? 0;
+    const weeklyMinutes = rawStreak.weeklyMinutes ?? 0;
     const activeDatesList = Array.isArray(rawStreak.activeDates) ? rawStreak.activeDates : [];
 
     const now = new Date();
@@ -534,13 +613,13 @@ export default function PracticeDashboard() {
     const weeklyDistribution = rawStreak.weeklyDistribution && rawStreak.weeklyDistribution.length === 7
       ? rawStreak.weeklyDistribution
       : [
-          { day: 'S', dayIndex: 0, minutes: 90, time: '1h 30m' },
-          { day: 'M', dayIndex: 1, minutes: 195, time: '3h 15m' },
-          { day: 'T', dayIndex: 2, minutes: 160, time: '2h 40m' },
-          { day: 'W', dayIndex: 3, minutes: 250, time: '4h 10m' },
-          { day: 'T', dayIndex: 4, minutes: 170, time: '2h 50m' },
-          { day: 'F', dayIndex: 5, minutes: 210, time: '3h 30m' },
-          { day: 'S', dayIndex: 6, minutes: 270, time: '4h 30m' },
+          { day: 'S', dayIndex: 0, minutes: 0, time: '0h 0m' },
+          { day: 'M', dayIndex: 1, minutes: 0, time: '0h 0m' },
+          { day: 'T', dayIndex: 2, minutes: 0, time: '0h 0m' },
+          { day: 'W', dayIndex: 3, minutes: 0, time: '0h 0m' },
+          { day: 'T', dayIndex: 4, minutes: 0, time: '0h 0m' },
+          { day: 'F', dayIndex: 5, minutes: 0, time: '0h 0m' },
+          { day: 'S', dayIndex: 6, minutes: 0, time: '0h 0m' },
         ];
 
     const streakSuffix = currentStreak === 1 ? 'st' : currentStreak === 2 ? 'nd' : currentStreak === 3 ? 'rd' : 'th';
@@ -824,6 +903,58 @@ export default function PracticeDashboard() {
     };
   }, [drmActiveNote]);
 
+  if (!authChecked) {
+    return (
+      <div className="pd-auth-gate-shell">
+        <Header user={null} />
+        <main className="pd-auth-gate-main">
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, color: '#64748B' }}>
+            <CircularProgress size={32} />
+            <Typography variant="body2">Verifying session and loading your profile...</Typography>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!userAuthData) {
+    return (
+      <div className="pd-auth-gate-shell">
+        <Header user={null} />
+        <main className="pd-auth-gate-main">
+          <Paper elevation={0} className="pd-auth-gate-card">
+            <LockOutlinedIcon sx={{ fontSize: 48, color: '#2563EB', mb: 1.5 }} />
+            <Typography variant="h5" sx={{ fontWeight: 800, color: '#0F172A', mb: 1 }}>
+              Sign In Required
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#64748B', lineHeight: 1.6, mb: 3 }}>
+              Practice sheets, live mentorship sessions, study notes, and your personal stats are only available after signing in to your Strivers account.
+            </Typography>
+            <div className="pd-auth-gate-actions">
+              <Button
+                variant="contained"
+                color="primary"
+                data-testid="practice-signin-btn"
+                endIcon={<ArrowForwardIcon />}
+                onClick={() => navigate('/login?redirect=/practice')}
+              >
+                Sign In to Continue
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => navigate('/register?redirect=/practice')}
+              >
+                Create Account
+              </Button>
+            </div>
+          </Paper>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="dashboard-layout">
       {/* ====================================================================
@@ -833,10 +964,13 @@ export default function PracticeDashboard() {
         <div className="sidebar-header">
           {!isSidebarCollapsed && (
             <Link to="/" className="sidebar-logo">
-              <svg width="26" height="26" viewBox="0 0 64 64" aria-hidden="true">
-                <rect width="64" height="64" rx="14" fill="#0E1B3D" />
-                <path d="M20 44l12-24 12 24" fill="none" stroke="#FFB703" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <img
+                src="/favicon.ico"
+                alt="Strivers logo"
+                width="26"
+                height="26"
+                style={{ borderRadius: 6, objectFit: 'contain', display: 'block' }}
+              />
               <span>Strivers</span>
             </Link>
           )}
@@ -855,7 +989,7 @@ export default function PracticeDashboard() {
             onClick={() => setActiveTab('dsa')}
             title="Sheets & Practice Problems"
           >
-            <span style={{ fontSize: '1.2rem' }}>📑</span>
+            <AssignmentIcon fontSize="small" />
             {!isSidebarCollapsed && <span>Sheets</span>}
           </button>
 
@@ -865,13 +999,13 @@ export default function PracticeDashboard() {
                 className={`subnav-btn ${practiceViewMode === 'my' ? 'active' : ''}`}
                 onClick={() => setPracticeViewMode('my')}
               >
-                📑 My Practice Sheets ({userEnrolledSheets.length})
+                My Practice Sheets ({userEnrolledSheets.length})
               </button>
               <button
                 className={`subnav-btn ${practiceViewMode === 'all' ? 'active' : ''}`}
                 onClick={() => setPracticeViewMode('all')}
               >
-                📚 All Practice Sheets ({practiceSheets.length})
+                All Practice Sheets ({practiceSheets.length})
               </button>
             </div>
           )}
@@ -881,7 +1015,7 @@ export default function PracticeDashboard() {
             onClick={() => setActiveTab('mentorship')}
             title="Live Mentorship & Masterclasses"
           >
-            <span style={{ fontSize: '1.2rem' }}>🔴</span>
+            <LiveTvIcon fontSize="small" />
             {!isSidebarCollapsed && (
               <>
                 <span>Live Mentorship</span>
@@ -895,7 +1029,7 @@ export default function PracticeDashboard() {
             onClick={() => setActiveTab('notes')}
             title="Downloadable Notes & Cheatsheets"
           >
-            <span style={{ fontSize: '1.2rem' }}>📝</span>
+            <MenuBookIcon fontSize="small" />
             {!isSidebarCollapsed && <span>Downloadable Notes</span>}
           </button>
 
@@ -904,7 +1038,7 @@ export default function PracticeDashboard() {
             onClick={() => setActiveTab('analytics')}
             title="Profile & Consistency Analytics"
           >
-            <span style={{ fontSize: '1.2rem' }}>📊</span>
+            <BarChartIcon fontSize="small" />
             {!isSidebarCollapsed && <span>Profile & Stats</span>}
           </button>
         </nav>
@@ -912,7 +1046,7 @@ export default function PracticeDashboard() {
         {!isSidebarCollapsed && (
           <div className="sidebar-footer">
             <div className="streak-card-mini" onClick={() => setIsStreakModalOpen(true)}>
-              <span style={{ fontSize: '1.6rem' }}>🔥</span>
+              <LocalFireDepartmentIcon sx={{ fontSize: 24, color: '#D97706' }} />
               <div>
                 <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#92400E' }}>
                   {streakData.currentStreak}{streakData.streakSuffix} Day Streak
@@ -942,19 +1076,22 @@ export default function PracticeDashboard() {
               <MenuIcon />
             </IconButton>
             <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none', marginLeft: 4 }}>
-              <svg width="24" height="24" viewBox="0 0 64 64" aria-hidden="true">
-                <rect width="64" height="64" rx="14" fill="#0E1B3D" />
-                <path d="M20 44l12-24 12 24" fill="none" stroke="#FFB703" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <img
+                src="/favicon.ico"
+                alt="Strivers logo"
+                width="24"
+                height="24"
+                style={{ borderRadius: 6, objectFit: 'contain', display: 'block' }}
+              />
               <span style={{ fontWeight: 800, fontSize: '1.05rem', color: '#0E1B3D', fontFamily: 'var(--display)' }}>Strivers</span>
             </Link>
           </div>
 
           <div className="topbar-search">
-            <span>🔍</span>
+            <SearchIcon sx={{ fontSize: 18, color: '#64748B' }} />
             <input
               type="text"
-              placeholder={activeTab === 'notes' ? 'Search study notes, roadmaps, cheatsheets...' : 'Search topics, problems, companies (e.g. Google, Arrays)...'}
+              placeholder={activeTab === 'notes' ? 'Search study notes, cheatsheets...' : 'Search topics, problems, companies...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -962,7 +1099,7 @@ export default function PracticeDashboard() {
 
           <div className="topbar-actions">
             <button className="streak-pill-btn" onClick={() => setIsStreakModalOpen(true)}>
-              <span>🔥</span>
+              <LocalFireDepartmentIcon sx={{ fontSize: 16, color: '#D97706' }} />
               <span>
                 {streakData.currentStreak}{streakData.streakSuffix} day streak
               </span>
@@ -982,7 +1119,7 @@ export default function PracticeDashboard() {
               </div>
             </button>
 
-            <Link className="btn btn-ghost" to="/" style={{ padding: '6px 14px', fontSize: '0.85rem' }}>
+            <Link className="btn btn-ghost pd-mobile-hide" to="/" style={{ padding: '6px 14px', fontSize: '0.85rem' }}>
               Home
             </Link>
           </div>
@@ -997,19 +1134,20 @@ export default function PracticeDashboard() {
             scrollButtons="auto"
             allowScrollButtonsMobile
             sx={{
-              minHeight: 38,
+              minHeight: 40,
               width: '100%',
               '& .MuiTabs-indicator': { backgroundColor: '#2563EB', height: 2.5, borderRadius: '2px 2px 0 0' },
-              '& .MuiTabs-flexContainer': { gap: '2px' },
+              '& .MuiTabs-flexContainer': { gap: '4px' },
               '& .MuiTab-root': {
-                minHeight: 38,
+                minHeight: 40,
                 minWidth: 'auto',
-                padding: '4px 10px',
-                fontSize: '0.78rem',
+                padding: '6px 12px',
+                fontSize: '0.8rem',
                 fontWeight: 700,
                 textTransform: 'none',
                 color: '#64748B',
                 borderRadius: '6px 6px 0 0',
+                whiteSpace: 'nowrap',
                 '&.Mui-selected': { color: '#2563EB', background: 'rgba(37, 99, 235, 0.06)' },
               },
             }}
@@ -1022,25 +1160,7 @@ export default function PracticeDashboard() {
             />
             <Tab
               value="mentorship"
-              icon={
-                <Badge
-                  badgeContent="LIVE"
-                  color="error"
-                  sx={{
-                    '& .MuiBadge-badge': {
-                      fontSize: '0.58rem',
-                      height: 13,
-                      minWidth: 13,
-                      padding: '0 3px',
-                      fontWeight: 800,
-                      right: -6,
-                      top: 4,
-                    },
-                  }}
-                >
-                  <LiveTvIcon sx={{ fontSize: 16 }} />
-                </Badge>
-              }
+              icon={<LiveTvIcon sx={{ fontSize: 16 }} />}
               iconPosition="start"
               label="Mentorship"
             />
@@ -1065,15 +1185,17 @@ export default function PracticeDashboard() {
           open={mobileDrawerOpen}
           onClose={() => setMobileDrawerOpen(false)}
           ModalProps={{ keepMounted: true }}
-          PaperProps={{
-            sx: {
-              width: 'min(82vw, 300px)',
-              background: '#FFFFFF',
-              boxSizing: 'border-box',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              boxShadow: '4px 0 24px rgba(0,0,0,0.12)',
+          slotProps={{
+            paper: {
+              sx: {
+                width: 'min(82vw, 300px)',
+                background: '#FFFFFF',
+                boxSizing: 'border-box',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                boxShadow: '4px 0 24px rgba(0,0,0,0.12)',
+              },
             },
           }}
         >
@@ -1088,10 +1210,13 @@ export default function PracticeDashboard() {
               }}
             >
               <Link to="/" className="sidebar-logo" onClick={() => setMobileDrawerOpen(false)}>
-                <svg width="26" height="26" viewBox="0 0 64 64" aria-hidden="true">
-                  <rect width="64" height="64" rx="14" fill="#0E1B3D" />
-                  <path d="M20 44l12-24 12 24" fill="none" stroke="#FFB703" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <img
+                  src="/favicon.ico"
+                  alt="Strivers logo"
+                  width="26"
+                  height="26"
+                  style={{ borderRadius: 6, objectFit: 'contain', display: 'block' }}
+                />
                 <span>Strivers</span>
               </Link>
 
@@ -1114,8 +1239,8 @@ export default function PracticeDashboard() {
                 }}
                 style={{ width: '100%' }}
               >
-                <span style={{ fontSize: '1.2rem' }}>📑</span>
-                <span>Sheets & Tracks</span>
+                <AssignmentIcon fontSize="small" />
+                <span>Sheets &amp; Tracks</span>
               </button>
 
               {activeTab === 'dsa' && (
@@ -1127,7 +1252,7 @@ export default function PracticeDashboard() {
                       setMobileDrawerOpen(false);
                     }}
                   >
-                    📑 My Practice Sheets ({userEnrolledSheets.length})
+                    My Practice Sheets ({userEnrolledSheets.length})
                   </button>
                   <button
                     className={`subnav-btn ${practiceViewMode === 'all' ? 'active' : ''}`}
@@ -1136,7 +1261,7 @@ export default function PracticeDashboard() {
                       setMobileDrawerOpen(false);
                     }}
                   >
-                    📚 All Practice Sheets ({practiceSheets.length})
+                    All Practice Sheets ({practiceSheets.length})
                   </button>
                 </div>
               )}
@@ -1149,7 +1274,7 @@ export default function PracticeDashboard() {
                 }}
                 style={{ width: '100%' }}
               >
-                <span style={{ fontSize: '1.2rem' }}>🔴</span>
+                <LiveTvIcon fontSize="small" />
                 <span style={{ flex: 1, textAlign: 'left' }}>Live Mentorship</span>
                 <span className="nav-item-badge">LIVE</span>
               </button>
@@ -1162,7 +1287,7 @@ export default function PracticeDashboard() {
                 }}
                 style={{ width: '100%' }}
               >
-                <span style={{ fontSize: '1.2rem' }}>📝</span>
+                <MenuBookIcon fontSize="small" />
                 <span>Downloadable Notes</span>
               </button>
 
@@ -1174,8 +1299,8 @@ export default function PracticeDashboard() {
                 }}
                 style={{ width: '100%' }}
               >
-                <span style={{ fontSize: '1.2rem' }}>📊</span>
-                <span>Profile & Stats</span>
+                <BarChartIcon fontSize="small" />
+                <span>Profile &amp; Stats</span>
               </button>
             </nav>
           </div>
@@ -1189,7 +1314,7 @@ export default function PracticeDashboard() {
               }}
               style={{ cursor: 'pointer' }}
             >
-              <span style={{ fontSize: '1.6rem' }}>🔥</span>
+              <LocalFireDepartmentIcon sx={{ fontSize: 24, color: '#D97706' }} />
               <div>
                 <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#92400E' }}>
                   {streakData.currentStreak}{streakData.streakSuffix} Day Streak
@@ -1210,7 +1335,7 @@ export default function PracticeDashboard() {
                 Home
               </Link>
               <Link
-                to="/products"
+                to="/courses"
                 onClick={() => setMobileDrawerOpen(false)}
                 className="btn btn-primary btn-block"
                 style={{ fontSize: '0.82rem', padding: '8px' }}
@@ -1236,13 +1361,15 @@ export default function PracticeDashboard() {
                     className={`sheet-btn track-category-btn ${selectedTrackCategory === 'non-tech' ? 'primary' : ''}`}
                     onClick={() => setSelectedTrackCategory('non-tech')}
                   >
-                    🏢 Non-Tech Operations (Active)
+                    <BusinessCenterOutlinedIcon sx={{ fontSize: 16 }} />
+                    <span>Non-Tech Operations</span>
                   </button>
                   <button
                     className={`sheet-btn track-category-btn ${selectedTrackCategory === 'tech' ? 'primary' : ''}`}
                     onClick={() => setSelectedTrackCategory('tech')}
                   >
-                    💻 Technical SDE (Template)
+                    <CodeOutlinedIcon sx={{ fontSize: 16 }} />
+                    <span>Technical SDE</span>
                   </button>
                 </div>
 
@@ -1296,43 +1423,45 @@ export default function PracticeDashboard() {
                   <div>
                     {/* Header */}
                     <div className="sheet-header-card">
-                      <div className="breadcrumb">
+                      <div className="breadcrumb pd-mobile-hide">
                         <span>Mentorship Tracks</span>
                         <span>›</span>
-                        <span>Non-Technical Operations & Growth</span>
+                        <span>Non-Technical Operations &amp; Growth</span>
                       </div>
 
-                      <h1 className="sheet-title">Non-Tech Operations & Growth Mentorship</h1>
-                      <p className="sheet-subtitle">
-                        • Practical Operational Problem Scenarios &nbsp; • Curated for Dark Store, Logistics & Category Management &nbsp; • Interview Guidance for Unicorns
+                      <h1 className="sheet-title">Non-Tech Operations &amp; Growth</h1>
+                      <p className="sheet-subtitle pd-mobile-hide">
+                        Practical operational problem scenarios for dark store, logistics &amp; category management interviews.
                       </p>
 
-                      {/* Marquee & Placement Notice */}
-                      <div style={{ margin: '14px 0' }}>
+                      {/* Marquee & Placement Notice (Desktop Only) */}
+                      <div className="pd-mobile-hide" style={{ margin: '14px 0' }}>
                         <CompanyMarquee />
                         <div style={{ marginTop: 10 }}>
                           <PlacementDisclaimer compact />
                         </div>
                       </div>
 
-                      {/* Quota & Access Status */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, background: '#F1F5F9', padding: '10px 16px', borderRadius: 8, marginTop: 14 }}>
+                      {/* Quota & Access Status (Desktop Only) */}
+                      <div className="pd-mobile-hide" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, background: '#F1F5F9', padding: '10px 16px', borderRadius: 8, marginTop: 14 }}>
                         <div>
                           <strong style={{ fontSize: '0.9rem', color: '#0F172A' }}>Practice Sheet Quota:</strong>{' '}
                           <span style={{ fontSize: '0.85rem', color: '#475569' }}>
-                            {userEnrolledSheets.length} / 2 Enrolled (Limited Practice Sheet Access Granted per User)
+                            {userEnrolledSheets.length} / {userAuthData?.maxPracticeSheetsAllowed || 2} Enrolled
                           </span>
                         </div>
                         <span style={{ fontSize: '0.75rem', fontWeight: 700, background: '#DBEAFE', color: '#1E40AF', padding: '3px 8px', borderRadius: 99 }}>
-                          {userEnrolledSheets.length >= 2 ? 'Quota Reached' : `${2 - userEnrolledSheets.length} Slots Available`}
+                          {userEnrolledSheets.length >= (userAuthData?.maxPracticeSheetsAllowed || 2)
+                            ? 'Quota Reached'
+                            : `${(userAuthData?.maxPracticeSheetsAllowed || 2) - userEnrolledSheets.length} Slots Available`}
                         </span>
                       </div>
 
-                      {/* Practice Sheet Selector Cards - Filtered by My Practice Sheets vs All Practice Sheets */}
-                      <div style={{ marginTop: 16 }}>
+                      {/* Practice Sheet Selector Cards */}
+                      <div style={{ marginTop: 14 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 10 }}>
-                          <h3 style={{ fontSize: '1.05rem', margin: 0, color: '#0E1B3D' }}>
-                            {practiceViewMode === 'my' ? '📑 My Enrolled Practice Sheets' : '📚 All Practice Sheets Catalog'}
+                          <h3 style={{ fontSize: '1rem', margin: 0, color: '#0E1B3D' }}>
+                            {practiceViewMode === 'my' ? 'My Enrolled Practice Sheets' : 'Practice Sheets Catalog'}
                           </h3>
                           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                             <button
@@ -1353,14 +1482,14 @@ export default function PracticeDashboard() {
                         </div>
 
                         {practiceViewMode === 'my' && nonTechSheets.filter((s) => userEnrolledSheets.some((u) => u.sheetId === s.sheetId)).length === 0 ? (
-                          <div style={{ textAlign: 'center', padding: '36px 20px', background: '#F8FAFC', borderRadius: 10, border: '1px dashed #CBD5E1' }}>
-                            <div style={{ fontSize: '2.5rem', marginBottom: 8 }}>📑</div>
+                          <div style={{ textAlign: 'center', padding: '24px 16px', background: '#F8FAFC', borderRadius: 10, border: '1px dashed #CBD5E1' }}>
+                            <AssignmentIcon sx={{ fontSize: 36, color: '#2563EB', mb: 1 }} />
                             <h4 style={{ margin: '0 0 6px', color: '#0F172A' }}>No Enrolled Practice Sheets Yet</h4>
-                            <p style={{ margin: '0 0 16px', color: '#64748B', fontSize: '0.88rem' }}>
-                              You have not unlocked any practice sheets yet. Explore All Practice Sheets to enroll for free or unlock with a masterclass.
+                            <p className="pd-mobile-hide" style={{ margin: '0 0 14px', color: '#64748B', fontSize: '0.86rem' }}>
+                              Browse available practice sheets to enroll and track your progress.
                             </p>
                             <button className="sheet-btn primary" onClick={() => setPracticeViewMode('all')}>
-                              📚 Browse All Practice Sheets ({nonTechSheets.length})
+                              Browse All Practice Sheets ({nonTechSheets.length})
                             </button>
                           </div>
                         ) : (
@@ -1490,16 +1619,6 @@ export default function PracticeDashboard() {
                               <p style={{ margin: 0, fontSize: '0.88rem', color: '#64748B' }}>{activeNonTechSheet.description}</p>
                             </div>
                             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                              <a
-                                href={`${(process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080').replace(/\/api\/v1\/?$/, '')}/practice/sheets/${activeNonTechSheet.sheetId}/template`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="sheet-btn"
-                                style={{ textDecoration: 'none', background: '#F1F5F9', color: '#0F172A', borderColor: '#CBD5E1' }}
-                                title="Open Server-Rendered React Lifeline View"
-                              >
-                                ⚡ Lifeline View
-                              </a>
                               {isUserEnrolledInActiveSheet ? (
                                 <button className="sheet-btn primary" style={{ cursor: 'default' }}>
                                   ✓ Start Learning
@@ -1526,19 +1645,27 @@ export default function PracticeDashboard() {
                               <div key={topicKey} className={`day-accordion-card ${isOpen ? 'open' : ''}`}>
                                 <div className="day-accordion-header" onClick={() => toggleDayAccordion(topicKey)}>
                                   <div className="day-title-group">
-                                    <span style={{ fontSize: '1.1rem' }}>{isOpen ? '📂' : '📁'}</span>
+                                    {isOpen ? (
+                                      <FolderOpenOutlinedIcon sx={{ fontSize: 20, color: '#2563EB' }} />
+                                    ) : (
+                                      <FolderOutlinedIcon sx={{ fontSize: 20, color: '#64748B' }} />
+                                    )}
                                     <div>
                                       <span className="day-title-text">{topic.topicTitle}</span>
                                       {topic.summary && (
-                                        <div style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 400 }}>{topic.summary}</div>
+                                        <div className="pd-mobile-hide" style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 400 }}>{topic.summary}</div>
                                       )}
                                     </div>
                                   </div>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
                                     <span className="day-progress-pill">
                                       {topic.problems.filter((p) => solvedMap[p.id]).length}/{topic.problems.length}
                                     </span>
-                                    <span style={{ fontSize: '0.9rem', color: '#64748B' }}>{isOpen ? '▲' : '▼'}</span>
+                                    {isOpen ? (
+                                      <ExpandLessIcon sx={{ fontSize: 18, color: '#64748B' }} />
+                                    ) : (
+                                      <ExpandMoreIcon sx={{ fontSize: 18, color: '#64748B' }} />
+                                    )}
                                   </div>
                                 </div>
 
@@ -1551,9 +1678,9 @@ export default function PracticeDashboard() {
                                           <th>Interview Scenario</th>
                                           <th style={{ width: 110 }}>Company</th>
                                           <th style={{ width: 90 }}>Level</th>
-                                          <th style={{ width: 130 }}>Domain Type</th>
+                                          <th style={{ width: 130 }} className="pd-mobile-hide">Domain Type</th>
                                           <th style={{ width: 120, textAlign: 'center' }}>Guidance</th>
-                                          <th style={{ width: 50, textAlign: 'center' }}>Notes</th>
+                                          <th style={{ width: 50, textAlign: 'center' }} className="pd-mobile-hide">Notes</th>
                                           <th style={{ width: 50, textAlign: 'center' }}>Revise</th>
                                         </tr>
                                       </thead>
@@ -1574,11 +1701,11 @@ export default function PracticeDashboard() {
                                                   {isSolved ? '✓' : ''}
                                                 </div>
                                               </td>
-                                              <td>
+                                              <td className="pd-col-title">
                                                 <strong style={{ color: isSolved ? '#047857' : '#0F172A', cursor: 'pointer' }} onClick={() => setActiveScenarioModal(problem)}>
                                                   {problem.title}
                                                 </strong>
-                                                <div style={{ fontSize: '0.8rem', color: '#64748B', marginTop: 2 }}>
+                                                <div className="pd-mobile-hide" style={{ fontSize: '0.8rem', color: '#64748B', marginTop: 2 }}>
                                                   {problem.scenario.slice(0, 90)}...
                                                 </div>
                                               </td>
@@ -1592,7 +1719,7 @@ export default function PracticeDashboard() {
                                                   {problem.difficulty}
                                                 </span>
                                               </td>
-                                              <td>
+                                              <td className="pd-mobile-hide">
                                                 <span style={{ fontSize: '0.8rem', color: '#475569' }}>
                                                   {problem.type}
                                                 </span>
@@ -1600,28 +1727,28 @@ export default function PracticeDashboard() {
                                               <td style={{ textAlign: 'center' }}>
                                                 <button
                                                   className="sheet-btn primary"
-                                                  style={{ padding: '3px 8px', fontSize: '0.78rem' }}
+                                                  style={{ padding: '4px 10px', fontSize: '0.78rem' }}
                                                   onClick={() => setActiveScenarioModal(problem)}
                                                 >
-                                                  View Solution →
+                                                  Solution →
                                                 </button>
                                               </td>
-                                              <td style={{ textAlign: 'center' }}>
+                                              <td className="pd-mobile-hide" style={{ textAlign: 'center' }}>
                                                 <button
                                                   onClick={() => openNoteModal(problem)}
-                                                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', color: hasNote ? '#2563EB' : '#94A3B8' }}
+                                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: hasNote ? '#2563EB' : '#94A3B8', display: 'inline-flex' }}
                                                   title={hasNote ? 'Edit note' : 'Add note'}
                                                 >
-                                                  {hasNote ? '📝' : '✏️'}
+                                                  <EditOutlinedIcon fontSize="small" />
                                                 </button>
                                               </td>
                                               <td style={{ textAlign: 'center' }}>
                                                 <button
                                                   onClick={() => toggleRevision(problem.id)}
-                                                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', color: isRev ? '#F59E0B' : '#CBD5E1' }}
+                                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: isRev ? '#F59E0B' : '#CBD5E1', display: 'inline-flex' }}
                                                   title={isRev ? 'Starred for Revision' : 'Star for Revision'}
                                                 >
-                                                  ★
+                                                  {isRev ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}
                                                 </button>
                                               </td>
                                             </tr>
@@ -1646,8 +1773,9 @@ export default function PracticeDashboard() {
                     ======================================================= */}
                 {selectedTrackCategory === 'tech' && (
                   <div>
-                    {/* Template Notice */}
+                    {/* Template Notice (Desktop Only) */}
                     <div
+                      className="pd-mobile-hide"
                       style={{
                         padding: '14px 18px',
                         background: '#FEF3C7',
@@ -1660,43 +1788,43 @@ export default function PracticeDashboard() {
                         gap: 12,
                       }}
                     >
-                      <span style={{ fontSize: '1.5rem' }}>ℹ️</span>
+                      <BoltOutlinedIcon sx={{ fontSize: 22, color: '#D97706' }} />
                       <div>
                         <strong style={{ fontSize: '0.95rem' }}>Technical SDE Master Preparation Sheet (Template Mode)</strong>
                         <div style={{ fontSize: '0.85rem', color: '#B45309', marginTop: 2 }}>
-                          This 193-problem Data Structures & Algorithms curriculum is preserved as a structured reference template for technical candidates.
+                          This 193-problem Data Structures &amp; Algorithms curriculum is preserved as a structured reference template for technical candidates.
                         </div>
                       </div>
                     </div>
 
                     <div className="sheet-header-card">
-                      <div className="breadcrumb">
+                      <div className="breadcrumb pd-mobile-hide">
                         <span>Technical Track</span>
                         <span>›</span>
                         <span>SDE Master Preparation Template</span>
                       </div>
 
-                      <h1 className="sheet-title">SDE Sheet - Most Important Interview Questions (Template)</h1>
-                      <p className="sheet-subtitle">
-                        • Preserved Technical DSA curriculum &nbsp; • All DSA topics covered &nbsp; • Real interview patterns
+                      <h1 className="sheet-title">SDE Sheet - Interview Questions</h1>
+                      <p className="sheet-subtitle pd-mobile-hide">
+                        Preserved Technical DSA curriculum covering core interview patterns.
                       </p>
 
-                      <div className="sheet-action-btns">
+                      <div className="sheet-action-btns pd-mobile-hide">
                         <button className="sheet-btn" onClick={() => setIsGroupStudyModalOpen(true)}>
-                          <span>👥</span>
+                          <GroupsOutlinedIcon fontSize="small" />
                           <span>Group Study</span>
                         </button>
                         <button
                           className={`sheet-btn ${onlySaved ? 'primary' : ''}`}
                           onClick={() => setOnlySaved(!onlySaved)}
                         >
-                          <span>🔖</span>
+                          <BookmarkBorderOutlinedIcon fontSize="small" />
                           <span>{onlySaved ? 'Show All Questions' : 'Saved Questions'}</span>
                         </button>
                       </div>
 
                       {/* Level & Revision Filter Pills */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '14px', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
                         <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#64748B' }}>Level:</span>
                         {['all', 'easy', 'medium', 'hard'].map((diff) => (
                           <button
@@ -1709,11 +1837,11 @@ export default function PracticeDashboard() {
                           </button>
                         ))}
                         <button
-                          className={`sheet-btn ${onlyRevision ? 'primary' : ''}`}
+                          className={`sheet-btn pd-mobile-hide ${onlyRevision ? 'primary' : ''}`}
                           style={{ padding: '4px 10px', fontSize: '0.8rem', marginLeft: 'auto' }}
                           onClick={() => setOnlyRevision(!onlyRevision)}
                         >
-                          ★ {onlyRevision ? 'Showing Starred' : 'Filter Revision Starred'}
+                          {onlyRevision ? 'Showing Starred' : 'Filter Revision Starred'}
                         </button>
                       </div>
                     </div>
@@ -1729,14 +1857,22 @@ export default function PracticeDashboard() {
                           <div key={day.id} className={`day-accordion-card ${isOpen ? 'open' : ''}`}>
                             <div className="day-accordion-header" onClick={() => toggleDayAccordion(day.id)}>
                               <div className="day-title-group">
-                                <span style={{ fontSize: '1.1rem' }}>{isOpen ? '📂' : '📁'}</span>
+                                {isOpen ? (
+                                  <FolderOpenOutlinedIcon sx={{ fontSize: 20, color: '#2563EB' }} />
+                                ) : (
+                                  <FolderOutlinedIcon sx={{ fontSize: 20, color: '#64748B' }} />
+                                )}
                                 <span className="day-title-text">{day.title}</span>
                               </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
                                 <span className={`day-progress-pill ${isCompleted ? 'completed' : ''}`}>
                                   {daySolved}/{day.problems.length}
                                 </span>
-                                <span style={{ fontSize: '0.9rem', color: '#64748B' }}>{isOpen ? '▲' : '▼'}</span>
+                                {isOpen ? (
+                                  <ExpandLessIcon sx={{ fontSize: 18, color: '#64748B' }} />
+                                ) : (
+                                  <ExpandMoreIcon sx={{ fontSize: 18, color: '#64748B' }} />
+                                )}
                               </div>
                             </div>
 
@@ -1747,11 +1883,11 @@ export default function PracticeDashboard() {
                                     <tr>
                                       <th style={{ width: 44 }}>Status</th>
                                       <th>Problem</th>
-                                      <th style={{ width: 80, textAlign: 'center' }}>Editorial</th>
+                                      <th style={{ width: 80, textAlign: 'center' }} className="pd-mobile-hide">Editorial</th>
                                       <th style={{ width: 80, textAlign: 'center' }}>Practice</th>
                                       <th style={{ width: 90 }}>Level</th>
-                                      <th style={{ width: 60, textAlign: 'center' }}>Notes</th>
-                                      <th>Companies</th>
+                                      <th style={{ width: 60, textAlign: 'center' }} className="pd-mobile-hide">Notes</th>
+                                      <th className="pd-mobile-hide">Companies</th>
                                       <th style={{ width: 50, textAlign: 'center' }}>Revise</th>
                                     </tr>
                                   </thead>
@@ -1772,7 +1908,7 @@ export default function PracticeDashboard() {
                                               {isSolved ? '✓' : ''}
                                             </div>
                                           </td>
-                                          <td>
+                                          <td className="pd-col-title">
                                             <a
                                               href={problem.practiceUrl}
                                               target="_blank"
@@ -1786,10 +1922,14 @@ export default function PracticeDashboard() {
                                               {problem.title}
                                             </a>
                                           </td>
-                                          <td style={{ textAlign: 'center' }}>
+                                          <td className="pd-mobile-hide" style={{ textAlign: 'center' }}>
                                             <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
-                                              <a className="action-icon-link" href={problem.articleUrl} target="_blank" rel="noreferrer" title="Article">📄</a>
-                                              <a className="action-icon-link" href={problem.videoUrl} target="_blank" rel="noreferrer" title="Video">▶️</a>
+                                              <a className="action-icon-link" href={problem.articleUrl} target="_blank" rel="noreferrer" title="Article">
+                                                <DescriptionOutlinedIcon fontSize="small" />
+                                              </a>
+                                              <a className="action-icon-link" href={problem.videoUrl} target="_blank" rel="noreferrer" title="Video">
+                                                <PlayCircleOutlinedIcon fontSize="small" />
+                                              </a>
                                             </div>
                                           </td>
                                           <td style={{ textAlign: 'center' }}>
@@ -1797,9 +1937,9 @@ export default function PracticeDashboard() {
                                               href={problem.practiceUrl}
                                               target="_blank"
                                               rel="noreferrer"
-                                              style={{ fontSize: '0.8rem', fontWeight: 700, padding: '2px 8px', background: '#F1F5F9', borderRadius: 4, color: '#2563EB', textDecoration: 'none' }}
+                                              style={{ fontSize: '0.8rem', fontWeight: 700, padding: '3px 9px', background: '#EFF6FF', borderRadius: 6, color: '#2563EB', textDecoration: 'none' }}
                                             >
-                                              Solve ↗
+                                              Solve →
                                             </a>
                                           </td>
                                           <td>
@@ -1807,16 +1947,16 @@ export default function PracticeDashboard() {
                                               {problem.difficulty}
                                             </span>
                                           </td>
-                                          <td style={{ textAlign: 'center' }}>
+                                          <td className="pd-mobile-hide" style={{ textAlign: 'center' }}>
                                             <button
                                               onClick={() => openNoteModal(problem)}
-                                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', color: hasNote ? '#2563EB' : '#94A3B8' }}
+                                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: hasNote ? '#2563EB' : '#94A3B8', display: 'inline-flex' }}
                                               title={hasNote ? 'Edit note' : 'Add note'}
                                             >
-                                              {hasNote ? '📝' : '✏️'}
+                                              <EditOutlinedIcon fontSize="small" />
                                             </button>
                                           </td>
-                                          <td>
+                                          <td className="pd-mobile-hide">
                                             <div className="company-badges-cell">
                                               {problem.companies.slice(0, 3).map((comp) => (
                                                 <span key={comp} className="company-badge">{comp}</span>
@@ -1829,10 +1969,10 @@ export default function PracticeDashboard() {
                                           <td style={{ textAlign: 'center' }}>
                                             <button
                                               onClick={() => toggleRevision(problem.id)}
-                                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.1rem', color: isRev ? '#F59E0B' : '#CBD5E1' }}
+                                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: isRev ? '#F59E0B' : '#CBD5E1', display: 'inline-flex' }}
                                               title={isRev ? 'Starred for Revision' : 'Star for Revision'}
                                             >
-                                              ★
+                                              {isRev ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}
                                             </button>
                                           </td>
                                         </tr>
@@ -1855,7 +1995,7 @@ export default function PracticeDashboard() {
                 {/* Total Progress Card */}
                 <div className="progress-overview-card">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                    <span style={{ fontSize: '1.4rem' }}>🚀</span>
+                    <TrendingUpIcon sx={{ fontSize: 22, color: '#2563EB' }} />
                     <div>
                       <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0E1B3D' }}>
                         {progressPercent > 0 ? "You're making great progress!" : "Let's get started!"}
@@ -1948,7 +2088,7 @@ export default function PracticeDashboard() {
                 <div className="streak-calendar-card">
                   <div className="calendar-header">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span>🔥</span>
+                      <LocalFireDepartmentIcon sx={{ fontSize: 18, color: '#D97706' }} />
                       <strong style={{ fontSize: '0.95rem', color: '#0F172A' }}>
                         {streakData.currentStreak}{streakData.streakSuffix} Day Streak
                       </strong>
@@ -2110,7 +2250,7 @@ export default function PracticeDashboard() {
                     <button
                       className="live-join-btn"
                       style={{ background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)' }}
-                      onClick={() => navigate(`/products?enroll=${encodeURIComponent(activeMentorshipClass?.productId || 'masterclass')}`)}
+                      onClick={() => navigate(`/courses?checkout=${encodeURIComponent(activeMentorshipClass?.productId || 'masterclass')}`)}
                     >
                       <span>🔒</span>
                       <span>Unlock Live Room Access (₹{activeMentorshipClass?.price || 21})</span>
@@ -2163,7 +2303,10 @@ export default function PracticeDashboard() {
                   </p>
 
                   <div className="timeline-list">
-                    {LIVE_MENTORSHIP.nextSession.agenda.map((item, idx) => (
+                    {(activeMentorshipClass?.timingSlots?.[0]?.agenda?.length > 0
+                      ? activeMentorshipClass.timingSlots[0].agenda
+                      : LIVE_MENTORSHIP.nextSession.agenda
+                    ).map((item, idx) => (
                       <div key={idx} className="timeline-item">
                         <div className="timeline-time-badge">{item.time}</div>
                         <div style={{ fontSize: '0.92rem', color: '#334155', lineHeight: 1.5 }}>{item.topic}</div>
@@ -2177,7 +2320,15 @@ export default function PracticeDashboard() {
                   <div className="agenda-card">
                     <h3 style={{ margin: '0 0 14px', fontSize: '1.15rem' }}>Weekly Live Timetable</h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      {LIVE_MENTORSHIP.weeklySchedule.map((s, i) => (
+                      {(activeMentorshipClass?.timingSlots?.length > 0
+                        ? activeMentorshipClass.timingSlots.map((slot) => ({
+                            day: slot.date || slot.dateTime || 'Live Session',
+                            time: slot.startTime ? `${slot.startTime} - ${slot.endTime || ''}` : 'IST',
+                            title: slot.title || activeMentorshipClass.title,
+                            mentor: slot.mentorName || 'Unicorn Mentors',
+                          }))
+                        : LIVE_MENTORSHIP.weeklySchedule
+                      ).map((s, i) => (
                         <div
                           key={i}
                           style={{
@@ -2320,16 +2471,16 @@ export default function PracticeDashboard() {
                           Downloadable Notes & Engineering Vault
                         </h1>
                         <p className="muted" style={{ margin: 0 }}>
-                          Curated high-yield engineering notes, dark store playbooks, PDFs, and cheatsheets managed securely in MongoDB.
+                          Curated high-yield engineering notes, dark store playbooks, study guides, and cheatsheets.
                         </p>
                       </div>
 
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                         <span style={{ fontSize: '0.8rem', padding: '4px 10px', borderRadius: 99, background: '#DCFCE7', color: '#16A34A', fontWeight: 700 }}>
-                          🟢 Free Notes
+                          Free Notes
                         </span>
                         <span style={{ fontSize: '0.8rem', padding: '4px 10px', borderRadius: 99, background: '#EDE9FE', color: '#7C3AED', fontWeight: 700 }}>
-                          🔒 Paid (Masterclass Passcode)
+                          Member Notes
                         </span>
                       </div>
                     </div>
@@ -2361,11 +2512,11 @@ export default function PracticeDashboard() {
                                   textTransform: 'uppercase',
                                 }}
                               >
-                                {isPaid ? (isUnlocked ? '✓ Unlocked Paid' : '🔒 Paid Note') : 'Free Note'}
+                                {isPaid ? (isUnlocked ? 'Unlocked' : 'Member Only') : 'Free'}
                               </span>
                             </div>
                             <div style={{ textAlign: 'center', marginTop: 8 }}>
-                              <span style={{ fontSize: '2.6rem' }}>{isPaid ? '🔐' : '📚'}</span>
+                              <MenuBookIcon sx={{ fontSize: 38, color: '#FFFFFF' }} />
                             </div>
                           </div>
 
@@ -2373,13 +2524,13 @@ export default function PracticeDashboard() {
                             <h3 className="note-card-title">{note.title}</h3>
                             <p className="note-card-subtitle">{note.subtitle}</p>
 
-                            <div style={{ fontSize: '0.78rem', color: '#64748B', margin: '8px 0 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <div className="drm-mobile-hide" style={{ fontSize: '0.78rem', color: '#64748B', margin: '8px 0 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
                               <span style={{ fontWeight: 600, color: '#0F172A' }}>Format:</span>{' '}
                               <span style={{ textTransform: 'uppercase', background: '#F1F5F9', padding: '2px 6px', borderRadius: 4 }}>
                                 {note.fileType || 'HTML/PDF'}
                               </span>
                               {note.fileSize && (
-                                <span>• {(note.fileSize / 1024).toFixed(0)} KB (in MongoDB)</span>
+                                <span>• {(note.fileSize / 1024).toFixed(0)} KB</span>
                               )}
                             </div>
 
@@ -2619,7 +2770,7 @@ export default function PracticeDashboard() {
                           </div>
 
                           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-                            <Link to="/products" className="sheet-btn primary" style={{ padding: '6px 14px', fontSize: '0.85rem' }}>
+                            <Link to="/courses" className="sheet-btn primary" style={{ padding: '6px 14px', fontSize: '0.85rem' }}>
                               Continue Learning →
                             </Link>
                           </div>
@@ -2649,7 +2800,7 @@ export default function PracticeDashboard() {
                               : 'Unlock 1-on-1 resume reviews, mock interviews, and live offline hiring days.'}
                           </div>
                         </div>
-                        <Link to="/products" className="sheet-btn primary" style={{ padding: '8px 16px', fontSize: '0.88rem' }}>
+                        <Link to="/courses" className="sheet-btn primary" style={{ padding: '8px 16px', fontSize: '0.88rem' }}>
                           {userAuthData?.hasActiveAccess ? '✓ Continue Learning' : 'Explore Courses & Pricing →'}
                         </Link>
                       </div>
@@ -2837,10 +2988,10 @@ export default function PracticeDashboard() {
                     </div>
                     <div style={{ fontSize: '0.85rem', color: '#2563EB', fontWeight: 600, marginTop: 4 }}>
                       {userAuthData?.isPermanent || userEnrolledCourses.length > 0
-                        ? '✓ Permanent Lifetime Member'
+                        ? 'Permanent Lifetime Member'
                         : userAuthData?.role === 'admin'
-                        ? '🛡️ Platform Admin'
-                        : 'Practice Dashboard Free User'}
+                        ? 'Platform Admin'
+                        : 'Practice Dashboard Member'}
                     </div>
                   </div>
 
@@ -2856,9 +3007,11 @@ export default function PracticeDashboard() {
                       <strong style={{ textTransform: 'capitalize' }}>{userAuthData?.role || 'User'}</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span className="muted">Target Unicorns</span>
+                      <span className="muted">Target Companies</span>
                       <strong style={{ textAlign: 'right' }}>
-                        Zomato, Blinkit, Swiggy, Porter
+                        {Array.isArray(userProfile?.targetCompanies) && userProfile.targetCompanies.length > 0
+                          ? userProfile.targetCompanies.join(', ')
+                          : 'Not configured'}
                       </strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -2875,8 +3028,8 @@ export default function PracticeDashboard() {
                   <h4 style={{ margin: '0 0 12px', fontSize: '1rem' }}>Total Learning Time (Weekly)</h4>
                   <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: 110, padding: '10px 0', borderBottom: '1px solid #E2E8F0' }}>
                     {streakData.weeklyDistribution.map((col, idx) => {
-                      const maxMin = Math.max(...streakData.weeklyDistribution.map((c) => c.minutes || 100), 100);
-                      const barHeight = Math.min(100, Math.max(22, Math.round((col.minutes / maxMin) * 95)));
+                      const maxMin = Math.max(...streakData.weeklyDistribution.map((c) => c.minutes || 0), 60);
+                      const barHeight = col.minutes > 0 ? Math.min(100, Math.max(12, Math.round((col.minutes / maxMin) * 95))) : 4;
                       return (
                         <div key={col.day + idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
                           <div
@@ -2925,32 +3078,36 @@ export default function PracticeDashboard() {
               <div className="streak-metrics-quad">
                 <div className="quad-card">
                   <div className="quad-card-title">
-                    <span>🔥</span> Current Week
+                    <LocalFireDepartmentIcon sx={{ fontSize: 16, color: '#D97706' }} />
+                    <span>Current Week</span>
                   </div>
                   <div className="quad-card-value">
-                    {Array.from(streakData.activeDaysSet).filter((d) => Math.abs(d - streakData.todayDateNum) <= 6).length || 5} days
+                    {Array.from(streakData.activeDaysSet).filter((d) => Math.abs(d - streakData.todayDateNum) <= 6).length} days
                   </div>
                 </div>
 
                 <div className="quad-card">
                   <div className="quad-card-title">
-                    <span>🏆</span> Best Week
+                    <EmojiEventsOutlinedIcon sx={{ fontSize: 16, color: '#2563EB' }} />
+                    <span>Best Streak</span>
                   </div>
-                  <div className="quad-card-value">{streakData.bestStreak || 7} days</div>
+                  <div className="quad-card-value">{streakData.bestStreak || 0} days</div>
                 </div>
 
                 <div className="quad-card">
                   <div className="quad-card-title">
-                    <span>📅</span> Current Month
+                    <CalendarTodayOutlinedIcon sx={{ fontSize: 16, color: '#059669' }} />
+                    <span>Current Month</span>
                   </div>
-                  <div className="quad-card-value">{streakData.activeDaysSet.size || 14} days</div>
+                  <div className="quad-card-value">{streakData.activeDaysSet.size} days</div>
                 </div>
 
                 <div className="quad-card">
                   <div className="quad-card-title">
-                    <span>📈</span> Best Month
+                    <TrendingUpIcon sx={{ fontSize: 16, color: '#7C3AED' }} />
+                    <span>Total Active Days</span>
                   </div>
-                  <div className="quad-card-value">28 days</div>
+                  <div className="quad-card-value">{streakData.totalActiveDays || 0} days</div>
                 </div>
               </div>
 
@@ -2967,11 +3124,11 @@ export default function PracticeDashboard() {
                   marginBottom: 20,
                 }}
               >
-                <span style={{ fontSize: '1.4rem' }}>⚡</span>
+                <BoltOutlinedIcon sx={{ fontSize: 24, color: '#2563EB' }} />
                 <div>
                   <div style={{ fontSize: '0.8rem', color: '#1E3A8A' }}>Total Active Days</div>
                   <strong style={{ fontSize: '1.1rem', color: '#1E3A8A' }}>
-                    {streakData.totalActiveDays} days (Oct 2, {streakData.currentYear} - Present)
+                    {streakData.totalActiveDays || 0} days ({streakData.monthName} {streakData.currentYear})
                   </strong>
                 </div>
               </div>
@@ -3559,47 +3716,40 @@ export default function PracticeDashboard() {
             }}
           >
             {/* Viewer Topbar */}
-            <div
-              style={{
-                padding: '14px 22px',
-                background: '#0F172A',
-                color: '#F8FAFC',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                borderBottom: '1px solid #1E293B',
-                flexShrink: 0,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: '1.2rem' }}>🔒</span>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.98rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span>{drmContent?.title || drmActiveNote.title}</span>
+            <div className="drm-reader-toolbar" style={{ background: '#0F172A', color: '#F8FAFC', borderBottom: '1px solid #1E293B' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                <MenuBookIcon sx={{ color: '#38BDF8', fontSize: 22 }} />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.96rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {drmContent?.title || drmActiveNote.title}
+                    </span>
                     <span
+                      className="drm-mobile-hide"
                       style={{
-                        fontSize: '0.7rem',
+                        fontSize: '0.68rem',
                         padding: '2px 8px',
                         borderRadius: 4,
                         background: drmActiveNote.type === 'paid' ? '#7C3AED' : '#10B981',
                         color: '#FFF',
                         textTransform: 'uppercase',
-                        fontWeight: 800,
+                        fontWeight: 700,
                       }}
                     >
-                      {drmActiveNote.type === 'paid' ? 'Paid DRM Protected' : 'Free Resource'}
+                      {drmActiveNote.type === 'paid' ? 'Member Access' : 'Open Resource'}
                     </span>
                   </div>
-                  <span style={{ fontSize: '0.78rem', color: '#94A3B8' }}>
-                    Strict DRM View-Only · Copying, Screenshots, & Printing Disabled
+                  <span className="drm-mobile-hide" style={{ fontSize: '0.76rem', color: '#94A3B8' }}>
+                    In-App Reading Mode
                   </span>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <span
+                  className="drm-mobile-hide"
                   style={{
-                    fontSize: '0.75rem',
+                    fontSize: '0.74rem',
                     color: '#38BDF8',
                     fontFamily: 'var(--mono, monospace)',
                     background: 'rgba(56, 189, 248, 0.1)',
@@ -3607,54 +3757,49 @@ export default function PracticeDashboard() {
                     borderRadius: 4,
                   }}
                 >
-                  Watermark: {userAuthData?.email || userProfile?.email || 'Authenticated'}
+                  Student: {userAuthData?.email || userProfile?.email || 'Authenticated'}
                 </span>
-                <button
-                  className="modal-close-btn"
-                  style={{ color: '#F8FAFC', fontSize: '1.4rem' }}
+                <IconButton
+                  size="small"
+                  aria-label="Close document viewer"
+                  sx={{ color: '#F8FAFC' }}
                   onClick={() => setDrmActiveNote(null)}
                 >
-                  ✕
-                </button>
+                  <CloseIcon fontSize="small" />
+                </IconButton>
               </div>
             </div>
 
             {/* Viewer Body & Document Canvas */}
             <div style={{ position: 'relative', flex: '1 1 auto', overflow: 'hidden', background: '#FFFFFF' }}>
-              {/* Dynamic Repeating Diagonal Watermark Matrix */}
-              <div className="drm-watermark-overlay">
-                <div className="drm-watermark-text-grid">
-                  {Array.from({ length: 32 }, (_, i) => (
-                    <div key={i} className="drm-watermark-cell">
-                      CONFIDENTIAL • {userAuthData?.email || userProfile?.email || 'STUDENT'} • DO NOT DISTRIBUTE
-                    </div>
-                  ))}
-                </div>
-              </div>
+              {/* Default Irremovable Student Watermark Matrix */}
+              <StudentWatermarkOverlay
+                studentLabel={userAuthData?.email || userProfile?.email || 'STUDENT'}
+                theme="light"
+              />
 
-              {/* Obfuscation Shield (Visible when Snipping Tool or Capture extension triggers focus loss) */}
+              {/* Obfuscation Shield */}
               {isDocumentObfuscated && (
                 <div className="drm-blocker-shield">
-                  <span style={{ fontSize: '3rem', marginBottom: 12 }}>🛡️</span>
-                  <h3 style={{ margin: '0 0 8px', fontSize: '1.3rem', color: '#EF4444' }}>
-                    You can not take Screenshot or Print this page
+                  <ShieldOutlinedIcon sx={{ fontSize: 44, color: '#EF4444', mb: 1 }} />
+                  <h3 style={{ margin: '0 0 8px', fontSize: '1.2rem', color: '#EF4444' }}>
+                    Content Hidden While Window Unfocused
                   </h3>
-                  <p style={{ maxWidth: 440, fontSize: '0.9rem', color: '#CBD5E1', margin: 0 }}>
-                    Screen capture utility or external recording detected. Protected DRM content is temporarily hidden to prevent unauthorized distribution. Return focus to resume reading.
+                  <p style={{ maxWidth: 420, fontSize: '0.88rem', color: '#CBD5E1', margin: 0 }}>
+                    Return focus to the reading window to continue viewing your study notes.
                   </p>
                 </div>
               )}
 
               {/* Document Rendering Frame */}
-              <div className="drm-document-frame" style={{ width: '100%', height: '100%', overflowY: 'auto', padding: '24px 32px' }}>
+              <div className="drm-document-frame" style={{ width: '100%', height: '100%', overflowY: 'auto', padding: '20px 24px' }}>
                 {isDrmLoading ? (
-                  <div style={{ textAlign: 'center', padding: '80px 20px', color: '#64748B' }}>
-                    <div style={{ fontSize: '2.5rem', marginBottom: 10 }}>⏳</div>
-                    <div>Decrypting and rendering protected document from MongoDB...</div>
+                  <div style={{ textAlign: 'center', padding: '72px 20px', color: '#64748B' }}>
+                    <div>Loading study document...</div>
                   </div>
                 ) : drmContent?.fileType === 'pdf' ? (
                   <iframe
-                    title="Protected PDF DRM"
+                    title="Study Document Viewer"
                     src={`data:application/pdf;base64,${drmContent.fileData}#toolbar=0&navpanes=0&scrollbar=0`}
                     style={{ width: '100%', height: '100%', border: 'none' }}
                   />
@@ -3673,20 +3818,20 @@ export default function PracticeDashboard() {
             {/* Viewer Bottom Footer Bar */}
             <div
               style={{
-                padding: '10px 22px',
+                padding: '8px 18px',
                 background: '#F8FAFC',
                 borderTop: '1px solid #E2E8F0',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 flexShrink: 0,
-                fontSize: '0.8rem',
+                fontSize: '0.78rem',
                 color: '#64748B',
               }}
             >
-              <span>⚡ Strivers DRM Security Engine: Multi-OS Screen Grab Protection Active</span>
+              <span>Student Watermark: {userAuthData?.email || userProfile?.email || 'Authenticated'}</span>
               <button
-                className="sheet-btn"
+                className="sheet-btn drm-mobile-hide"
                 style={{ padding: '4px 14px', fontSize: '0.8rem' }}
                 onClick={() => setDrmActiveNote(null)}
               >

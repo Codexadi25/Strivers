@@ -1,0 +1,55 @@
+.sc-lifeline-search-paper {
+  padding: 16px 20px;
+  border-radius: 14px !important;
+  border-color: #e2e8f0 !important;
+  margin-bottom: 24px;
+  background-color: #ffffff;
+}
+
+.sc-lifeline-search-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sc-lifeline-category-field {
+  min-width: 210px;
+}
+
+.sc-lifeline-query-field {
+  flex: 1;
+  min-width: 260px;
+}
+
+.sc-lifeline-search-btn {
+  height: 40px;
+  border-radius: 10px !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+  padding: 0 20px !important;
+}
+
+.sc-lifeline-quick-samples {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.sc-lifeline-quick-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+@media (max-width: 720px) {
+  .sc-lifeline-category-field,
+  .sc-lifeline-query-field,
+  .sc-lifeline-search-btn {
+    width: 100%;
+  }
+}

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import api from '../utils/api';
-import Navbar from '../components/common/Navbar';
+import Header from '../components/common/Header';
+import Footer from '../components/common/Footer';
+import './Auth.css';
 
 export default function ResetPassword() {
   const [params] = useSearchParams();
@@ -65,8 +67,8 @@ export default function ResetPassword() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <Navbar />
+    <div className="auth-page-root">
+      <Header />
 
       <main className="auth-wrap" style={{ flex: 1, maxWidth: 460, margin: '60px auto', width: '100%', padding: '0 16px' }}>
         <h2>Set New Password</h2>
@@ -214,6 +216,7 @@ export default function ResetPassword() {
           </Link>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

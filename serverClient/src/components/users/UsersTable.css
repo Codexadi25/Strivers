@@ -1,0 +1,22 @@
+.sc-users-table-card {
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+
+.sc-users-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sc-users-courses-list {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.sc-users-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}

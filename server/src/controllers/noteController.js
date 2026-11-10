@@ -72,7 +72,7 @@ const DEFAULT_SEED_NOTES = [
     mimeType: 'text/html',
     fileSize: 88000,
     linkedMasterclassId: 'masterclass',
-    secretCode: 'STRIVERS2026', // Secret code for masterclass attendees
+    secretCode: 'Secret Code', // Secret code for masterclass attendees
     fileData: Buffer.from(`
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 28px; color: #0f172a; line-height: 1.65;">
         <div style="background: #f5f3ff; border: 1.5px solid #c4b5fd; border-radius: 10px; padding: 18px 24px; margin-bottom: 24px;">

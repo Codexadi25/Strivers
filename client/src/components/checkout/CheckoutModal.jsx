@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlined';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutlined';
+import ConfirmationNumberOutlinedIcon from '@mui/icons-material/ConfirmationNumberOutlined';
 import api from '../../utils/api';
 import { wakeServer, useServerStatus } from '../../utils/ping';
 import { loadRazorpay } from '../../utils/razorpay';
 import { BRAND } from '../../config/strivers';
 import RaiseTicketModal from '../support/RaiseTicketModal';
+import './CheckoutModal.css';
 
 export default function CheckoutModal({ plan, price, onClose }) {
   const navigate = useNavigate();
@@ -130,7 +134,7 @@ export default function CheckoutModal({ plan, price, onClose }) {
             refId,
             orderId: paymentResponse.razorpay_order_id,
             amount: price,
-            accessUrl: resData.accessUrl || '/products/masterclass/access',
+            accessUrl: resData.accessUrl || '/courses/masterclass/access',
           });
         } catch (verifyErr) {
           setBusy(false);
@@ -172,7 +176,7 @@ export default function CheckoutModal({ plan, price, onClose }) {
                 orderId,
                 paymentId: cancelPaymentId,
                 errorCode: 'PAYMENT_CANCELLED',
-                errorDescription: 'PG Failure: Payment Canceled midway by user',
+                errorDescription: 'Transaction Cancelled: Payment cancelled midway by user',
                 errorSource: 'user_action',
                 errorStep: 'payment_checkout',
                 errorReason: 'payment_canceled_midway',
@@ -191,13 +195,13 @@ export default function CheckoutModal({ plan, price, onClose }) {
               paymentId: cancelPaymentId,
               status: 'canceled',
               reason: 'Payment Canceled',
-              description: 'PG Failure: Payment Canceled midway by user closing the gateway modal.',
+              description: 'Transaction cancelled before completion.',
               email,
               phone,
               amount: price,
             });
 
-            setError('PG Failure: Payment Canceled midway. No amount was charged.');
+            setError('Payment cancelled before completion. No amount was charged.');
           },
         },
       };
@@ -237,14 +241,14 @@ export default function CheckoutModal({ plan, price, onClose }) {
           orderId: failedOrderId,
           paymentId,
           status: 'failed',
-          reason: 'PG Failure',
-          description: `PG Failure: ${errObj.description || reason}`,
+          reason: 'Transaction Incomplete',
+          description: `Transaction Incomplete: ${errObj.description || reason}`,
           email,
           phone,
           amount: price,
         });
 
-        setError(`PG Failure: ${reason}`);
+        setError(`Transaction Incomplete: ${reason}`);
       });
 
       rzp.open();
@@ -297,107 +301,57 @@ export default function CheckoutModal({ plan, price, onClose }) {
 
           {/* Detailed Payment Success Card with Txn ID & Ref. ID */}
           {successTxn && (
-            <div
-              style={{
-                background: '#ECFDF5',
-                border: '1px solid #A7F3D0',
-                borderRadius: '12px',
-                padding: '16px',
-                marginTop: '14px',
-                fontSize: '0.88rem',
-                color: '#065F46',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, marginBottom: '8px', fontSize: '1rem', color: '#047857' }}>
-                <span style={{ fontSize: '1.25rem' }}>✅</span>
-                <span>Payment Successful · Access Unlocked!</span>
+            <div className="checkout-success-card">
+              <div className="checkout-success-header">
+                <CheckCircleOutlineIcon sx={{ color: '#059669', fontSize: 20 }} />
+                <span>Payment Successful · Access Unlocked</span>
               </div>
-              <p style={{ margin: '0 0 10px', fontSize: '0.85rem', color: '#065F46' }}>
-                Your payment has been captured and verified. Permanent access has been granted to your account.
+              <p className="checkout-success-desc">
+                Your enrollment has been confirmed and course access is now active on your account.
               </p>
-              <div
-                style={{
-                  background: '#FFFFFF',
-                  padding: '10px 14px',
-                  borderRadius: '8px',
-                  fontSize: '0.82rem',
-                  color: '#1F2937',
-                  marginBottom: '12px',
-                  border: '1px solid #E5E7EB',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '4px',
-                }}
-              >
+              <div className="checkout-receipt-box">
                 <div>• <strong>Txn ID:</strong> <code style={{ color: '#059669', fontWeight: 700 }}>{successTxn.txnId}</code></div>
                 <div>• <strong>Ref. ID:</strong> <code style={{ color: '#2563EB', fontWeight: 700 }}>{successTxn.refId}</code></div>
                 <div>• <strong>Order ID:</strong> <code style={{ color: '#4B5563' }}>{successTxn.orderId}</code></div>
-                <div>• <strong>Status:</strong> <span style={{ color: '#047857', fontWeight: 700 }}>Captured (Success)</span></div>
+                <div>• <strong>Status:</strong> <span style={{ color: '#047857', fontWeight: 700 }}>Confirmed</span></div>
                 <div>• <strong>Amount:</strong> <strong>₹{successTxn.amount}</strong></div>
               </div>
               <button
                 type="button"
-                className="btn btn-primary btn-block"
+                className="btn btn-primary btn-block checkout-btn-proceed"
                 onClick={() => navigate(successTxn.accessUrl)}
-                style={{ padding: '10px', fontWeight: 700, background: '#059669', borderColor: '#059669' }}
               >
-                Proceed to Classroom & Mentorship Room →
+                Proceed to Classroom
               </button>
             </div>
           )}
 
-          {/* Detailed PG Failure Alert Card */}
+          {/* Detailed Transaction Alert Card */}
           {failedTxn && !successTxn && (
-            <div
-              style={{
-                background: '#FEF2F2',
-                border: '1px solid #FECACA',
-                borderRadius: '10px',
-                padding: '14px 16px',
-                marginTop: '14px',
-                fontSize: '0.88rem',
-                color: '#991B1B',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, marginBottom: '6px' }}>
-                <span style={{ fontSize: '1.2rem' }}>⚠️</span>
-                <span>{failedTxn.status === 'canceled' ? 'PG Failure: Payment Canceled' : 'PG Failure: Transaction Unsuccessful'}</span>
+            <div className="checkout-failure-card">
+              <div className="checkout-failure-header">
+                <ErrorOutlineIcon sx={{ color: '#DC2626', fontSize: 20 }} />
+                <span>{failedTxn.status === 'canceled' ? 'Payment Cancelled' : 'Transaction Unsuccessful'}</span>
               </div>
-              <p style={{ margin: '0 0 8px', fontSize: '0.84rem', color: '#B91C1C' }}>
+              <p className="checkout-failure-desc">
                 {failedTxn.description}
               </p>
-              <div
-                style={{
-                  background: '#FFFFFF',
-                  padding: '8px 12px',
-                  borderRadius: '6px',
-                  fontSize: '0.8rem',
-                  color: '#4B5563',
-                  marginBottom: '10px',
-                  border: '1px solid #F3F4F6',
-                }}
-              >
+              <div className="checkout-failure-details">
                 <div>• Order ID: <code style={{ color: '#2563EB' }}>{failedTxn.orderId}</code></div>
                 {failedTxn.paymentId && (
-                  <div>• Txn ID / Payment ID: <code style={{ color: '#2563EB' }}>{failedTxn.paymentId}</code></div>
+                  <div>• Payment ID: <code style={{ color: '#2563EB' }}>{failedTxn.paymentId}</code></div>
                 )}
-                <div>• Status: <strong style={{ color: failedTxn.status === 'canceled' ? '#D97706' : '#DC2626' }}>{failedTxn.status === 'canceled' ? 'Payment Canceled (Cancelled Midway)' : 'PG Failure'}</strong></div>
-                <div>• Money Protection: <strong>Any deducted amount will be refunded to source within 5-7 working days.</strong></div>
+                <div>• Status: <strong style={{ color: failedTxn.status === 'canceled' ? '#D97706' : '#DC2626' }}>{failedTxn.status === 'canceled' ? 'Cancelled Before Completion' : 'Transaction Failed'}</strong></div>
+                <div>• Refund Policy: <strong>Any deducted amount is returned to source within 5-7 business days.</strong></div>
               </div>
               <button
                 type="button"
-                className="btn btn-secondary btn-sm"
+                className="btn btn-secondary btn-sm checkout-btn-ticket"
                 onClick={() => setShowTicketModal(true)}
-                style={{
-                  width: '100%',
-                  background: '#FFFFFF',
-                  borderColor: '#DC2626',
-                  color: '#DC2626',
-                  fontWeight: 600,
-                  padding: '8px',
-                }}
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
               >
-                🎫 Amount Deducted? Raise Refund Ticket →
+                <ConfirmationNumberOutlinedIcon fontSize="small" />
+                <span>Amount Deducted? Raise Support Ticket</span>
               </button>
             </div>
           )}
@@ -409,15 +363,15 @@ export default function CheckoutModal({ plan, price, onClose }) {
           )}
 
           {server === 'waking' && (
-            <p className="muted small">Connecting to a secure server. Payment opens as soon as it is ready.</p>
+            <p className="muted small">Connecting to enrollment server...</p>
           )}
-          {server === 'failed' && <p className="muted small">Server is slow to respond. We will retry when you pay.</p>}
+          {server === 'failed' && <p className="muted small">Connection is slower than usual. We will retry when you submit.</p>}
 
-          <button className="btn btn-primary btn-block" disabled={busy} style={{ marginTop: '12px' }}>
+          <button className="btn btn-primary btn-block checkout-btn-pay" disabled={busy}>
             {busy ? 'Processing payment...' : `Pay ₹${price}`}
           </button>
-          <p className="muted small" style={{ textAlign: 'center' }}>
-            Secured by Razorpay. UPI, Cards and Netbanking supported.
+          <p className="muted small checkout-security-note">
+            UPI, Cards and Netbanking supported. Instant access after confirmation.
           </p>
         </form>
       </div>

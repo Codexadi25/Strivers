@@ -1,0 +1,170 @@
+/* Strivers Server Client Practice Page Styles */
+
+.practice-page-root {
+  padding: 24px 32px 48px;
+  max-width: 1540px;
+  margin: 0 auto;
+  font-family: inherit;
+}
+
+.practice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.practice-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0 0 6px;
+  letter-spacing: -0.3px;
+}
+
+.practice-desc {
+  font-size: 0.88rem;
+  color: #64748B;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.practice-btn-add {
+  background-color: #2563EB !important;
+  color: #FFFFFF !important;
+  text-transform: none !important;
+  font-weight: 700 !important;
+  font-size: 0.88rem !important;
+  padding: 8px 18px !important;
+  border-radius: 8px !important;
+}
+
+.practice-alert {
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  background-color: #ECFDF5;
+  color: #065F46;
+  border: 1px solid #A7F3D0;
+  margin-bottom: 20px;
+}
+
+.practice-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 1100px) {
+  .practice-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .practice-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.practice-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+}
+
+.practice-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.practice-cat-pill {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #2563EB;
+  background-color: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.practice-role-tag {
+  font-size: 0.72rem;
+  color: #64748B;
+  font-weight: 600;
+}
+
+.practice-card-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0 0 10px;
+  line-height: 1.3;
+}
+
+.practice-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #64748B;
+  margin-bottom: 14px;
+}
+
+.practice-companies-box {
+  background-color: #F8FAFC;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.practice-companies-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748B;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.practice-companies-list {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.practice-company-pill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  background-color: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  color: #1E293B;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.practice-card-footer {
+  border-top: 1px solid #F1F5F9;
+  padding-top: 12px;
+}
+
+.practice-status-active {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #059669;
+  font-weight: 700;
+}
+

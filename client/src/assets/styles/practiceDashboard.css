@@ -1546,7 +1546,7 @@
   transition: all 0.15s;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .track-category-selector-row {
     flex-direction: column;
     gap: 8px;
@@ -1642,7 +1642,7 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   /* Remove excessive blank spaces and margins */
   .sheet-header-card {
     margin-bottom: 12px !important;
@@ -1717,33 +1717,55 @@
     padding: 2px 7px !important;
   }
 
-  /* Table styling on mobile */
+  /* Table -> Responsive Mobile Card Rows (Zero narrow squished columns) */
   .problems-table-wrapper {
     display: block !important;
     width: 100% !important;
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    border-radius: 6px !important;
+    overflow-x: hidden !important;
   }
   .problems-table {
-    min-width: 580px !important;
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  .problems-table thead {
+    display: none !important;
+  }
+  .problems-table tbody {
+    display: block !important;
     width: 100% !important;
   }
-  .problems-table th {
-    padding: 8px 8px !important;
-    font-size: 0.72rem !important;
+  .problems-table tr {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    gap: 8px 10px !important;
+    padding: 12px 10px !important;
+    border-bottom: 1px solid #E2E8F0 !important;
   }
   .problems-table td {
-    padding: 8px 8px !important;
-    font-size: 0.8rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    width: auto !important;
+    padding: 0 !important;
+    border: none !important;
+    font-size: 0.82rem !important;
+  }
+  .problems-table td.pd-col-title {
+    flex: 1 1 calc(100% - 42px) !important;
+    display: block !important;
+    min-width: 0 !important;
+  }
+  .pd-mobile-hide {
+    display: none !important;
   }
   .diff-pill {
-    font-size: 0.68rem !important;
-    padding: 2px 6px !important;
+    font-size: 0.7rem !important;
+    padding: 2px 7px !important;
   }
   .company-badge {
-    font-size: 0.68rem !important;
-    padding: 1px 5px !important;
+    font-size: 0.7rem !important;
+    padding: 2px 6px !important;
   }
 
   /* Compact Right Sidebar & Progress Overview */
@@ -1895,17 +1917,51 @@
 
   /* Topbar Buttons */
   .streak-pill-btn {
-    padding: 3px 6px !important;
+    padding: 4px 8px !important;
     font-size: 0.72rem !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
   }
   .user-profile-badge span {
     display: none !important;
   }
   .user-avatar-circle {
-    width: 26px !important;
-    height: 26px !important;
-    font-size: 0.72rem !important;
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 0.75rem !important;
   }
+}
+
+/* Auth Gate & Mobile Helpers */
+.pd-auth-gate-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f8fafc;
+}
+
+.pd-auth-gate-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 16px;
+}
+
+.pd-auth-gate-card {
+  max-width: 480px;
+  width: 100%;
+  padding: 36px 28px;
+  border-radius: 16px !important;
+  border: 1px solid #e2e8f0 !important;
+  text-align: center;
+}
+
+.pd-auth-gate-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 

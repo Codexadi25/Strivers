@@ -1,0 +1,60 @@
+/* Placement Guidance & Mentorship Disclaimer Styles */
+
+.placement-disclaimer-compact {
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  color: #92400E;
+  line-height: 1.5;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.placement-disclaimer-icon-compact {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.placement-disclaimer-full {
+  background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+  border: 1px solid #F59E0B;
+  border-radius: 14px;
+  padding: 18px 24px;
+  margin: 24px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.08);
+}
+
+.placement-disclaimer-icon-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #FDE68A;
+  color: #B45309;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.placement-disclaimer-heading {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  color: #92400E;
+  font-weight: 700;
+  font-family: var(--font-heading, inherit);
+}
+
+.placement-disclaimer-body {
+  margin: 0;
+  font-size: 0.86rem;
+  color: #78350F;
+  line-height: 1.55;
+}
+

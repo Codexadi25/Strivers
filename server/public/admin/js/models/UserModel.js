@@ -40,4 +40,10 @@ export class UserModel {
       body: JSON.stringify(payload),
     });
   }
+
+  static async deleteUser(emailOrId) {
+    return await apiRequest(`/users/${encodeURIComponent(emailOrId)}`, {
+      method: 'DELETE',
+    });
+  }
 }

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
-import Navbar from '../components/common/Navbar';
+import Header from '../components/common/Header';
+import Footer from '../components/common/Footer';
+import './Auth.css';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -49,8 +51,8 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <Navbar />
+    <div className="auth-page-root">
+      <Header />
 
       <main className="auth-wrap" style={{ flex: 1, maxWidth: 460, margin: '60px auto', width: '100%', padding: '0 16px' }}>
         <h2>Reset Your Password</h2>
@@ -154,6 +156,7 @@ export default function ForgotPassword() {
           </Link>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

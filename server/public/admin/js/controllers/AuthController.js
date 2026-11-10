@@ -87,9 +87,9 @@ export class AuthController {
       showToast('Authenticated as Master Root Administrator', 'success');
       this.showDashboard(res.user);
 
-      // Trigger initial tab load
+      // Trigger initial tab load (User Access Control is the primary basic Server GUI pane)
       if (window.switchTab) {
-        window.switchTab('pricing');
+        window.switchTab('users');
       }
     } catch (err) {
       if (errBox) {

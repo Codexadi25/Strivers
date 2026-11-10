@@ -3,9 +3,10 @@ import axiosClient from '../api/axiosClient';
 import { DRMProtectionWrapper } from '../components/secureViewer/DRMProtectionWrapper';
 import { SecureCanvasViewer } from '../components/secureViewer/SecureCanvasViewer';
 import { SkeletonLoader } from '../components/common/SkeletonLoader';
-import Navbar from '../components/common/Navbar';
+import Header from '../components/common/Header';
+import Footer from '../components/common/Footer';
 import { loadRazorpay } from '../utils/razorpay';
-import '../assets/styles/secureViewer.css';
+import './ViewerPage.css';
 
 export const ViewerPage = () => {
   const [loading, setLoading] = useState(true);
@@ -13,23 +14,36 @@ export const ViewerPage = () => {
   const [watermark, setWatermark] = useState('');
   const [paymentRequired, setPaymentRequired] = useState(false);
   const [error, setError] = useState(null);
+  const [tierProduct, setTierProduct] = useState({ price: 499, title: 'Full-Stack Software Engineering', productId: 'course_fullstack' });
 
   const fetchProtectedContent = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await axiosClient.get('/secure/data');
-      if (res.data.success) {
-        setContent(res.data.payload);
-        setWatermark(res.data.watermark);
+      const [dataRes, coursesRes] = await Promise.allSettled([
+        axiosClient.get('/secure/data'),
+        axiosClient.get('/courses'),
+      ]);
+
+      if (coursesRes.status === 'fulfilled' && Array.isArray(coursesRes.value.data?.courses)) {
+        const pro = coursesRes.value.data.courses.find((p) => p.productId === 'course_fullstack') || coursesRes.value.data.courses[0];
+        if (pro) setTierProduct(pro);
+      }
+
+      if (dataRes.status === 'fulfilled' && dataRes.value.data?.success) {
+        setContent(dataRes.value.data.payload);
+        setWatermark(dataRes.value.data.watermark);
         setPaymentRequired(false);
+      } else if (dataRes.status === 'rejected') {
+        const err = dataRes.reason;
+        if (err.response && err.response.status === 403 && err.response.data?.paymentRequired) {
+          setPaymentRequired(true);
+        } else {
+          setError(err.response?.data?.message || 'Failed to authenticate data streams.');
+        }
       }
     } catch (err) {
-      if (err.response && err.response.status === 403 && err.response.data.paymentRequired) {
-        setPaymentRequired(true);
-      } else {
-        setError(err.response?.data?.message || 'Failed to authenticate data streams.');
-      }
+      setError(err.response?.data?.message || 'Failed to authenticate data streams.');
     } finally {
       setLoading(false);
     }
@@ -45,11 +59,13 @@ export const ViewerPage = () => {
       setError(null);
       await loadRazorpay();
 
-      // 1. Create Order on Backend (amount in paise, min 100 paise)
+      const planId = tierProduct.productId || 'course_fullstack';
+      const amountInPaise = tierProduct.priceInPaise || Math.round((tierProduct.price || 499) * 100);
+
       const { data: orderData } = await axiosClient.post('/create-order', {
-        amount: 49900, // ₹499 in paise
+        amount: amountInPaise,
         currency: 'INR',
-        planId: 'plan_pro_access',
+        planId,
       });
 
       const orderId = orderData.order_id || orderData.orderId;
@@ -65,20 +81,18 @@ export const ViewerPage = () => {
 
       const options = {
         key: keyId,
-        amount: orderData.amount || 49900,
+        amount: orderData.amount || amountInPaise,
         currency: orderData.currency || 'INR',
-        name: 'Secure Enterprise Access',
-        description: '30-Day Protected Tier Subscription',
+        name: 'Strivers',
+        description: tierProduct.title || 'Protected Tier Subscription',
         order_id: orderId,
         handler: async (response) => {
           try {
-            // 3. Verify Razorpay Signature on Server
             const verifyRes = await axiosClient.post('/verify-payment', {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
             });
-
             if (verifyRes.data.success) {
               fetchProtectedContent();
             }
@@ -98,7 +112,7 @@ export const ViewerPage = () => {
             setError('Payment was cancelled by the user.');
           },
         },
-        theme: { color: '#00f2fe' },
+        theme: { color: '#2563EB' },
       };
 
       const razorpayInstance = new window.Razorpay(options);
@@ -106,7 +120,6 @@ export const ViewerPage = () => {
         setLoading(false);
         setError(response.error?.description || 'Payment failed. Please try again.');
       });
-
       razorpayInstance.open();
     } catch (err) {
       setLoading(false);
@@ -116,69 +129,63 @@ export const ViewerPage = () => {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <Navbar />
-        <div style={{ maxWidth: '850px', margin: '40px auto', padding: '0 20px', width: '100%' }}>
+      <div className="viewer-page-shell">
+        <Header />
+        <div className="viewer-skeleton-wrap">
           <SkeletonLoader height="40px" width="50%" />
           <SkeletonLoader height="350px" width="100%" />
         </div>
+        <Footer />
       </div>
     );
   }
 
   if (paymentRequired) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <Navbar />
-        <div style={{ maxWidth: '600px', margin: '60px auto', width: '100%', padding: '0 20px' }}>
-          <div className="drm-protected-container" style={{ padding: '60px 20px', textAlign: 'center' }}>
-            <h2>Premium Access Required</h2>
-            <p style={{ color: '#94a3b8', margin: '12px 0 24px' }}>
-              This document is protected under dynamic DRM. Unlock access via Razorpay.
+      <div className="viewer-page-shell">
+        <Header />
+        <div className="viewer-paywall-wrap">
+          <div className="drm-protected-container viewer-paywall-card">
+            <h2>Member Access Required</h2>
+            <p className="viewer-paywall-desc">
+              This study resource is reserved for enrolled learners. Unlock instant in-app access to continue.
             </p>
-            <button
-              onClick={handleRazorpayCheckout}
-              style={{
-                padding: '12px 28px',
-                backgroundColor: '#00f2fe',
-                border: 'none',
-                borderRadius: '6px',
-                fontWeight: '600',
-                cursor: 'pointer',
-              }}
-            >
-              Pay ₹499 to Unlock
+            <button onClick={handleRazorpayCheckout} className="viewer-unlock-btn">
+              Pay ₹{tierProduct.price || 499} to Unlock
             </button>
           </div>
         </div>
+        <Footer />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <Navbar />
-        <div style={{ maxWidth: '600px', margin: '40px auto', width: '100%', padding: '0 20px' }}>
-          <div className="drm-protected-container" style={{ padding: '40px' }}>
-            <p style={{ color: 'var(--danger)' }}>{error}</p>
-            <button onClick={fetchProtectedContent} style={{ marginTop: '12px' }}>
+      <div className="viewer-page-shell">
+        <Header />
+        <div className="viewer-error-wrap">
+          <div className="drm-protected-container viewer-error-card">
+            <p className="viewer-error-msg">{error}</p>
+            <button onClick={fetchProtectedContent} className="viewer-retry-btn">
               Retry
             </button>
           </div>
         </div>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <Navbar />
-      <div style={{ maxWidth: '900px', margin: '40px auto', padding: '0 20px', width: '100%' }}>
+    <div className="viewer-page-shell">
+      <Header />
+      <div className="viewer-canvas-wrap">
         <DRMProtectionWrapper>
           <SecureCanvasViewer contentData={content} watermarkText={watermark} />
         </DRMProtectionWrapper>
       </div>
+      <Footer />
     </div>
   );
 };

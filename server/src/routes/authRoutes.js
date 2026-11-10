@@ -3,61 +3,43 @@ const crypto = require('crypto');
 const mongoose = require('mongoose');
 const UserAccess = require('../models/UserAccess');
 const UserProfile = require('../models/UserProfile');
-const ActivityLog = require('../models/ActivityLog');
+const UserStore = require('../utils/userStore');
+const ActivityOrderStore = require('../utils/activityOrderStore');
 const { verifyFirebaseToken } = require('../middlewares/authMiddleware');
-const { signSessionToken } = require('../utils/token');
+const { signSessionToken, verifySessionToken } = require('../utils/token');
 const { hashPassword, verifyPassword } = require('../utils/password');
 
-// High-availability in-memory user cache (prevents login/registration failures during DB timeouts or offline mode)
-const inMemoryUsers = new Map();
+// Helper: build clean user response object
+function formatAuthUser(userDoc, fallbackReqUser = {}) {
+  const email = (userDoc?.email || fallbackReqUser.email || '').trim().toLowerCase();
+  const uid = userDoc?.userId || fallbackReqUser.uid || `usr_${Date.now()}`;
+  const envAdmin = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+  const role =
+    userDoc?.role ||
+    (envAdmin && email === envAdmin ? 'admin' : fallbackReqUser.role || 'user');
 
-function initSeedUsers() {
-  if (inMemoryUsers.size === 0) {
-    const adminEmail = (process.env.ADMIN_EMAIL || 'admin@yourdomain.com').trim().toLowerCase();
-    inMemoryUsers.set(adminEmail, {
-      userId: 'usr_admin_001',
-      email: adminEmail,
-      name: 'System Administrator',
-      password: hashPassword('admin123'),
-      role: 'admin',
-      hasActiveSubscription: true,
-      enrolledCourses: [{ courseId: 'masterclass', title: 'Full Stack Masterclass', enrolledAt: new Date() }],
-      enrolledPracticeSheets: [],
-    });
-
-    inMemoryUsers.set('creedracer111@gmail.com', {
-      userId: 'usr_creed_001',
-      email: 'creedracer111@gmail.com',
-      name: 'Creed Racer',
-      password: hashPassword('student123'),
-      role: 'admin',
-      hasActiveSubscription: true,
-      enrolledCourses: [{ courseId: 'masterclass', title: 'Full Stack Masterclass', enrolledAt: new Date() }],
-      enrolledPracticeSheets: [],
-    });
-
-    inMemoryUsers.set('kamaldeep@gmail.com', {
-      userId: '312795448',
-      email: 'kamaldeep@gmail.com',
-      name: 'Kamaldeep',
-      phone: '+91 98765 55543',
-      password: hashPassword('student123'),
-      role: 'user',
-      hasActiveSubscription: true,
-      enrolledCourses: [{ courseId: 'masterclass', title: 'Full Stack Masterclass', enrolledAt: new Date() }],
-      enrolledPracticeSheets: [],
-    });
-  }
+  return {
+    _id: uid,
+    id: uid,
+    name: userDoc?.name || fallbackReqUser.name || (email ? email.split('@')[0] : 'Student'),
+    email,
+    phone: userDoc?.phone || '',
+    role,
+    isAdmin: role === 'admin',
+    hasActiveSubscription: Boolean(userDoc?.hasActiveSubscription),
+    enrolledCourses: userDoc?.enrolledCourses || [],
+    enrolledPracticeSheets: userDoc?.enrolledPracticeSheets || [],
+    maxPracticeSheetsAllowed: userDoc?.maxPracticeSheetsAllowed || 2,
+  };
 }
-initSeedUsers();
 
-// Get current user session
+// Get current user session (/api/auth/me)
 router.get('/me', verifyFirebaseToken, async (req, res) => {
   if (!req.user) {
     return res.status(401).json({
       success: false,
       user: null,
-      message: 'Not authenticated',
+      message: 'Not authenticated or session expired.',
     });
   }
 
@@ -66,35 +48,21 @@ router.get('/me', verifyFirebaseToken, async (req, res) => {
     try {
       userAccess = await UserAccess.findOne({
         $or: [{ userId: req.user.uid }, { email: req.user.email }],
-      }).maxTimeMS(2500);
+      }).maxTimeMS(1500);
     } catch (_) {}
   }
 
   if (!userAccess && req.user.email) {
-    userAccess = inMemoryUsers.get(req.user.email.toLowerCase());
+    userAccess = UserStore.findRaw(req.user.email);
   }
-
-  const role =
-    userAccess?.role ||
-    (req.user.email === process.env.ADMIN_EMAIL ? 'admin' : req.user.role || 'user');
 
   return res.json({
     success: true,
-    user: {
-      _id: req.user.uid,
-      id: req.user.uid,
-      name: userAccess?.name || req.user.name || (req.user.email ? req.user.email.split('@')[0] : 'User'),
-      email: req.user.email,
-      role: role,
-      isAdmin: role === 'admin',
-      hasActiveSubscription: Boolean(userAccess?.hasActiveSubscription),
-      enrolledCourses: userAccess?.enrolledCourses || [],
-      enrolledPracticeSheets: userAccess?.enrolledPracticeSheets || [],
-    },
+    user: formatAuthUser(userAccess, req.user),
   });
 });
 
-// Login endpoint with plan verification
+// Login endpoint (/api/auth/login)
 router.post('/login', async (req, res) => {
   try {
     const { email, password, plan } = req.body;
@@ -104,80 +72,75 @@ router.post('/login', async (req, res) => {
 
     const userEmail = email.trim().toLowerCase();
 
-    // 1. Look up in MongoDB if available
+    // Look up in MongoDB first if connected, otherwise UserStore
     let userAccess = null;
     if (mongoose.connection.readyState === 1) {
       try {
-        userAccess = await UserAccess.findOne({ email: userEmail }).maxTimeMS(3000);
+        userAccess = await UserAccess.findOne({ email: userEmail }).maxTimeMS(2000);
       } catch (dbErr) {
-        console.warn('[Auth Login] DB query error, using memory fallback:', dbErr.message);
+        console.warn('[Auth Login] DB notice, falling back to UserStore:', dbErr.message);
       }
     }
-
-    // 2. Fallback to inMemoryUsers
     if (!userAccess) {
-      userAccess = inMemoryUsers.get(userEmail);
+      userAccess = UserStore.findRaw(userEmail);
     }
 
     if (!userAccess) {
       return res.status(404).json({
         success: false,
-        message: 'No account found with this email. Please create an account first.',
+        notFound: true,
+        message: `No account registered with ${userEmail}. Please create an account.`,
       });
     }
 
-    if (password && userAccess.password && !verifyPassword(password, userAccess.password)) {
-      return res.status(401).json({
-        success: false,
-        message: 'Incorrect password. Please verify and try again.',
-      });
+    if (password) {
+      if (userAccess.password) {
+        const matches = verifyPassword(password, userAccess.password);
+        if (!matches) {
+          return res.status(401).json({
+            success: false,
+            message: 'Incorrect password. Please verify and try again.',
+          });
+        }
+      } else {
+        const hashed = hashPassword(password);
+        UserStore.upsert({ email: userEmail, password: hashed });
+        if (mongoose.connection.readyState === 1) {
+          UserAccess.updateOne({ email: userEmail }, { $set: { password: hashed } }).catch(() => {});
+        }
+      }
     }
 
-    const isEnvAdmin = process.env.ADMIN_EMAIL && userEmail === process.env.ADMIN_EMAIL.toLowerCase();
-    let role = userAccess.role || (isEnvAdmin ? 'admin' : 'user');
+    const formattedUser = formatAuthUser(userAccess, { email: userEmail });
+    const token = signSessionToken({ uid: formattedUser.id, email: userEmail, role: formattedUser.role });
 
-    const uid = userAccess.userId || `usr_${Date.now()}`;
-    const token = signSessionToken({ uid, email: userEmail, role });
-
-    // Check if user already owns the opted course
     const targetPlan = plan || 'masterclass';
     const alreadyOwnsCourse =
-      userAccess.enrolledCourses?.some((c) => c.courseId === targetPlan) ||
-      (userAccess.hasActiveSubscription && targetPlan === 'masterclass');
+      formattedUser.enrolledCourses.some((c) => c.courseId === targetPlan) ||
+      (formattedUser.hasActiveSubscription && targetPlan === 'masterclass');
 
-    if (mongoose.connection.readyState === 1) {
-      ActivityLog.create({
-        userId: uid,
-        userEmail,
-        action: 'LOGIN',
-        ipAddress: req.ip || '127.0.0.1',
-        userAgent: req.headers['user-agent'] || 'Client-Login',
-        metaData: { plan: targetPlan, alreadyOwnsCourse },
-      }).catch(() => {});
-    }
+    ActivityOrderStore.addLog({
+      event: 'LOGIN',
+      userEmail,
+      ip: req.ip || '127.0.0.1',
+      metadata: { plan: targetPlan, alreadyOwnsCourse },
+      tag: 'AUTH',
+    });
 
     return res.json({
       success: true,
       token,
       alreadyPaid: Boolean(alreadyOwnsCourse),
-      accessUrl: alreadyOwnsCourse ? `/products/${targetPlan}/access` : null,
-      user: {
-        id: uid,
-        email: userEmail,
-        name: userAccess.name || userEmail.split('@')[0],
-        role: role,
-        isAdmin: role === 'admin',
-        enrolledCourses: userAccess.enrolledCourses || [],
-        enrolledPracticeSheets: userAccess.enrolledPracticeSheets || [],
-      },
+      accessUrl: alreadyOwnsCourse ? `/courses/${targetPlan}/access` : null,
+      user: formattedUser,
     });
   } catch (err) {
     console.error('[Auth Login Error]:', err);
-    return res.status(500).json({ success: false, message: 'Login failed: ' + err.message, error: err.message });
+    return res.status(500).json({ success: false, message: 'Login failed: ' + err.message });
   }
 });
 
-// Registration endpoint with existing account check and automatic session start
+// Registration endpoint (/api/auth/register)
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password, plan } = req.body;
@@ -187,20 +150,16 @@ router.post('/register', async (req, res) => {
 
     const userEmail = email.trim().toLowerCase();
 
-    // 1. Look up existing in DB or memory
     let existingUser = null;
     if (mongoose.connection.readyState === 1) {
       try {
-        existingUser = await UserAccess.findOne({ email: userEmail }).maxTimeMS(3000);
-      } catch (dbErr) {
-        console.warn('[Auth Register] DB query error, checking memory:', dbErr.message);
-      }
+        existingUser = await UserAccess.findOne({ email: userEmail }).maxTimeMS(2000);
+      } catch (_) {}
     }
     if (!existingUser) {
-      existingUser = inMemoryUsers.get(userEmail);
+      existingUser = UserStore.findRaw(userEmail);
     }
 
-    // If an account already exists, redirect user to login and check if they already bought the course
     if (existingUser) {
       const targetPlan = plan || 'masterclass';
       const alreadyOwnsCourse =
@@ -220,7 +179,7 @@ router.post('/register', async (req, res) => {
     const hashedPassword = hashPassword(password || 'student123');
     const userName = name?.trim() || userEmail.split('@')[0];
 
-    const newUserRecord = {
+    const created = UserStore.upsert({
       userId: uid,
       email: userEmail,
       name: userName,
@@ -230,15 +189,10 @@ router.post('/register', async (req, res) => {
       watermarkIdentifier: `${userEmail} | ${uid.slice(0, 6)}`,
       enrolledCourses: [],
       enrolledPracticeSheets: [],
-    };
+    });
 
-    // Store in-memory immediately for zero-downtime resilience
-    inMemoryUsers.set(userEmail, newUserRecord);
-
-    // Persist to MongoDB if connected
     if (mongoose.connection.readyState === 1) {
       try {
-        await UserAccess.create(newUserRecord);
         await UserProfile.findOneAndUpdate(
           { email: userEmail },
           {
@@ -248,19 +202,17 @@ router.post('/register', async (req, res) => {
             targetCompanies: ['Zomato', 'Blinkit', 'Hyperpure', 'District', 'Porter', 'Amazon', 'Flipkart', 'Swiggy'],
           },
           { upsert: true, new: true }
-        );
-        ActivityLog.create({
-          userId: uid,
-          userEmail,
-          action: 'LOGIN',
-          ipAddress: req.ip || '127.0.0.1',
-          userAgent: req.headers['user-agent'] || 'Client-Register',
-          metaData: { action: 'ACCOUNT_CREATED', plan },
-        }).catch(() => {});
-      } catch (dbWriteErr) {
-        console.warn('[Auth Register] DB write failed, saved in memory cache:', dbWriteErr.message);
-      }
+        ).maxTimeMS(2000);
+      } catch (_) {}
     }
+
+    ActivityOrderStore.addLog({
+      event: 'REGISTER',
+      userEmail,
+      ip: req.ip || '127.0.0.1',
+      metadata: { plan: plan || 'none' },
+      tag: 'AUTH',
+    });
 
     const token = signSessionToken({ uid, email: userEmail, role: 'user' });
 
@@ -269,19 +221,46 @@ router.post('/register', async (req, res) => {
       token,
       alreadyPaid: false,
       message: 'Account registered successfully.',
-      user: {
-        id: uid,
-        email: userEmail,
-        name: userName,
-        role: 'user',
-        isAdmin: false,
-        enrolledCourses: [],
-        enrolledPracticeSheets: [],
-      },
+      user: formatAuthUser(created, { uid, email: userEmail }),
     });
   } catch (err) {
     console.error('[Auth Register Error]:', err);
-    return res.status(500).json({ success: false, message: 'Registration failed: ' + err.message, error: err.message });
+    return res.status(500).json({ success: false, message: 'Registration failed: ' + err.message });
+  }
+});
+
+// Account setup verification & password save (/api/auth/setup-account)
+router.get('/setup-account', (req, res) => {
+  const token = req.query.token || '';
+  const payload = verifySessionToken(token);
+  if (!payload || !payload.email) {
+    return res.status(400).json({ success: false, error: 'Invalid or expired account setup token.' });
+  }
+  return res.json({ success: true, email: payload.email });
+});
+
+router.post('/setup-account', async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    const payload = verifySessionToken(token || '');
+    if (!payload || !payload.email) {
+      return res.status(400).json({ success: false, error: 'Invalid or expired setup link.' });
+    }
+    if (!password || password.length < 6) {
+      return res.status(400).json({ success: false, error: 'Password must be at least 6 characters.' });
+    }
+    const email = payload.email.trim().toLowerCase();
+    const hashedPassword = hashPassword(password);
+    const updated = UserStore.upsert({ email, password: hashedPassword });
+    const sessionToken = signSessionToken({ uid: updated.userId, email, role: updated.role || 'user' });
+    return res.json({
+      success: true,
+      token: sessionToken,
+      accessUrl: '/courses',
+      user: formatAuthUser(updated),
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -295,17 +274,13 @@ router.post('/forgot-password', async (req, res) => {
 
     const userEmail = email.trim().toLowerCase();
     let user = null;
-
     if (mongoose.connection.readyState === 1) {
       try {
-        user = await UserAccess.findOne({ email: userEmail }).maxTimeMS(3000);
-      } catch (dbErr) {
-        console.warn('[Forgot Password] DB query error, checking memory:', dbErr.message);
-      }
+        user = await UserAccess.findOne({ email: userEmail }).maxTimeMS(2000);
+      } catch (_) {}
     }
-
     if (!user) {
-      user = inMemoryUsers.get(userEmail);
+      user = UserStore.findRaw(userEmail);
     }
 
     if (!user) {
@@ -313,28 +288,13 @@ router.post('/forgot-password', async (req, res) => {
     }
 
     const resetToken = crypto.randomBytes(24).toString('hex');
-    const expiresAt = new Date(Date.now() + 3600000); // 1 hour validity
+    const expiresAt = new Date(Date.now() + 3600000);
 
-    // Update in-memory user
-    user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = expiresAt;
-    inMemoryUsers.set(userEmail, user);
-
-    // Update in MongoDB if connected
-    if (mongoose.connection.readyState === 1) {
-      try {
-        if (typeof user.save === 'function') {
-          await user.save();
-        } else {
-          await UserAccess.updateOne(
-            { email: userEmail },
-            { $set: { resetPasswordToken: resetToken, resetPasswordExpires: expiresAt } }
-          );
-        }
-      } catch (dbSaveErr) {
-        console.warn('[Forgot Password] DB save notice, preserved in memory:', dbSaveErr.message);
-      }
-    }
+    UserStore.upsert({
+      email: userEmail,
+      resetPasswordToken: resetToken,
+      resetPasswordExpires: expiresAt.toISOString(),
+    });
 
     const resetUrl = `/reset-password?token=${resetToken}&email=${encodeURIComponent(userEmail)}`;
 
@@ -345,8 +305,7 @@ router.post('/forgot-password', async (req, res) => {
       resetUrl,
     });
   } catch (err) {
-    console.error('[Forgot Password Error]:', err);
-    return res.status(500).json({ success: false, message: 'Password reset request failed: ' + err.message, error: err.message });
+    return res.status(500).json({ success: false, message: 'Password reset request failed: ' + err.message });
   }
 });
 
@@ -357,79 +316,66 @@ router.post('/reset-password', async (req, res) => {
     if (!email || !newPassword) {
       return res.status(400).json({ success: false, message: 'Email and new password are required.' });
     }
-
     if (newPassword.length < 6) {
       return res.status(400).json({ success: false, message: 'Password must be at least 6 characters long.' });
     }
 
     const userEmail = email.trim().toLowerCase();
     let user = null;
-
     if (mongoose.connection.readyState === 1) {
       try {
-        user = await UserAccess.findOne({
-          email: userEmail,
-          ...(token ? { resetPasswordToken: token, resetPasswordExpires: { $gt: new Date() } } : {}),
-        }).maxTimeMS(3000);
-      } catch (dbErr) {
-        console.warn('[Reset Password] DB query error, checking memory:', dbErr.message);
-      }
+        user = await UserAccess.findOne({ email: userEmail }).maxTimeMS(2000);
+      } catch (_) {}
     }
-
     if (!user) {
-      const memUser = inMemoryUsers.get(userEmail);
-      if (memUser) {
-        if (token && memUser.resetPasswordToken && memUser.resetPasswordToken !== token) {
-          return res.status(400).json({ success: false, message: 'Password reset token is invalid or does not match.' });
-        }
-        if (token && memUser.resetPasswordExpires && new Date(memUser.resetPasswordExpires) < new Date()) {
-          return res.status(400).json({ success: false, message: 'Password reset token has expired. Please request a new link.' });
-        }
-        user = memUser;
-      }
+      user = UserStore.findRaw(userEmail);
     }
-
-    if (!user && token) {
-      return res.status(400).json({ success: false, message: 'Password reset token is invalid or has expired.' });
-    }
-
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found.' });
     }
 
-    const hashedPassword = hashPassword(newPassword);
-    user.password = hashedPassword;
-    user.resetPasswordToken = null;
-    user.resetPasswordExpires = null;
-    inMemoryUsers.set(userEmail, user);
-
-    if (mongoose.connection.readyState === 1) {
-      try {
-        if (typeof user.save === 'function') {
-          await user.save();
-        } else {
-          await UserAccess.updateOne(
-            { email: userEmail },
-            { $set: { password: hashedPassword, resetPasswordToken: null, resetPasswordExpires: null } }
-          );
-        }
-      } catch (dbErr) {
-        console.warn('[Reset Password] DB save notice, preserved in memory:', dbErr.message);
-      }
+    if (token && user.resetPasswordToken && user.resetPasswordToken !== token) {
+      return res.status(400).json({ success: false, message: 'Invalid password reset token.' });
     }
+
+    const hashedPassword = hashPassword(newPassword);
+    UserStore.upsert({
+      email: userEmail,
+      password: hashedPassword,
+      resetPasswordToken: null,
+      resetPasswordExpires: null,
+    });
 
     return res.json({
       success: true,
       message: 'Password has been reset successfully. Please sign in with your new credentials.',
     });
   } catch (err) {
-    console.error('[Reset Password Error]:', err);
-    return res.status(500).json({ success: false, message: 'Password reset failed: ' + err.message, error: err.message });
+    return res.status(500).json({ success: false, message: 'Password reset failed: ' + err.message });
   }
 });
 
-router.post('/logout', (req, res) => {
-  res.json({ success: true, message: 'Logged out successfully' });
+// Token Refresh
+router.post('/refresh', verifyFirebaseToken, (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ success: false, message: 'No active session to refresh.' });
+  }
+  const newToken = signSessionToken({ uid: req.user.uid, email: req.user.email, role: req.user.role });
+  return res.json({ success: true, token: newToken });
+});
+
+// Logout endpoint (/api/auth/logout)
+router.post('/logout', verifyFirebaseToken, (req, res) => {
+  if (req.user?.email) {
+    ActivityOrderStore.addLog({
+      event: 'LOGOUT',
+      userEmail: req.user.email,
+      ip: req.ip || '127.0.0.1',
+      metadata: { portal: 'Student Client' },
+      tag: 'AUTH',
+    });
+  }
+  res.json({ success: true, message: 'Logged out successfully.' });
 });
 
 module.exports = router;

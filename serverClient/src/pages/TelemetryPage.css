@@ -1,0 +1,318 @@
+/* Strivers Server Client Telemetry Page Styles */
+
+.telem-page-root {
+  padding: 24px 32px 48px;
+  max-width: 1540px;
+  margin: 0 auto;
+  font-family: inherit;
+}
+
+.telem-header {
+  margin-bottom: 24px;
+}
+
+.telem-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0 0 6px;
+  letter-spacing: -0.3px;
+}
+
+.telem-desc {
+  font-size: 0.88rem;
+  color: #64748B;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* 4 METRIC CARDS */
+.telem-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 1200px) {
+  .telem-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .telem-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.telem-metric-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+}
+
+.telem-metric-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.bg-green-light {
+  background-color: #ECFDF5;
+}
+
+.bg-blue-light {
+  background-color: #EFF6FF;
+}
+
+.bg-purple-light {
+  background-color: #F5F3FF;
+}
+
+.bg-indigo-light {
+  background-color: #EEF2FF;
+}
+
+.telem-metric-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748B;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.telem-metric-val {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1.1;
+  margin-bottom: 2px;
+}
+
+.telem-metric-sub {
+  font-size: 0.74rem;
+  display: block;
+}
+
+.text-green {
+  color: #059669;
+}
+
+.text-muted {
+  color: #64748B;
+}
+
+.text-dark {
+  color: #0F172A;
+}
+
+.text-blue {
+  color: #2563EB;
+}
+
+/* 2 DIAGNOSTIC PANELS */
+.telem-panels-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 900px) {
+  .telem-panels-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.telem-panel-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 22px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+}
+
+.telem-panel-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0 0 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.telem-keyval-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.telem-keyval-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.86rem;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed #F1F5F9;
+}
+
+.telem-key {
+  color: #64748B;
+}
+
+.telem-val {
+  color: #0F172A;
+}
+
+.font-mono {
+  font-family: monospace;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+/* TABLE CARD */
+.telem-table-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 22px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+}
+
+.telem-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.telem-table-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0 0 4px;
+}
+
+.telem-table-subtitle {
+  font-size: 0.8rem;
+  color: #64748B;
+}
+
+.telem-table-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 0.82rem;
+  color: #64748B;
+  flex-wrap: wrap;
+}
+
+.telem-per-page {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.telem-per-page select {
+  padding: 4px 8px;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  font-size: 0.82rem;
+}
+
+.telem-pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.telem-pagination button {
+  padding: 3px 9px;
+  border: 1px solid #CBD5E1;
+  background-color: #FFFFFF;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.telem-pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* TABLE */
+.telem-table-wrapper {
+  overflow-x: auto;
+}
+
+.telem-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.82rem;
+}
+
+.telem-table th {
+  padding: 10px 14px;
+  background-color: #F8FAFC;
+  color: #64748B;
+  font-weight: 700;
+  border-bottom: 1px solid #E2E8F0;
+  white-space: nowrap;
+}
+
+.telem-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #F1F5F9;
+  vertical-align: middle;
+}
+
+.telem-event-name {
+  font-family: monospace;
+  font-weight: 700;
+  color: #0F172A;
+  font-size: 0.8rem;
+}
+
+.telem-meta-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.telem-meta-json {
+  color: #2563EB;
+  background-color: #EFF6FF;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.74rem;
+  max-width: 380px;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.telem-tag-pill {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #475569;
+  background-color: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  padding: 2px 6px;
+  border-radius: 4px;
+}

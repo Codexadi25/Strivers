@@ -1,0 +1,73 @@
+.viewer-page-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #f8fafc;
+}
+
+.viewer-skeleton-wrap {
+  max-width: 850px;
+  margin: 40px auto;
+  padding: 0 20px;
+  width: 100%;
+  flex: 1;
+}
+
+.viewer-paywall-wrap {
+  max-width: 600px;
+  margin: 60px auto;
+  width: 100%;
+  padding: 0 20px;
+  flex: 1;
+}
+
+.viewer-paywall-card {
+  padding: 60px 24px;
+  text-align: center;
+}
+
+.viewer-paywall-desc {
+  color: #94a3b8;
+  margin: 12px 0 24px;
+}
+
+.viewer-unlock-btn {
+  padding: 12px 28px;
+  background-color: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.viewer-error-wrap {
+  max-width: 600px;
+  margin: 40px auto;
+  width: 100%;
+  padding: 0 20px;
+  flex: 1;
+}
+
+.viewer-error-card {
+  padding: 40px;
+}
+
+.viewer-error-msg {
+  color: #ef4444;
+}
+
+.viewer-retry-btn {
+  margin-top: 12px;
+  padding: 8px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.viewer-canvas-wrap {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 20px;
+  width: 100%;
+  flex: 1;
+}

@@ -1,0 +1,63 @@
+.sc-telem-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 1200px) {
+  .sc-telem-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .sc-telem-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sc-telem-metric-card {
+  border-radius: 14px !important;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.sc-telem-icon-box {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sc-telem-icon-box.green {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.sc-telem-icon-box.blue {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.sc-telem-icon-box.purple {
+  background: #f5f3ff;
+  color: #7c3aed;
+}
+
+.sc-telem-icon-box.indigo {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.sc-telem-val {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 4px 0 2px;
+}

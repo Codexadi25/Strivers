@@ -1,0 +1,39 @@
+.sc-diag-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 960px) {
+  .sc-diag-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sc-diag-card {
+  border-radius: 14px !important;
+  padding: 20px 22px;
+}
+
+.sc-diag-title {
+  margin: 0 0 14px;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.sc-diag-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sc-diag-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(148, 163, 184, 0.08);
+  font-size: 0.85rem;
+}

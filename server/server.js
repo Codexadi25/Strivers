@@ -3,25 +3,26 @@ require('dotenv').config();
 const app = require('./src/app');
 const connectDB = require('./src/config/db');
 
-const { seedProductsIfEmpty } = require('./src/config/seedProducts');
+const { seedCoursesIfEmpty } = require('./src/config/seedCourses');
 const { seedPracticeSheetsIfEmpty } = require('./src/config/seedPracticeSheets');
 
-const PORT = process.env.PORT || 5000;
+const PORT = parseInt(process.env.PORT, 10) || 8080;
+
+let serverInstance = null;
 
 const startServer = () => {
-  const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`[Server] Live on http://localhost:${PORT} in ${process.env.NODE_ENV || 'development'} mode.`);
+  if (serverInstance) return;
+
+  // Listen on PORT without host string to bind dual-stack IPv4 (127.0.0.1) & IPv6 (::1) on Windows
+  serverInstance = app.listen(PORT, () => {
+    console.log(`[Server] Live on http://localhost:${PORT} and http://127.0.0.1:${PORT} in ${process.env.NODE_ENV || 'development'} mode.`);
   });
 
-  server.on('error', (err) => {
+  serverInstance.on('error', (err) => {
     if (err.code === 'EADDRINUSE' || err.code === 'EACCES') {
-      const fallbackPort = PORT === 5000 ? 5050 : 5000;
-      console.warn(`[Server Port Warning] Port ${PORT} busy or restricted (${err.code}), attempting fallback to ${fallbackPort}...`);
-      const fallbackServer = app.listen(fallbackPort, '0.0.0.0', () => {
-        console.log(`[Server] Live on fallback http://localhost:${fallbackPort} in ${process.env.NODE_ENV || 'development'} mode.`);
-      });
-      fallbackServer.on('error', (fallbackErr) => {
-        console.error('[Server Fallback Error]', fallbackErr.message);
+      console.warn(`[Server Port Warning] Port ${PORT} busy or inaccessible, attempting fallback to 5000...`);
+      serverInstance = app.listen(5000, () => {
+        console.log(`[Server] Live on fallback http://localhost:5000 and http://127.0.0.1:5000 in ${process.env.NODE_ENV || 'development'} mode.`);
       });
     } else {
       console.error('[Server Error]', err.message);
@@ -29,16 +30,17 @@ const startServer = () => {
   });
 };
 
+// Start HTTP server immediately so port 8080 is available in milliseconds
+startServer();
+
+// Connect to MongoDB asynchronously in the background without blocking HTTP traffic
 connectDB().then(async () => {
   try {
-    await seedProductsIfEmpty();
+    await seedCoursesIfEmpty();
     await seedPracticeSheetsIfEmpty();
   } catch (seedErr) {
     console.warn('[Seed Notice]', seedErr.message);
   }
-
-  startServer();
 }).catch((err) => {
   console.warn('[Server Boot Notice]', err.message);
-  startServer();
 });

@@ -1,0 +1,383 @@
+/* Strivers Server Client Pricing & Courses Page */
+
+.pricing-page-root {
+  padding: 24px 32px 48px;
+  max-width: 1540px;
+  margin: 0 auto;
+  font-family: inherit;
+}
+
+.pricing-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.pricing-page-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0 0 6px;
+  letter-spacing: -0.3px;
+}
+
+.pricing-page-desc {
+  font-size: 0.88rem;
+  color: #64748B;
+  margin: 0;
+  max-width: 780px;
+  line-height: 1.5;
+}
+
+.pricing-btn-add {
+  background-color: #2563EB !important;
+  color: #FFFFFF !important;
+  text-transform: none !important;
+  font-weight: 700 !important;
+  font-size: 0.88rem !important;
+  padding: 8px 18px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
+}
+
+.pricing-btn-add:hover {
+  background-color: #1D4ED8 !important;
+}
+
+/* STATUS ALERTS */
+.pricing-status-alert {
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.alert-success {
+  background-color: #ECFDF5;
+  color: #065F46;
+  border: 1px solid #A7F3D0;
+}
+
+.alert-error {
+  background-color: #FEF2F2;
+  color: #B91C1C;
+  border: 1px solid #FECACA;
+}
+
+/* LOADING */
+.pricing-loading-box {
+  padding: 60px 20px;
+  text-align: center;
+  color: #64748B;
+  font-size: 0.95rem;
+}
+
+/* GRID & CARDS */
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+@media (max-width: 1400px) {
+  .pricing-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .pricing-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pricing-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  min-height: 480px;
+}
+
+.pricing-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.07);
+}
+
+.pricing-card-top {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.pricing-badges-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pricing-badge-green {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #059669;
+  background-color: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  padding: 2px 8px;
+  border-radius: 99px;
+  letter-spacing: 0.4px;
+}
+
+.pricing-category-pill {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 99px;
+  letter-spacing: 0.4px;
+}
+
+.pill-masterclass {
+  background-color: #EFF6FF;
+  color: #2563EB;
+  border: 1px solid #BFDBFE;
+}
+
+.pill-channel {
+  background-color: #FEF3C7;
+  color: #D97706;
+  border: 1px solid #FDE68A;
+}
+
+.pill-course {
+  background-color: #F1F5F9;
+  color: #475569;
+  border: 1px solid #CBD5E1;
+}
+
+.pricing-slug {
+  font-size: 0.72rem;
+  color: #94A3B8;
+  font-family: monospace;
+}
+
+.pricing-card-title {
+  font-size: 1.18rem;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0 0 6px;
+  line-height: 1.25;
+}
+
+.pricing-card-desc {
+  font-size: 0.82rem;
+  color: #64748B;
+  margin: 0 0 16px;
+  line-height: 1.45;
+  min-height: 48px;
+}
+
+/* PRICE BOX */
+.pricing-price-box {
+  background-color: #F8FAFC;
+  border: 1px solid #F1F5F9;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.pricing-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.pricing-price-main {
+  font-size: 1.85rem;
+  font-weight: 900;
+  color: #059669;
+  letter-spacing: -0.5px;
+}
+
+.pricing-price-was {
+  font-size: 0.95rem;
+  color: #94A3B8;
+  text-decoration: line-through;
+  font-weight: 600;
+}
+
+.pricing-discount-tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #2563EB;
+  background-color: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.pricing-price-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: #64748B;
+}
+
+.pricing-price-meta code {
+  font-family: monospace;
+  color: #0F172A;
+  background-color: #E2E8F0;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.text-active {
+  color: #059669;
+  font-weight: 700;
+}
+
+.text-inactive {
+  color: #DC2626;
+  font-weight: 700;
+}
+
+/* FEATURES LIST */
+.pricing-features-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.pricing-features-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: #334155;
+  line-height: 1.35;
+}
+
+.pricing-features-list .tick-mark {
+  color: #059669;
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.pricing-btn-edit {
+  background-color: #2563EB !important;
+  color: #FFFFFF !important;
+  text-transform: none !important;
+  font-weight: 700 !important;
+  font-size: 0.84rem !important;
+  padding: 9px 16px !important;
+  border-radius: 8px !important;
+}
+
+.pricing-btn-edit:hover {
+  background-color: #1D4ED8 !important;
+}
+
+/* BOTTOM NOTICE BANNER */
+.pricing-audit-notice-section {
+  margin-top: 10px;
+}
+
+.pricing-notice-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0 0 10px;
+}
+
+.pricing-notice-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background-color: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 10px;
+  padding: 16px 20px;
+}
+
+.pricing-notice-icon {
+  color: #F59E0B;
+  font-size: 1.5rem !important;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.pricing-notice-box p {
+  margin: 0;
+  font-size: 0.86rem;
+  color: #1E3A8A;
+  line-height: 1.55;
+}
+
+/* MODAL FORM STYLES */
+.modal-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.modal-form-group label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.modal-input {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 7px;
+  border: 1px solid #CBD5E1;
+  font-size: 0.88rem;
+  color: #0F172A;
+  background-color: #FFFFFF;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.modal-input:focus {
+  outline: none;
+  border-color: #2563EB;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.modal-textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 7px;
+  border: 1px solid #CBD5E1;
+  font-size: 0.86rem;
+  color: #0F172A;
+  background-color: #FFFFFF;
+  font-family: inherit;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.modal-textarea:focus {
+  outline: none;
+  border-color: #2563EB;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}

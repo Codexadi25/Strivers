@@ -1,0 +1,104 @@
+/* Strivers Lifeline Hub Page Styles (Modular Material UI Layout) */
+
+.sc-lifeline-page-root {
+  padding: 24px 32px 48px;
+  max-width: 1540px;
+  margin: 0 auto;
+  font-family: inherit;
+}
+
+.sc-lifeline-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.sc-lifeline-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.sc-lifeline-title {
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.3px;
+}
+
+.sc-lifeline-desc {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.sc-lifeline-header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sc-lifeline-alert {
+  margin-bottom: 20px;
+  border-radius: 12px !important;
+}
+
+.sc-lifeline-empty-state {
+  padding: 48px 24px;
+  border-radius: 16px !important;
+  border-color: #e2e8f0 !important;
+  text-align: center;
+  background-color: #ffffff;
+}
+
+.sc-lifeline-empty-title {
+  margin: 12px 0 6px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.sc-lifeline-empty-desc {
+  margin: 0 auto;
+  max-width: 540px;
+  font-size: 0.86rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.sc-lifeline-investigation-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.sc-lifeline-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.sc-lifeline-skeleton-card {
+  padding: 20px;
+  border-radius: 14px !important;
+  border-color: #e2e8f0 !important;
+}
+
+@media (max-width: 1080px) {
+  .sc-lifeline-page-root {
+    padding: 20px 18px 36px;
+  }
+
+  .sc-lifeline-investigation-grid {
+    grid-template-columns: 1fr;
+  }
+}

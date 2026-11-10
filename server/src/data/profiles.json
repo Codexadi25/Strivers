@@ -1,0 +1,260 @@
+[
+  {
+    "userId": "usr_1794324147575_uennk",
+    "email": "qa.student.1794324147573@example.com",
+    "name": "QA Dynamic Student",
+    "handle": "@qa.student.1794324147573",
+    "roleTitle": "Software Development Engineer",
+    "college": "",
+    "graduationYear": 2026,
+    "targetCompanies": [
+      "Zomato",
+      "Blinkit",
+      "Swiggy",
+      "Porter",
+      "Flipkart",
+      "Amazon"
+    ],
+    "solvedProblems": [
+      "dsa-1-1",
+      "dsa-1-2"
+    ],
+    "starredProblems": [
+      "dsa-1-1"
+    ],
+    "problemNotes": {},
+    "streak": {
+      "currentStreak": 1,
+      "bestStreak": 1,
+      "totalActiveDays": 1,
+      "lastActiveDate": "2026-11-10T15:22:27.734Z",
+      "weeklyMinutes": 15,
+      "activeDates": [
+        "2026-11-10"
+      ],
+      "dailySubmissions": {
+        "2026-11-10": 1
+      },
+      "weeklyDistribution": [
+        {
+          "day": "S",
+          "dayIndex": 0,
+          "minutes": 0,
+          "time": "0h 0m"
+        },
+        {
+          "day": "M",
+          "dayIndex": 1,
+          "minutes": 0,
+          "time": "0h 0m"
+        },
+        {
+          "day": "T",
+          "dayIndex": 2,
+          "minutes": 15,
+          "time": "0h 15m"
+        },
+        {
+          "day": "W",
+          "dayIndex": 3,
+          "minutes": 0,
+          "time": "0h 0m"
+        },
+        {
+          "day": "T",
+          "dayIndex": 4,
+          "minutes": 0,
+          "time": "0h 0m"
+        },
+        {
+          "day": "F",
+          "dayIndex": 5,
+          "minutes": 0,
+          "time": "0h 0m"
+        },
+        {
+          "day": "S",
+          "dayIndex": 6,
+          "minutes": 0,
+          "time": "0h 0m"
+        }
+      ],
+      "currentWeek": 0,
+      "bestWeek": 0,
+      "currentMonth": 0,
+      "bestMonth": 0
+    }
+  },
+  {
+    "userId": "usr_1794325830581_znrjs",
+    "email": "qa.student.1794325830579@example.com",
+    "name": "QA Dynamic Student",
+    "handle": "@qa.student.1794325830579",
+    "roleTitle": "Software Development Engineer",
+    "college": "",
+    "graduationYear": 2026,
+    "targetCompanies": [
+      "Zomato",
+      "Blinkit",
+      "Swiggy",
+      "Porter",
+      "Flipkart",
+      "Amazon"
+    ],
+    "solvedProblems": [
+      "dsa-1-1",
+      "dsa-1-2"
+    ],
+    "starredProblems": [
+      "dsa-1-1"
+    ],
+    "problemNotes": {},
+    "streak": {
+      "currentStreak": 1,
+      "bestStreak": 1,
+      "totalActiveDays": 1,
+      "lastActiveDate": "2026-11-10T15:50:30.724Z",
+      "weeklyMinutes": 15,
+      "activeDates": [
+        "2026-11-10"
+      ],
+      "dailySubmissions": {
+        "2026-11-10": 1
+      },
+      "weeklyDistribution": [
+        {
+          "day": "S",
+          "dayIndex": 0,
+          "minutes": 0,
+          "time": "0h 0m"
+        },
+        {
+          "day": "M",
+          "dayIndex": 1,
+          "minutes": 0,
+          "time": "0h 0m"
+        },
+        {
+          "day": "T",
+          "dayIndex": 2,
+          "minutes": 15,
+          "time": "0h 15m"
+        },
+        {
+          "day": "W",
+          "dayIndex": 3,
+          "minutes": 0,
+          "time": "0h 0m"
+        },
+        {
+          "day": "T",
+          "dayIndex": 4,
+          "minutes": 0,
+          "time": "0h 0m"
+        },
+        {
+          "day": "F",
+          "dayIndex": 5,
+          "minutes": 0,
+          "time": "0h 0m"
+        },
+        {
+          "day": "S",
+          "dayIndex": 6,
+          "minutes": 0,
+          "time": "0h 0m"
+        }
+      ],
+      "currentWeek": 0,
+      "bestWeek": 0,
+      "currentMonth": 0,
+      "bestMonth": 0
+    }
+  },
+  {
+    "userId": "usr_1794326796994_zcida",
+    "email": "qa.student.1794326796994@example.com",
+    "name": "QA Dynamic Student",
+    "handle": "@qa.student.1794326796994",
+    "roleTitle": "Software Development Engineer",
+    "college": "",
+    "graduationYear": 2026,
+    "targetCompanies": [
+      "Zomato",
+      "Blinkit",
+      "Swiggy",
+      "Porter",
+      "Flipkart",
+      "Amazon"
+    ],
+    "solvedProblems": [
+      "dsa-1-1",
+      "dsa-1-2"
+    ],
+    "starredProblems": [
+      "dsa-1-1"
+    ],
+    "problemNotes": {},
+    "streak": {
+      "currentStreak": 1,
+      "bestStreak": 1,
+      "totalActiveDays": 1,
+      "lastActiveDate": "2026-11-10T16:06:37.119Z",
+      "weeklyMinutes": 15,
+      "activeDates": [
+        "2026-11-10"
+      ],
+      "dailySubmissions": {
+        "2026-11-10": 1
+      },
+      "weeklyDistribution": [
+        {
+          "day": "S",
+          "dayIndex": 0,
+          "minutes": 0,
+          "time": "0h 0m"
+        },
+        {
+          "day": "M",
+          "dayIndex": 1,
+          "minutes": 0,
+          "time": "0h 0m"
+        },
+        {
+          "day": "T",
+          "dayIndex": 2,
+          "minutes": 15,
+          "time": "0h 15m"
+        },
+        {
+          "day": "W",
+          "dayIndex": 3,
+          "minutes": 0,
+          "time": "0h 0m"
+        },
+        {
+          "day": "T",
+          "dayIndex": 4,
+          "minutes": 0,
+          "time": "0h 0m"
+        },
+        {
+          "day": "F",
+          "dayIndex": 5,
+          "minutes": 0,
+          "time": "0h 0m"
+        },
+        {
+          "day": "S",
+          "dayIndex": 6,
+          "minutes": 0,
+          "time": "0h 0m"
+        }
+      ],
+      "currentWeek": 0,
+      "bestWeek": 0,
+      "currentMonth": 0,
+      "bestMonth": 0
+    }
+  }
+]

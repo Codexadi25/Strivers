@@ -1,0 +1,144 @@
+/* Strivers Authentication Pages Styles (Login, Register, Forgot Password, Reset Password) */
+
+.auth-page-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #F8FAFC;
+  font-family: var(--font-body, 'Figtree', sans-serif);
+}
+
+.auth-wrap {
+  flex: 1;
+  max-width: 440px;
+  margin: 60px auto;
+  width: 100%;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.auth-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 32px 28px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+}
+
+.auth-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0 0 8px;
+  font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
+}
+
+.auth-subtitle {
+  color: #64748B;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  margin: 0 0 22px;
+}
+
+.auth-notice-box {
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  color: #15803D;
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.auth-error-box {
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  color: #B91C1C;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.auth-field {
+  margin-bottom: 16px;
+}
+
+.auth-field-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.auth-field-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0F172A;
+  display: block;
+}
+
+.auth-field-link {
+  font-size: 0.82rem;
+  color: #2563EB;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.auth-field-link:hover {
+  text-decoration: underline;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: #2563EB;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.auth-btn-submit {
+  width: 100%;
+  background: #2563EB !important;
+  color: #FFFFFF !important;
+  padding: 12px !important;
+  border-radius: 8px !important;
+  font-weight: 700 !important;
+  font-size: 0.95rem !important;
+  text-transform: none !important;
+  margin-top: 8px !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
+}
+
+.auth-btn-submit:hover {
+  background: #1D4ED8 !important;
+}
+
+.auth-footer-text {
+  color: #64748B;
+  margin-top: 20px;
+  font-size: 0.92rem;
+  text-align: center;
+}
+
+.auth-footer-text a {
+  color: #2563EB;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-footer-text a:hover {
+  text-decoration: underline;
+}
+

@@ -1,0 +1,115 @@
+[
+  {
+    "_id": "usr_1794314534430_kr9lr",
+    "userId": "usr_1794314534430_kr9lr",
+    "email": "artisahu68802@gmail.com",
+    "name": "Aditya Sahu",
+    "phone": "",
+    "password": "109424f67ea8c46d521c0a522b3a64f3:49f19b73636bc144a207695d8222d745a77cc022de0c0037f4ba365b8eaedd765a996997a5227118b0819e79582b2e400d79f9e77d1e2fc510e82ee5354ec708",
+    "role": "user",
+    "hasActiveSubscription": false,
+    "expiresAt": null,
+    "watermarkIdentifier": "artisahu68802@gmail.com | usr_17",
+    "enrolledCourses": [],
+    "enrolledPracticeSheets": [],
+    "maxPracticeSheetsAllowed": 2,
+    "unlockedNotes": [],
+    "createdAt": "2026-11-10T12:42:14.467Z",
+    "updatedAt": "2026-11-10T16:06:36.743Z"
+  },
+  {
+    "_id": "usr_creedracer",
+    "userId": "usr_creedracer_01",
+    "email": "creedracer111@gmail.com",
+    "name": "Root Administrator",
+    "phone": "+91 9999999999",
+    "password": "f440071e040dcca85acbe0b2b62b7578:696dd80b8a7b909318f001efa6abc9069d316ec7433d18284c343f2b680707c666564d8354741af493110ab00b9d64c38b1660fe503398ebad63d8a85eed0965",
+    "role": "admin",
+    "hasActiveSubscription": true,
+    "expiresAt": null,
+    "watermarkIdentifier": "creedracer111@gmail.com | ADMIN",
+    "enrolledCourses": [
+      {
+        "courseId": "masterclass",
+        "courseTitle": "Strivers Placement Masterclass",
+        "isPermanent": true,
+        "paidAt": "2026-10-01T08:00:00.000Z"
+      },
+      {
+        "courseId": "channel",
+        "courseTitle": "Paid Job Channel",
+        "isPermanent": true,
+        "paidAt": "2026-10-01T08:00:00.000Z"
+      },
+      {
+        "courseId": "course_fullstack",
+        "courseTitle": "Full-Stack Software Engineering",
+        "isPermanent": true,
+        "paidAt": "2026-10-01T08:00:00.000Z"
+      }
+    ],
+    "enrolledPracticeSheets": [],
+    "maxPracticeSheetsAllowed": 5,
+    "createdAt": "2026-10-01T08:00:00.000Z",
+    "updatedAt": "2026-11-10T16:06:37.271Z"
+  },
+  {
+    "_id": "usr_admin",
+    "userId": "usr_1793625333084_7ddd8",
+    "email": "artisahu6880@gmail.com",
+    "name": "Aditya Sahu",
+    "phone": "+91 9876545543",
+    "password": "9ff7036f381f118e4c9bb0c34b2a86ef:fa124a2df41f84b423170f392aebf863a39ba8cbcab8819902e8c86a2cf3575eb144c5b5ac2e852936fa811c9eb962cd4f7d9a7874e929936d6b07127ea3efba",
+    "role": "admin",
+    "hasActiveSubscription": true,
+    "expiresAt": null,
+    "watermarkIdentifier": "artisahu6880@gmail.com | ADMIN",
+    "enrolledCourses": [
+      {
+        "courseId": "masterclass",
+        "courseTitle": "Strivers Placement Masterclass",
+        "isPermanent": true,
+        "paidAt": "2026-10-01T08:00:00.000Z"
+      },
+      {
+        "courseId": "channel",
+        "courseTitle": "Paid Job Channel",
+        "isPermanent": true,
+        "paidAt": "2026-10-01T08:00:00.000Z"
+      },
+      {
+        "courseId": "course_fullstack",
+        "courseTitle": "Full-Stack Software Engineering",
+        "isPermanent": true,
+        "paidAt": "2026-10-01T08:00:00.000Z"
+      }
+    ],
+    "enrolledPracticeSheets": [],
+    "maxPracticeSheetsAllowed": 5,
+    "createdAt": "2026-10-01T08:00:00.000Z",
+    "updatedAt": "2026-11-10T15:40:04.416Z"
+  },
+  {
+    "_id": "usr_312795448",
+    "userId": "#312795448",
+    "email": "kamaldeep@gmail.com",
+    "name": "Kamaldeep",
+    "phone": "+91 9876545543",
+    "password": "bd2f8370d3b972e5639cc94e015807e8:53bb1ce6a1506bb11fac140c5f18566203edd8404fb4961dcbd3ef04c1c3d761851b6ef8018a3fa52daf4b7969d8ff700130b7dcf83c755fe2e0c40da15e9e4c",
+    "role": "user",
+    "hasActiveSubscription": true,
+    "expiresAt": null,
+    "watermarkIdentifier": "kamaldeep@gmail.com | #312795",
+    "enrolledCourses": [
+      {
+        "courseId": "masterclass",
+        "courseTitle": "Strivers Placement Masterclass",
+        "isPermanent": true,
+        "paidAt": "2026-10-15T12:00:00.000Z"
+      }
+    ],
+    "enrolledPracticeSheets": [],
+    "maxPracticeSheetsAllowed": 2,
+    "createdAt": "2026-10-15T12:00:00.000Z"
+  }
+]

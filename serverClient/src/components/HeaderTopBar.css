@@ -1,0 +1,98 @@
+/* Strivers Top Control Status Bar */
+
+.sc-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #FFFFFF;
+  border-bottom: 1px solid #E2E8F0;
+  padding: 10px 24px;
+  min-height: 54px;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  font-family: inherit;
+}
+
+.sc-header-status-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sc-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #334155;
+  transition: all 0.15s ease;
+}
+
+.sc-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-green {
+  background-color: #10B981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+}
+
+.dot-blue {
+  background-color: #3B82F6;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.5);
+}
+
+.dot-purple {
+  background-color: #8B5CF6;
+  box-shadow: 0 0 6px rgba(139, 92, 246, 0.5);
+}
+
+.sc-header-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sc-header-action-btn {
+  background-color: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  padding: 6px 13px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.sc-header-action-btn:hover {
+  background-color: #F1F5F9;
+  border-color: #94A3B8;
+  color: #0F172A;
+}
+
+.sc-header-clock-pill {
+  background-color: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1E293B;
+  letter-spacing: 0.5px;
+  font-variant-numeric: tabular-nums;
+}
+

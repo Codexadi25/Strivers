@@ -1,0 +1,130 @@
+.sc-lifeline-orders-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sc-lifeline-order-card {
+  border-radius: 14px !important;
+  border-color: #e2e8f0 !important;
+}
+
+.sc-lifeline-order-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.sc-lifeline-order-id-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.sc-lifeline-order-id {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+  font-family: monospace;
+}
+
+.sc-lifeline-order-date {
+  font-size: 0.76rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.sc-lifeline-order-tags-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.sc-lifeline-tags-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.sc-lifeline-order-amount-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 10px;
+}
+
+.sc-lifeline-payment-caption {
+  font-size: 0.74rem;
+  color: #64748b;
+}
+
+.sc-lifeline-order-amount {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #059669;
+}
+
+.sc-lifeline-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #475569;
+  padding: 4px 0;
+}
+
+.sc-lifeline-order-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.sc-lifeline-load-more-btn {
+  border-radius: 10px !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+  padding: 10px 16px !important;
+}
+
+.sc-lifeline-dialog-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 0.86rem;
+}
+
+.sc-lifeline-dialog-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px dashed #e2e8f0;
+  padding-bottom: 6px;
+}
+
+.sc-lifeline-dialog-key {
+  font-weight: 700;
+  color: #64748b;
+}
+
+.sc-lifeline-dialog-val {
+  font-family: monospace;
+  color: #0f172a;
+  font-weight: 600;
+  text-align: right;
+  word-break: break-all;
+}

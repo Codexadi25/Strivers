@@ -151,4 +151,15 @@ export class UsersController {
       showToast(`Role change failed: ${err.message}`, 'error');
     }
   }
+
+  static async removeUser(email) {
+    if (!confirm(`Permanently remove user ${email} from directory?`)) return;
+    try {
+      const res = await UserModel.deleteUser(email);
+      showToast(res.message || `User ${email} removed.`, 'success');
+      this.loadUsers();
+    } catch (err) {
+      showToast(`Remove failed: ${err.message}`, 'error');
+    }
+  }
 }

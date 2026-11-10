@@ -1,0 +1,11 @@
+.drm-canvas-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  overflow-x: auto;
+}
+
+.drm-canvas {
+  max-width: 100%;
+  border-radius: 10px;
+}

@@ -1,0 +1,446 @@
+/* Strivers Course Access & Classroom Styles */
+
+.product-access-page-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #F8FAFC;
+  font-family: var(--font-body, 'Figtree', sans-serif);
+}
+
+.product-access-main {
+  flex: 1;
+  max-width: 1060px;
+  margin: 28px auto 56px;
+  padding: 0 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.product-access-loading {
+  text-align: center;
+  padding: 80px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  color: #64748B;
+}
+
+/* PAYWALL CARD */
+.product-access-paywall-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 44px 28px;
+  text-align: center;
+  max-width: 620px;
+  margin: 36px auto;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.product-access-lock-icon-wrap {
+  color: #2563EB;
+  margin-bottom: 14px;
+}
+
+.product-access-paywall-title {
+  color: #0F172A;
+  font-size: 1.55rem;
+  margin: 0 0 10px;
+  font-weight: 800;
+  font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
+}
+
+.product-access-paywall-desc {
+  color: #64748B;
+  font-size: 0.96rem;
+  line-height: 1.6;
+  margin: 0 0 22px;
+}
+
+.product-access-error-banner {
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  color: #B91C1C;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 18px;
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.product-access-course-summary-row {
+  background: #F1F5F9;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.product-access-summary-text {
+  text-align: left;
+}
+
+.product-access-summary-price {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #2563EB;
+}
+
+.product-access-actions-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ENROLLED CLASSROOM HEADER */
+.product-access-header-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 22px 26px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.product-access-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.product-access-cat-badge {
+  background: #DBEAFE;
+  color: #1D4ED8;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 99px;
+  text-transform: uppercase;
+}
+
+.product-access-verified-badge {
+  background: #DCFCE7;
+  color: #15803D;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 99px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.product-access-course-title {
+  margin: 0 0 6px;
+  font-size: clamp(1.3rem, 3.5vw, 1.7rem);
+  font-weight: 800;
+  color: #0F172A;
+  font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
+}
+
+.product-access-course-desc {
+  margin: 0;
+  color: #64748B;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.product-access-account-info {
+  text-align: right;
+}
+
+.product-access-account-label {
+  font-size: 0.82rem;
+  color: #94A3B8;
+  display: block;
+}
+
+/* RECEIPT BAR */
+.product-access-receipt-bar {
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: #166534;
+}
+
+.product-access-receipt-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.product-access-receipt-status {
+  background: #DCFCE7;
+  color: #15803D;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.76rem;
+}
+
+/* MEETING BANNER */
+.product-access-meeting-box {
+  background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+  color: #FFFFFF;
+  border-radius: 16px;
+  padding: 24px 26px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.product-access-meeting-box.is-live {
+  background: linear-gradient(135deg, #7F1D1D 0%, #DC2626 100%);
+}
+
+.product-access-session-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.14);
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.product-access-meeting-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin: 0 0 8px;
+  color: #FFFFFF;
+}
+
+.product-access-meeting-desc {
+  color: #CBD5E1;
+  font-size: 0.9rem;
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.product-access-meet-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.product-access-btn-meet {
+  background: #FFFFFF !important;
+  color: #0F172A !important;
+  padding: 10px 20px !important;
+  font-weight: 700 !important;
+  font-size: 0.92rem !important;
+  text-transform: none !important;
+  border-radius: 10px !important;
+}
+
+.product-access-btn-code {
+  background: rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  padding: 9px 14px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.product-access-platform-badge {
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 14px 18px;
+  text-align: center;
+  min-width: 180px;
+}
+
+/* SECTION HEADINGS */
+.product-access-section-block {
+  margin-bottom: 28px;
+}
+
+.product-access-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.product-access-section-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.product-access-section-sub {
+  font-size: 0.84rem;
+  color: #64748B;
+}
+
+.product-access-empty-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  color: #64748B;
+}
+
+.product-access-slots-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.product-access-slot-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.product-access-slot-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.product-access-slot-pill {
+  background: #EFF6FF;
+  color: #1D4ED8;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 99px;
+  border: 1px solid #DBEAFE;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.product-access-slot-agenda {
+  background: #F8FAFC;
+  border-radius: 8px;
+  padding: 12px 16px;
+  border: 1px solid #F1F5F9;
+}
+
+/* MATERIALS GRID */
+.materials-grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: 14px;
+}
+
+.material-card-item {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.material-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.material-card-type-pill {
+  background: #EFF6FF;
+  color: #2563EB;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.material-card-title {
+  margin: 0 0 6px;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.material-card-desc {
+  margin: 0 0 14px;
+  font-size: 0.85rem;
+  color: #64748B;
+  line-height: 1.5;
+}
+
+.material-read-btn {
+  text-transform: none !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+}
+
+.material-view-only-caption {
+  display: block;
+  text-align: center;
+  font-size: 0.72rem;
+  color: #94A3B8;
+  margin-top: 6px;
+}
+
+@media (max-width: 768px) {
+  .product-access-main {
+    margin: 18px auto 36px;
+    padding: 0 14px;
+  }
+
+  .product-access-account-info,
+  .product-access-receipt-bar,
+  .product-access-platform-badge,
+  .product-access-mobile-hide {
+    display: none;
+  }
+
+  .product-access-header-card,
+  .product-access-meeting-box {
+    padding: 18px 16px;
+  }
+}

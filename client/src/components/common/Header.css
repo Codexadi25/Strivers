@@ -1,0 +1,360 @@
+/**
+ * Header Navigation Component Styles
+ */
+
+.header-root {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid #E2E8F0;
+  width: 100%;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.header-container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 10px clamp(16px, 4vw, 36px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* Brand */
+.header-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #0E1B3D;
+}
+
+.header-brand-logo-img,
+.drawer-brand-logo-img {
+  border-radius: 8px;
+  object-fit: contain;
+  display: block;
+  flex-shrink: 0;
+}
+
+.header-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.header-brand-title {
+  font-family: var(--display, inherit);
+  font-weight: 800;
+  font-size: 1.28rem;
+  color: #0E1B3D;
+  line-height: 1.15;
+  letter-spacing: -0.3px;
+}
+
+.header-brand-subtitle {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #2563EB;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+/* Desktop Nav Links */
+.header-desktop-nav {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.header-nav-link {
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #334155;
+  transition: color 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.header-nav-link:hover {
+  color: #2563EB;
+}
+
+.header-nav-link.active {
+  font-weight: 700;
+  color: #2563EB;
+}
+
+.header-badge-live {
+  font-size: 0.68rem;
+  font-weight: 800;
+  background: #DCFCE7;
+  color: #15803D;
+  padding: 2px 7px;
+  border-radius: 99px;
+  line-height: 1;
+}
+
+/* Desktop Actions */
+.header-desktop-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-user-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 0.82rem;
+  color: #334155;
+}
+
+.header-user-name {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.header-btn-classroom {
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.header-btn-signout {
+  background: transparent;
+  border: none;
+  color: #64748B;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 8px;
+  transition: color 0.15s ease;
+}
+
+.header-btn-signout:hover {
+  color: #DC2626;
+}
+
+.header-btn-login {
+  text-decoration: none;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #334155;
+  padding: 6px 14px;
+}
+
+.header-btn-login:hover {
+  color: #2563EB;
+}
+
+.header-btn-explore {
+  text-decoration: none;
+  font-size: 0.86rem;
+  font-weight: 700;
+  background-color: #2563EB;
+  color: #FFFFFF;
+  padding: 8px 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.header-btn-explore:hover {
+  background-color: #1D4ED8;
+  transform: translateY(-1px);
+}
+
+/* Mobile Trigger & Drawer */
+.header-mobile-trigger {
+  display: none;
+}
+
+.drawer-content {
+  padding: 20px 18px;
+}
+
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #E2E8F0;
+  margin-bottom: 16px;
+}
+
+.drawer-brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drawer-brand-name {
+  font-size: 1.15rem;
+  color: #0E1B3D;
+  font-family: var(--display, inherit);
+}
+
+.drawer-user-strip {
+  background: #F1F5F9;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drawer-user-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0F172A;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.drawer-user-email {
+  font-size: 0.74rem;
+  color: #64748B;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.drawer-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.drawer-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  color: #0F172A;
+  font-weight: 600;
+  text-decoration: none;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+.drawer-nav-item.active {
+  color: #2563EB;
+  font-weight: 700;
+  background: #EFF6FF;
+}
+
+.drawer-footer-actions {
+  padding: 18px;
+  border-top: 1px solid #E2E8F0;
+  background: #F8FAFC;
+}
+
+.drawer-btn-signout {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #FEE2E2;
+  color: #DC2626;
+  border: 1px solid #FECACA;
+  font-weight: 700;
+  font-size: 0.92rem;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.drawer-guest-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.drawer-btn-login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  font-weight: 700;
+  color: #2563EB;
+  border: 1.5px solid #2563EB;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.drawer-btn-register {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  font-weight: 700;
+  background: #2563EB;
+  color: #FFFFFF;
+  padding: 11px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.header-auth-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-drawer-paper {
+  width: min(84vw, 320px);
+  background: #ffffff;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.12);
+}
+
+.drawer-user-text-wrap {
+  overflow: hidden;
+}
+
+.drawer-nav-split {
+  justify-content: space-between;
+}
+
+.drawer-nav-item-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .header-desktop-nav,
+  .header-desktop-actions {
+    display: none !important;
+  }
+  .header-mobile-trigger {
+    display: block !important;
+  }
+}
+

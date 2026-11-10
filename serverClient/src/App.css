@@ -1,0 +1,146 @@
+/* ServerClient Main Application Styles */
+
+.sc-layout {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background: #F8FAFC;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #0F172A;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.sc-content {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.sc-view-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+/* Topbar breadcrumb and actions fallback */
+.sc-topbar {
+  background: #FFFFFF;
+  border-bottom: 1px solid #E2E8F0;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sc-topbar-breadcrumb {
+  font-size: 0.88rem;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sc-topbar-breadcrumb strong {
+  color: #0F172A;
+}
+
+.sc-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sc-btn-outline {
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.sc-btn-outline:hover {
+  background: #F8FAFC;
+  border-color: #94A3B8;
+}
+
+/* Dark Mode overrides */
+.sc-dark-theme {
+  background: #0B0F19;
+  color: #F1F5F9;
+}
+
+.sc-dark-theme .sc-sidebar {
+  background: #111827;
+  border-right-color: #1F2937;
+}
+
+.sc-dark-theme .sc-header-bar {
+  background: #111827;
+  border-bottom-color: #1F2937;
+}
+
+.sc-dark-theme .sc-status-pill {
+  background: #1F2937;
+  border-color: #374151;
+  color: #E2E8F0;
+}
+
+.sc-dark-theme .sc-header-action-btn {
+  background: #1F2937;
+  border-color: #374151;
+  color: #E2E8F0;
+}
+
+.sc-dark-theme .sc-header-clock-pill {
+  background: #1F2937;
+  border-color: #374151;
+  color: #E2E8F0;
+}
+
+.sc-dark-theme .pricing-card,
+.sc-dark-theme .mc-card,
+.sc-dark-theme .metric-card,
+.sc-dark-theme .tele-section-card,
+.sc-dark-theme .orders-chart-card,
+.sc-dark-theme .orders-table-card,
+.sc-dark-theme .tickets-table-card,
+.sc-dark-theme .users-table-card,
+.sc-dark-theme .practice-card,
+.sc-dark-theme .refunds-table-card,
+.sc-dark-theme .audit-table-card {
+  background: #111827;
+  border-color: #1F2937;
+  color: #F1F5F9;
+}
+
+.sc-dark-theme .pricing-title,
+.sc-dark-theme .mc-title,
+.sc-dark-theme .telemetry-title,
+.sc-dark-theme .orders-title,
+.sc-dark-theme .tickets-title,
+.sc-dark-theme .users-title,
+.sc-dark-theme .practice-title,
+.sc-dark-theme .refunds-title,
+.sc-dark-theme .audit-title {
+  color: #F1F5F9;
+}
+
+.sc-auth-loader {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #64748b;
+}

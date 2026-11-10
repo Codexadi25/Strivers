@@ -1,0 +1,122 @@
+{
+  "key": "default_catalog",
+  "hero": {
+    "badge": "LIVE INDUSTRY PROGRAMS & PLACEMENT TRACKS",
+    "title": "Level Up Your Career with Unicorn Mentors",
+    "subtitle": "Direct, hands-on masterclasses designed to bridge the gap between college education and real tech hiring standards. How to crack an interview, which mistakes keep you from getting placed, ATS-friendly resumes, live portfolios, verified recruiter channels, live mentorship, and much more.",
+    "stats": [
+      {
+        "label": "Candidate Rating",
+        "value": "4.9/5",
+        "icon": "star"
+      },
+      {
+        "label": "Live Sunday Google Meet Sessions",
+        "value": "Interactive",
+        "icon": "livetv"
+      },
+      {
+        "label": "Permanent Lifetime Access",
+        "value": "Lifetime",
+        "icon": "shield"
+      }
+    ]
+  },
+  "faqs": [
+    {
+      "q": "How do I access the live masterclass or classroom after enrolling?",
+      "a": "Once your payment is confirmed, your account is immediately granted lifetime access. Simply navigate to \"My Access\" or click \"Start Learning\" to enter your Classroom with direct Google Meet links, DRM-protected notes, and schedule timings."
+    },
+    {
+      "q": "Can I read the study materials and session guides online?",
+      "a": "Study materials, templates, and interview playbooks are available directly inside our in-app reader for enrolled learners so everything stays organized in one place."
+    },
+    {
+      "q": "What if I miss the live Sunday session?",
+      "a": "Your enrollment gives you lifetime access to upcoming live sessions, curriculum schedules, and the full study notes library."
+    },
+    {
+      "q": "What is the refund policy if a payment fails?",
+      "a": "If an amount is debited during an interrupted checkout, an automatic reversal is initiated back to your source payment method within 5–7 business days. You can also submit a support request directly from the portal."
+    }
+  ],
+  "compareTable": {
+    "title": "Compare Strivers Programs",
+    "subtitle": "Everything you need to land your tech & non-tech placement shortlists.",
+    "headers": [
+      "Curriculum & Benefits",
+      "Strivers Masterclass",
+      "Paid Job Channel",
+      "Full-Stack Track"
+    ],
+    "rows": [
+      {
+        "feature": "Live Sunday Sessions with Industry Mentors",
+        "values": [
+          "✓ Live interactive",
+          "✓ Vacancy briefing",
+          "—"
+        ]
+      },
+      {
+        "feature": "ATS Resume Blueprint & Action Verb Matrix",
+        "values": [
+          "✓ Included",
+          "✓ Review pack",
+          "✓ Included"
+        ]
+      },
+      {
+        "feature": "Portfolio Project Showcase & Career Review",
+        "values": [
+          "✓ Included",
+          "—",
+          "✓ 5 Capstones"
+        ]
+      },
+      {
+        "feature": "Direct HR Meeting Links & Vacancy Feed",
+        "values": [
+          "—",
+          "✓ Direct HR links",
+          "—"
+        ]
+      },
+      {
+        "feature": "In-App Study Notes & Preparation Guides",
+        "values": [
+          "✓ Full access",
+          "✓ Interview vault",
+          "✓ Architecture guides"
+        ]
+      },
+      {
+        "feature": "Unit Economics & Operations Case Studies",
+        "values": [
+          "✓ Included",
+          "✓ High-frequency",
+          "✓ System design"
+        ]
+      },
+      {
+        "feature": "Lifetime Account Access & Meeting Re-entry",
+        "values": [
+          "✓ Lifetime",
+          "✓ Lifetime",
+          "✓ Lifetime"
+        ]
+      }
+    ]
+  },
+  "companies": [
+    "Startek",
+    "Zomato",
+    "Blinkit",
+    "Hyperpure",
+    "TCS",
+    "Genpact",
+    "Coforge",
+    "American Express"
+  ],
+  "updatedAt": "2026-11-10T16:06:37.335Z"
+}

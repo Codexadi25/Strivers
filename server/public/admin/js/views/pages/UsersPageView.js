@@ -7,7 +7,7 @@ import { escapeHtml } from '../../utils/formatters.js';
 export class UsersPageView {
   static renderPane() {
     return `
-      <section id="tab-users" class="tab-pane">
+      <section id="tab-users" class="tab-pane active">
         <div class="pane-header">
           <div>
             <h2>User Access & Subscription Authority</h2>
@@ -103,6 +103,9 @@ export class UsersPageView {
             ` : ''}
             <button class="btn btn-secondary btn-sm" onclick="toggleUserRole('${escapeHtml(u.email)}', '${isAdmin ? 'user' : 'admin'}')">
               ${isAdmin ? 'Demote' : 'Make Admin'}
+            </button>
+            <button class="btn btn-outline-danger btn-sm" onclick="removeUser('${escapeHtml(u.email)}')">
+              Remove
             </button>
           </div>
         </td>

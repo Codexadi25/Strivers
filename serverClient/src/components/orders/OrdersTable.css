@@ -1,0 +1,22 @@
+.sc-orders-table-card {
+  border-radius: 14px !important;
+  overflow: hidden;
+}
+
+.sc-orders-id-link {
+  color: #2563eb;
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.sc-orders-ref-dim {
+  font-family: monospace;
+  font-size: 0.76rem;
+  color: #64748b;
+}
+
+.sc-orders-amount {
+  font-weight: 800;
+  color: #059669;
+}
