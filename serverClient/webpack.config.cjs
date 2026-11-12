@@ -122,7 +122,12 @@ module.exports = (env, argv) => {
       host: 'localhost',
       hot: true,
       open: false,
-      historyApiFallback: true,
+      historyApiFallback: {
+        disableDotRule: true,
+        rewrites: [
+          { from: /^\/api/, to: (context) => context.parsedUrl.pathname },
+        ],
+      },
       allowedHosts: 'all',
       headers: {
         'Access-Control-Allow-Origin': '*',

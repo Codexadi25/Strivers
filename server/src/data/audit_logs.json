@@ -2,6 +2,802 @@
   {
     "event": "ADMIN_LOGOUT",
     "action": "ADMIN_LOGOUT",
+    "userEmail": "creedracer111@gmail.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:34:58 am",
+    "createdAt": "2026-11-12T20:04:58.271Z",
+    "metadata": {
+      "portal": "ServerClient GUI (v2)"
+    },
+    "metaData": {
+      "portal": "ServerClient GUI (v2)"
+    },
+    "tag": "AUTH"
+  },
+  {
+    "event": "PRACTICE_CREATED",
+    "action": "PRACTICE_CREATED",
+    "userEmail": "creedracer111@gmail.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:34:58 am",
+    "createdAt": "2026-11-12T20:04:58.268Z",
+    "metadata": {
+      "sheetId": "tech_1794513898267",
+      "title": "Dynamic QA Architecture Track"
+    },
+    "metaData": {
+      "sheetId": "tech_1794513898267",
+      "title": "Dynamic QA Architecture Track"
+    },
+    "tag": "PRACTICE"
+  },
+  {
+    "event": "CATALOG_META_UPDATED",
+    "action": "CATALOG_META_UPDATED",
+    "userEmail": "creedracer111@gmail.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:34:58 am",
+    "createdAt": "2026-11-12T20:04:58.265Z",
+    "metadata": {
+      "sectionsUpdated": [
+        "key",
+        "hero",
+        "faqs",
+        "compareTable",
+        "companies",
+        "updatedAt"
+      ]
+    },
+    "metaData": {
+      "sectionsUpdated": [
+        "key",
+        "hero",
+        "faqs",
+        "compareTable",
+        "companies",
+        "updatedAt"
+      ]
+    },
+    "tag": "CATALOG"
+  },
+  {
+    "event": "CATALOG_META_UPDATED",
+    "action": "CATALOG_META_UPDATED",
+    "userEmail": "creedracer111@gmail.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:34:58 am",
+    "createdAt": "2026-11-12T20:04:58.263Z",
+    "metadata": {
+      "sectionsUpdated": [
+        "key",
+        "hero",
+        "faqs",
+        "compareTable",
+        "companies",
+        "updatedAt"
+      ]
+    },
+    "metaData": {
+      "sectionsUpdated": [
+        "key",
+        "hero",
+        "faqs",
+        "compareTable",
+        "companies",
+        "updatedAt"
+      ]
+    },
+    "tag": "CATALOG"
+  },
+  {
+    "event": "ADMIN_LOGIN",
+    "action": "ADMIN_LOGIN",
+    "userEmail": "creedracer111@gmail.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:34:58 am",
+    "createdAt": "2026-11-12T20:04:58.259Z",
+    "metadata": {
+      "portal": "ServerClient GUI (v2)"
+    },
+    "metaData": {
+      "portal": "ServerClient GUI (v2)"
+    },
+    "tag": "AUTH"
+  },
+  {
+    "event": "LOGOUT",
+    "action": "LOGOUT",
+    "userEmail": "qa.student.1794513898168@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:34:58 am",
+    "createdAt": "2026-11-12T20:04:58.218Z",
+    "metadata": {
+      "portal": "Student Client"
+    },
+    "metaData": {
+      "portal": "Student Client"
+    },
+    "tag": "AUTH"
+  },
+  {
+    "event": "REGISTER",
+    "action": "REGISTER",
+    "userEmail": "qa.student.1794513898168@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:34:58 am",
+    "createdAt": "2026-11-12T20:04:58.207Z",
+    "metadata": {
+      "plan": "none"
+    },
+    "metaData": {
+      "plan": "none"
+    },
+    "tag": "AUTH"
+  },
+  {
+    "event": "USER_DELETED",
+    "action": "USER_DELETED",
+    "userEmail": "student.test@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:34:58 am",
+    "createdAt": "2026-11-12T20:04:58.150Z",
+    "metadata": {
+      "removedEmail": "delete_probe_1794513898111@example.com",
+      "removedUserId": "usr_1794513898111_ugcjf"
+    },
+    "metaData": {
+      "removedEmail": "delete_probe_1794513898111@example.com",
+      "removedUserId": "usr_1794513898111_ugcjf"
+    },
+    "tag": "ADMIN"
+  },
+  {
+    "event": "REGISTER",
+    "action": "REGISTER",
+    "userEmail": "delete_probe_1794513898111@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:34:58 am",
+    "createdAt": "2026-11-12T20:04:58.148Z",
+    "metadata": {
+      "plan": "none"
+    },
+    "metaData": {
+      "plan": "none"
+    },
+    "tag": "AUTH"
+  },
+  {
+    "event": "USER_ACCESS_UPDATED",
+    "action": "USER_ACCESS_UPDATED",
+    "userEmail": "student.test@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:34:58 am",
+    "createdAt": "2026-11-12T20:04:58.110Z",
+    "metadata": {
+      "target": "usr_1794314534430_kr9lr",
+      "updates": {
+        "role": "user",
+        "hasActiveSubscription": false
+      }
+    },
+    "metaData": {
+      "target": "usr_1794314534430_kr9lr",
+      "updates": {
+        "role": "user",
+        "hasActiveSubscription": false
+      }
+    },
+    "tag": "ADMIN"
+  },
+  {
+    "event": "USER_ACCESS_UPDATED",
+    "action": "USER_ACCESS_UPDATED",
+    "userEmail": "student.test@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:34:58 am",
+    "createdAt": "2026-11-12T20:04:58.106Z",
+    "metadata": {
+      "target": "usr_1794314534430_kr9lr",
+      "updates": {
+        "role": "admin",
+        "hasActiveSubscription": true
+      }
+    },
+    "metaData": {
+      "target": "usr_1794314534430_kr9lr",
+      "updates": {
+        "role": "admin",
+        "hasActiveSubscription": true
+      }
+    },
+    "tag": "ADMIN"
+  },
+  {
+    "event": "TICKET_UPDATED",
+    "action": "TICKET_UPDATED",
+    "userEmail": "student.test@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:34:58 am",
+    "createdAt": "2026-11-12T20:04:58.102Z",
+    "metadata": {
+      "ticketId": "tkt_1794513898100",
+      "status": "RESOLVED"
+    },
+    "metaData": {
+      "ticketId": "tkt_1794513898100",
+      "status": "RESOLVED"
+    },
+    "tag": "DISPUTE"
+  },
+  {
+    "event": "MASTERCLASS_MEETING_UPDATED",
+    "action": "MASTERCLASS_MEETING_UPDATED",
+    "userEmail": "student.test@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:34:58 am",
+    "createdAt": "2026-11-12T20:04:58.090Z",
+    "metadata": {
+      "productId": "masterclass",
+      "activeMeetingLink": "https://meet.google.com/dynamic-test-session"
+    },
+    "metaData": {
+      "productId": "masterclass",
+      "activeMeetingLink": "https://meet.google.com/dynamic-test-session"
+    },
+    "tag": "LIVE"
+  },
+  {
+    "event": "PRICE_UPDATED",
+    "action": "PRICE_UPDATED",
+    "userEmail": "student.test@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:34:58 am",
+    "createdAt": "2026-11-12T20:04:58.086Z",
+    "metadata": {
+      "productId": "masterclass",
+      "price": 74,
+      "title": "Strivers Placement Masterclass"
+    },
+    "metaData": {
+      "productId": "masterclass",
+      "price": 74,
+      "title": "Strivers Placement Masterclass"
+    },
+    "tag": "CATALOG"
+  },
+  {
+    "event": "PRICE_UPDATED",
+    "action": "PRICE_UPDATED",
+    "userEmail": "student.test@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:34:58 am",
+    "createdAt": "2026-11-12T20:04:58.083Z",
+    "metadata": {
+      "productId": "masterclass",
+      "price": 21,
+      "title": "Strivers Placement Masterclass"
+    },
+    "metaData": {
+      "productId": "masterclass",
+      "price": 21,
+      "title": "Strivers Placement Masterclass"
+    },
+    "tag": "CATALOG"
+  },
+  {
+    "event": "PRICE_UPDATED",
+    "action": "PRICE_UPDATED",
+    "userEmail": "student.test@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:34:58 am",
+    "createdAt": "2026-11-12T20:04:58.080Z",
+    "metadata": {
+      "productId": "masterclass",
+      "price": 21,
+      "title": "Strivers Placement Masterclass"
+    },
+    "metaData": {
+      "productId": "masterclass",
+      "price": 21,
+      "title": "Strivers Placement Masterclass"
+    },
+    "tag": "CATALOG"
+  },
+  {
+    "event": "PRICE_UPDATED",
+    "action": "PRICE_UPDATED",
+    "userEmail": "student.test@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:34:58 am",
+    "createdAt": "2026-11-12T20:04:58.077Z",
+    "metadata": {
+      "productId": "masterclass",
+      "price": 1,
+      "title": "Strivers Placement Masterclass"
+    },
+    "metaData": {
+      "productId": "masterclass",
+      "price": 1,
+      "title": "Strivers Placement Masterclass"
+    },
+    "tag": "CATALOG"
+  },
+  {
+    "event": "PAYMENT_INIT",
+    "action": "PAYMENT_INIT",
+    "userEmail": "student.test@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:34:58 am",
+    "createdAt": "2026-11-12T20:04:58.074Z",
+    "metadata": {
+      "orderId": "order_sim_1794513898073",
+      "amount": 74,
+      "targetPlan": "masterclass",
+      "currency": "INR"
+    },
+    "metaData": {
+      "orderId": "order_sim_1794513898073",
+      "amount": 74,
+      "targetPlan": "masterclass",
+      "currency": "INR"
+    },
+    "tag": "TXN"
+  },
+  {
+    "event": "PRICE_UPDATED",
+    "action": "PRICE_UPDATED",
+    "userEmail": "student.test@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:34:57 am",
+    "createdAt": "2026-11-12T20:04:57.987Z",
+    "metadata": {
+      "productId": "masterclass",
+      "price": 74,
+      "title": "Strivers Placement Masterclass"
+    },
+    "metaData": {
+      "productId": "masterclass",
+      "price": 74,
+      "title": "Strivers Placement Masterclass"
+    },
+    "tag": "CATALOG"
+  },
+  {
+    "event": "ADMIN_LOGIN",
+    "action": "ADMIN_LOGIN",
+    "userEmail": "artisahu6880@gmail.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:28:18 am",
+    "createdAt": "2026-11-12T19:58:18.847Z",
+    "metadata": {
+      "portal": "ServerClient GUI (v2)"
+    },
+    "metaData": {
+      "portal": "ServerClient GUI (v2)"
+    },
+    "tag": "AUTH"
+  },
+  {
+    "event": "ADMIN_LOGIN",
+    "action": "ADMIN_LOGIN",
+    "userEmail": "creedracer111@gmail.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:28:11 am",
+    "createdAt": "2026-11-12T19:58:11.487Z",
+    "metadata": {
+      "portal": "ServerClient GUI (v2)"
+    },
+    "metaData": {
+      "portal": "ServerClient GUI (v2)"
+    },
+    "tag": "AUTH"
+  },
+  {
+    "event": "ADMIN_LOGOUT",
+    "action": "ADMIN_LOGOUT",
+    "userEmail": "creedracer111@gmail.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:27:15 am",
+    "createdAt": "2026-11-12T19:57:15.099Z",
+    "metadata": {
+      "portal": "ServerClient GUI (v2)"
+    },
+    "metaData": {
+      "portal": "ServerClient GUI (v2)"
+    },
+    "tag": "AUTH"
+  },
+  {
+    "event": "PRACTICE_CREATED",
+    "action": "PRACTICE_CREATED",
+    "userEmail": "creedracer111@gmail.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:27:15 am",
+    "createdAt": "2026-11-12T19:57:15.093Z",
+    "metadata": {
+      "sheetId": "tech_1794513435091",
+      "title": "Dynamic QA Architecture Track"
+    },
+    "metaData": {
+      "sheetId": "tech_1794513435091",
+      "title": "Dynamic QA Architecture Track"
+    },
+    "tag": "PRACTICE"
+  },
+  {
+    "event": "CATALOG_META_UPDATED",
+    "action": "CATALOG_META_UPDATED",
+    "userEmail": "creedracer111@gmail.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:27:15 am",
+    "createdAt": "2026-11-12T19:57:15.086Z",
+    "metadata": {
+      "sectionsUpdated": [
+        "key",
+        "hero",
+        "faqs",
+        "compareTable",
+        "companies",
+        "updatedAt"
+      ]
+    },
+    "metaData": {
+      "sectionsUpdated": [
+        "key",
+        "hero",
+        "faqs",
+        "compareTable",
+        "companies",
+        "updatedAt"
+      ]
+    },
+    "tag": "CATALOG"
+  },
+  {
+    "event": "CATALOG_META_UPDATED",
+    "action": "CATALOG_META_UPDATED",
+    "userEmail": "creedracer111@gmail.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:27:15 am",
+    "createdAt": "2026-11-12T19:57:15.079Z",
+    "metadata": {
+      "sectionsUpdated": [
+        "key",
+        "hero",
+        "faqs",
+        "compareTable",
+        "companies",
+        "updatedAt"
+      ]
+    },
+    "metaData": {
+      "sectionsUpdated": [
+        "key",
+        "hero",
+        "faqs",
+        "compareTable",
+        "companies",
+        "updatedAt"
+      ]
+    },
+    "tag": "CATALOG"
+  },
+  {
+    "event": "ADMIN_LOGIN",
+    "action": "ADMIN_LOGIN",
+    "userEmail": "creedracer111@gmail.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:27:15 am",
+    "createdAt": "2026-11-12T19:57:15.068Z",
+    "metadata": {
+      "portal": "ServerClient GUI (v2)"
+    },
+    "metaData": {
+      "portal": "ServerClient GUI (v2)"
+    },
+    "tag": "AUTH"
+  },
+  {
+    "event": "LOGOUT",
+    "action": "LOGOUT",
+    "userEmail": "qa.student.1794513434879@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:27:14 am",
+    "createdAt": "2026-11-12T19:57:14.951Z",
+    "metadata": {
+      "portal": "Student Client"
+    },
+    "metaData": {
+      "portal": "Student Client"
+    },
+    "tag": "AUTH"
+  },
+  {
+    "event": "REGISTER",
+    "action": "REGISTER",
+    "userEmail": "qa.student.1794513434879@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:27:14 am",
+    "createdAt": "2026-11-12T19:57:14.936Z",
+    "metadata": {
+      "plan": "none"
+    },
+    "metaData": {
+      "plan": "none"
+    },
+    "tag": "AUTH"
+  },
+  {
+    "event": "USER_DELETED",
+    "action": "USER_DELETED",
+    "userEmail": "student.test@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:27:14 am",
+    "createdAt": "2026-11-12T19:57:14.844Z",
+    "metadata": {
+      "removedEmail": "delete_probe_1794513434744@example.com",
+      "removedUserId": "usr_1794513434746_g3w5b"
+    },
+    "metaData": {
+      "removedEmail": "delete_probe_1794513434744@example.com",
+      "removedUserId": "usr_1794513434746_g3w5b"
+    },
+    "tag": "ADMIN"
+  },
+  {
+    "event": "REGISTER",
+    "action": "REGISTER",
+    "userEmail": "delete_probe_1794513434744@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:27:14 am",
+    "createdAt": "2026-11-12T19:57:14.839Z",
+    "metadata": {
+      "plan": "none"
+    },
+    "metaData": {
+      "plan": "none"
+    },
+    "tag": "AUTH"
+  },
+  {
+    "event": "USER_ACCESS_UPDATED",
+    "action": "USER_ACCESS_UPDATED",
+    "userEmail": "student.test@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:27:14 am",
+    "createdAt": "2026-11-12T19:57:14.741Z",
+    "metadata": {
+      "target": "usr_1794314534430_kr9lr",
+      "updates": {
+        "role": "user",
+        "hasActiveSubscription": false
+      }
+    },
+    "metaData": {
+      "target": "usr_1794314534430_kr9lr",
+      "updates": {
+        "role": "user",
+        "hasActiveSubscription": false
+      }
+    },
+    "tag": "ADMIN"
+  },
+  {
+    "event": "USER_ACCESS_UPDATED",
+    "action": "USER_ACCESS_UPDATED",
+    "userEmail": "student.test@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:27:14 am",
+    "createdAt": "2026-11-12T19:57:14.731Z",
+    "metadata": {
+      "target": "usr_1794314534430_kr9lr",
+      "updates": {
+        "role": "admin",
+        "hasActiveSubscription": true
+      }
+    },
+    "metaData": {
+      "target": "usr_1794314534430_kr9lr",
+      "updates": {
+        "role": "admin",
+        "hasActiveSubscription": true
+      }
+    },
+    "tag": "ADMIN"
+  },
+  {
+    "event": "TICKET_UPDATED",
+    "action": "TICKET_UPDATED",
+    "userEmail": "student.test@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:27:14 am",
+    "createdAt": "2026-11-12T19:57:14.720Z",
+    "metadata": {
+      "ticketId": "tkt_1794513434714",
+      "status": "RESOLVED"
+    },
+    "metaData": {
+      "ticketId": "tkt_1794513434714",
+      "status": "RESOLVED"
+    },
+    "tag": "DISPUTE"
+  },
+  {
+    "event": "MASTERCLASS_MEETING_UPDATED",
+    "action": "MASTERCLASS_MEETING_UPDATED",
+    "userEmail": "student.test@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:27:14 am",
+    "createdAt": "2026-11-12T19:57:14.690Z",
+    "metadata": {
+      "productId": "masterclass",
+      "activeMeetingLink": "https://meet.google.com/dynamic-test-session"
+    },
+    "metaData": {
+      "productId": "masterclass",
+      "activeMeetingLink": "https://meet.google.com/dynamic-test-session"
+    },
+    "tag": "LIVE"
+  },
+  {
+    "event": "PRICE_UPDATED",
+    "action": "PRICE_UPDATED",
+    "userEmail": "student.test@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:27:14 am",
+    "createdAt": "2026-11-12T19:57:14.683Z",
+    "metadata": {
+      "productId": "masterclass",
+      "price": 74,
+      "title": "Strivers Placement Masterclass"
+    },
+    "metaData": {
+      "productId": "masterclass",
+      "price": 74,
+      "title": "Strivers Placement Masterclass"
+    },
+    "tag": "CATALOG"
+  },
+  {
+    "event": "PRICE_UPDATED",
+    "action": "PRICE_UPDATED",
+    "userEmail": "student.test@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:27:14 am",
+    "createdAt": "2026-11-12T19:57:14.679Z",
+    "metadata": {
+      "productId": "masterclass",
+      "price": 21,
+      "title": "Strivers Placement Masterclass"
+    },
+    "metaData": {
+      "productId": "masterclass",
+      "price": 21,
+      "title": "Strivers Placement Masterclass"
+    },
+    "tag": "CATALOG"
+  },
+  {
+    "event": "PRICE_UPDATED",
+    "action": "PRICE_UPDATED",
+    "userEmail": "student.test@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:27:14 am",
+    "createdAt": "2026-11-12T19:57:14.676Z",
+    "metadata": {
+      "productId": "masterclass",
+      "price": 21,
+      "title": "Strivers Placement Masterclass"
+    },
+    "metaData": {
+      "productId": "masterclass",
+      "price": 21,
+      "title": "Strivers Placement Masterclass"
+    },
+    "tag": "CATALOG"
+  },
+  {
+    "event": "PRICE_UPDATED",
+    "action": "PRICE_UPDATED",
+    "userEmail": "student.test@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:27:14 am",
+    "createdAt": "2026-11-12T19:57:14.671Z",
+    "metadata": {
+      "productId": "masterclass",
+      "price": 1,
+      "title": "Strivers Placement Masterclass"
+    },
+    "metaData": {
+      "productId": "masterclass",
+      "price": 1,
+      "title": "Strivers Placement Masterclass"
+    },
+    "tag": "CATALOG"
+  },
+  {
+    "event": "PAYMENT_INIT",
+    "action": "PAYMENT_INIT",
+    "userEmail": "student.test@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:27:14 am",
+    "createdAt": "2026-11-12T19:57:14.667Z",
+    "metadata": {
+      "orderId": "order_sim_1794513434666",
+      "amount": 74,
+      "targetPlan": "masterclass",
+      "currency": "INR"
+    },
+    "metaData": {
+      "orderId": "order_sim_1794513434666",
+      "amount": 74,
+      "targetPlan": "masterclass",
+      "currency": "INR"
+    },
+    "tag": "TXN"
+  },
+  {
+    "event": "PRICE_UPDATED",
+    "action": "PRICE_UPDATED",
+    "userEmail": "student.test@example.com",
+    "ip": "127.0.0.1",
+    "ipAddress": "127.0.0.1",
+    "time": "13/11/2026, 1:27:14 am",
+    "createdAt": "2026-11-12T19:57:14.492Z",
+    "metadata": {
+      "productId": "masterclass",
+      "price": 74,
+      "title": "Strivers Placement Masterclass"
+    },
+    "metaData": {
+      "productId": "masterclass",
+      "price": 74,
+      "title": "Strivers Placement Masterclass"
+    },
+    "tag": "CATALOG"
+  },
+  {
+    "event": "ADMIN_LOGOUT",
+    "action": "ADMIN_LOGOUT",
     "userEmail": "artisahu6880@gmail.com",
     "ip": "::ffff:127.0.0.1",
     "ipAddress": "::ffff:127.0.0.1",

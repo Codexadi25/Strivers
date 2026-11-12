@@ -31,7 +31,7 @@ const verifyFirebaseToken = async (req, res, next) => {
       if (isAutomatedAdminTestBypass) {
         req.user = {
           uid: 'admin_test_runner',
-          email: process.env.ADMIN_EMAIL || 'admin@yourdomain.com',
+          email: process.env.ADMIN_EMAIL || 'creedracer111@gmail.com',
           role: 'admin',
           isAdmin: true,
         };
@@ -109,7 +109,7 @@ const verifyFirebaseToken = async (req, res, next) => {
     if (isAutomatedAdminTestBypass) {
       req.user = {
         uid: 'admin_test_runner',
-        email: process.env.ADMIN_EMAIL || 'admin@yourdomain.com',
+        email: process.env.ADMIN_EMAIL || 'creedracer111@gmail.com',
         role: 'admin',
         isAdmin: true,
       };
@@ -143,7 +143,7 @@ const verifyAdmin = async (req, res, next) => {
     if (isAutomatedAdminTestBypass) {
       req.user = {
         uid: 'admin_test_runner',
-        email: process.env.ADMIN_EMAIL || 'admin@yourdomain.com',
+        email: process.env.ADMIN_EMAIL || 'creedracer111@gmail.com',
         role: 'admin',
         isAdmin: true,
       };

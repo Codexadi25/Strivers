@@ -34,7 +34,7 @@ router.post('/auth/login', async (req, res) => {
     }
 
     const adminEmail = String(email).trim().toLowerCase();
-    const envAdminEmail = (process.env.ADMIN_EMAIL || 'admin@yourdomain.com').trim().toLowerCase();
+    const envAdminEmail = (process.env.ADMIN_EMAIL || 'creedracer111@gmail.com').trim().toLowerCase();
     const envAdminPassword = process.env.ADMIN_PASSWORD || 'admin123';
 
     let existingUser = null;
@@ -130,7 +130,7 @@ router.get('/auth/me', (req, res) => {
 router.post('/auth/logout', (req, res) => {
   ActivityOrderStore.addLog({
     event: 'ADMIN_LOGOUT',
-    userEmail: req.user?.email || 'admin@yourdomain.com',
+    userEmail: req.user?.email || 'creedracer111@gmail.com',
     ip: req.ip || '127.0.0.1',
     metadata: { portal: 'ServerClient GUI (v2)' },
     tag: 'AUTH',

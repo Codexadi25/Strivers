@@ -191,6 +191,32 @@
         "capacity": 150,
         "active": true,
         "addedAt": "2026-11-10T16:06:36.697Z"
+      },
+      {
+        "slotId": "slot_1794513434700",
+        "title": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "date": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "dateTime": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "startTime": "11:00 AM",
+        "endTime": "01:00 PM",
+        "timezone": "IST",
+        "mentorName": "Unicorn Mentors",
+        "capacity": 150,
+        "active": true,
+        "addedAt": "2026-11-12T19:57:14.700Z"
+      },
+      {
+        "slotId": "slot_1794513898095",
+        "title": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "date": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "dateTime": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "startTime": "11:00 AM",
+        "endTime": "01:00 PM",
+        "timezone": "IST",
+        "mentorName": "Unicorn Mentors",
+        "capacity": 150,
+        "active": true,
+        "addedAt": "2026-11-12T20:04:58.095Z"
       }
     ],
     "notesAndPdfs": [
@@ -332,10 +358,34 @@
         "drmLevel": "HIGH_SECURITY",
         "viewOnly": true,
         "addedAt": "2026-11-10T16:06:36.679Z"
+      },
+      {
+        "materialId": "mat_1794513434695",
+        "title": "Dynamic Testing & Security Cheatsheet (Automated)",
+        "description": "DRM Protected Study Resource",
+        "fileType": "pdf",
+        "mimeType": "text/markdown",
+        "fileData": "IyBEeW5hbWljIFRlc3RpbmcgJiBTZWN1cml0eSBDaGVhdHNoZWV0IChBdXRvbWF0ZWQpCgpQcm90ZWN0ZWQgRFJNIFN0dWR5IEd1aWRlLg==",
+        "fileSize": 108,
+        "drmLevel": "HIGH_SECURITY",
+        "viewOnly": true,
+        "addedAt": "2026-11-12T19:57:14.695Z"
+      },
+      {
+        "materialId": "mat_1794513898093",
+        "title": "Dynamic Testing & Security Cheatsheet (Automated)",
+        "description": "DRM Protected Study Resource",
+        "fileType": "pdf",
+        "mimeType": "text/markdown",
+        "fileData": "IyBEeW5hbWljIFRlc3RpbmcgJiBTZWN1cml0eSBDaGVhdHNoZWV0IChBdXRvbWF0ZWQpCgpQcm90ZWN0ZWQgRFJNIFN0dWR5IEd1aWRlLg==",
+        "fileSize": 108,
+        "drmLevel": "HIGH_SECURITY",
+        "viewOnly": true,
+        "addedAt": "2026-11-12T20:04:58.093Z"
       }
     ],
     "isActive": true,
-    "updatedAt": "2026-11-10T16:06:36.697Z",
+    "updatedAt": "2026-11-12T20:04:58.096Z",
     "meetingLink": "https://meet.google.com/dynamic-test-session",
     "imageUrl": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80",
     "duration": "Weekend Live Cohort",

@@ -14,6 +14,10 @@ jest.mock('../services/api', () => ({
   getAdminToken: jest.fn(() => ''),
   setAdminSession: jest.fn(),
   clearAdminSession: jest.fn(),
+  getActiveApiBase: jest.fn(() => 'https://strivers-hr5g.onrender.com/api/v2/adminaccess'),
+  setCustomApiBase: jest.fn((u) => u),
+  pingBackend: jest.fn(async () => ({ ok: true, status: 'UP' })),
+  DEFAULT_PRODUCTION_BACKEND: 'https://strivers-hr5g.onrender.com/api/v2/adminaccess',
 }));
 
 describe('serverClient Material UI Pages - Dynamic & Modular Component Tests', () => {
