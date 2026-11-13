@@ -43,10 +43,10 @@ export default function Courses() {
 
   const isCourseOwned = (courseId) => {
     if (!user) return false;
+    if (user.role === 'admin' || user.isAdmin) return true;
     const cid = String(courseId).toLowerCase();
     return Boolean(
-      user.enrolledCourses?.some((c) => String(c.courseId).toLowerCase() === cid) ||
-        (user.hasActiveSubscription && (cid === 'masterclass' || cid === 'placement_masterclass'))
+      user.enrolledCourses?.some((c) => String(c.courseId).toLowerCase() === cid)
     );
   };
 
@@ -95,6 +95,16 @@ export default function Courses() {
     };
   }, []);
 
+  // Listen to tab / filter query params (e.g. /courses?tab=my-access)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab') || params.get('filter');
+    if (tabParam === 'my-access' || tabParam === 'access') {
+      setActiveTab('my-access');
+    }
+  }, []);
+
   // Auto-open checkout if returning from /login?plan=... or /register?plan=...
   useEffect(() => {
     if (typeof window === 'undefined' || !user || courses.length === 0) return;
@@ -104,10 +114,7 @@ export default function Courses() {
     const target = courses.find((c) => (c.productId || c._id) === checkoutParam);
     if (!target) return;
     const cid = target.productId || target._id;
-    const owned =
-      user.hasActiveAccess ||
-      user.hasActiveSubscription ||
-      user.enrolledCourses?.some((ec) => ec.courseId === cid);
+    const owned = isCourseOwned(cid);
     if (owned) {
       navigate(`/courses/${cid}/access`);
     } else {
@@ -128,6 +135,9 @@ export default function Courses() {
   };
 
   const filteredCourses = useMemo(() => {
+    if (activeTab === 'my-access') {
+      return courses.filter((c) => isCourseOwned(c.productId || c._id));
+    }
     if (activeTab === 'all') return courses;
     if (activeTab === 'masterclass') {
       return courses.filter((c) => c.category === 'masterclass' || c.isMasterclass);
@@ -139,7 +149,7 @@ export default function Courses() {
       return courses.filter((c) => c.category === 'course' || !c.isMasterclass);
     }
     return courses;
-  }, [courses, activeTab]);
+  }, [courses, activeTab, user]);
 
   const heroData = catalogMeta?.hero || {
     badge: 'LIVE INDUSTRY PROGRAMS & PLACEMENT TRACKS',
@@ -210,6 +220,7 @@ export default function Courses() {
           {/* FILTER TABS */}
           <div className="courses-filter-tabs">
             {[
+              ...(user ? [{ id: 'my-access', label: 'My Enrolled Access', icon: CheckCircleOutlineIcon }] : []),
               { id: 'all', label: 'All Programs', icon: SchoolIcon },
               { id: 'masterclass', label: 'Live Masterclasses', icon: LiveTvIcon },
               { id: 'channel', label: 'Job Placement Channels', icon: WorkOutlineIcon },
@@ -232,7 +243,35 @@ export default function Courses() {
 
           {/* COURSE CARDS GRID */}
           <div className="courses-grid">
-            {filteredCourses.map((course) => {
+            {activeTab === 'my-access' && filteredCourses.length === 0 ? (
+              <div
+                style={{
+                  gridColumn: '1 / -1',
+                  textAlign: 'center',
+                  padding: '48px 24px',
+                  borderRadius: 16,
+                  background: '#F8FAFC',
+                  border: '1px dashed #CBD5E1',
+                }}
+              >
+                <SchoolIcon sx={{ fontSize: 48, color: '#94A3B8', mb: 1 }} />
+                <h3 style={{ margin: '8px 0', color: '#1E293B', fontSize: '1.2rem' }}>
+                  No Enrolled Programs Yet
+                </h3>
+                <p style={{ color: '#64748B', maxWidth: 440, margin: '0 auto 18px', fontSize: '0.92rem' }}>
+                  You have not enrolled in any programs yet. Browse our masterclasses and placement programs below to get started.
+                </p>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => setActiveTab('all')}
+                  sx={{ borderRadius: 2 }}
+                >
+                  Explore All Programs
+                </Button>
+              </div>
+            ) : (
+              filteredCourses.map((course) => {
               const courseId = course.productId || course._id;
               const owned = isCourseOwned(courseId);
               const isMasterclass = course.category === 'masterclass' || course.isMasterclass;
@@ -362,7 +401,7 @@ export default function Courses() {
                         endIcon={<ArrowForwardIcon />}
                         className="courses-btn-owned"
                       >
-                        Start Learning
+                        Start Learning Now
                       </Button>
                     ) : (
                       <Button
@@ -381,7 +420,7 @@ export default function Courses() {
                   </div>
                 </article>
               );
-            })}
+            }))}
           </div>
         </section>
 

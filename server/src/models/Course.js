@@ -68,7 +68,7 @@ const studyMaterialSchema = new mongoose.Schema(
     },
     fileType: {
       type: String,
-      enum: ['pdf', 'notes', 'cheatsheet', 'document'],
+      enum: ['pdf', 'notes', 'cheatsheet', 'document', 'html'],
       default: 'notes',
     },
     mimeType: {
@@ -197,8 +197,13 @@ const courseSchema = new mongoose.Schema(
     },
     sessionStatus: {
       type: String,
-      enum: ['upcoming', 'live', 'completed'],
+      enum: ['upcoming', 'live', 'completed', 'ended'],
       default: 'upcoming',
+    },
+    whatsappGroupLink: {
+      type: String,
+      default: 'https://chat.whatsapp.com/strivers-placement-masterclass',
+      trim: true,
     },
     sessionDate: {
       type: String,

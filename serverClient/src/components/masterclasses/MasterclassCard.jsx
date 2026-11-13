@@ -43,7 +43,7 @@ export default function MasterclassCard({
             />
             <Chip
               size="small"
-              color={m.sessionStatus === 'live' ? 'error' : 'info'}
+              color={m.sessionStatus === 'live' ? 'error' : m.sessionStatus === 'ended' ? 'warning' : 'info'}
               label={(m.sessionStatus || 'UPCOMING').toUpperCase()}
               sx={{ fontWeight: 800, fontSize: '0.68rem' }}
             />
@@ -64,6 +64,12 @@ export default function MasterclassCard({
           <KeyIcon fontSize="small" color="warning" />
           <span>Passcode: <code>{m.secretPasscode || 'STRIVERS2026'}</code></span>
         </div>
+        {m.whatsappGroupLink && (
+          <div className="sc-mc-meta-item">
+            <span style={{ color: '#25D366', fontWeight: 800 }}>●</span>
+            <span>WhatsApp: <a href={m.whatsappGroupLink} target="_blank" rel="noopener noreferrer" style={{ color: '#059669', fontWeight: 600 }}>Official Community</a></span>
+          </div>
+        )}
       </div>
 
       <div className="sc-mc-meta-strip" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>

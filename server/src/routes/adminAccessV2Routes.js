@@ -139,39 +139,8 @@ router.post('/auth/logout', (req, res) => {
 });
 
 // ==========================================
-// 1. LIFELINE INVESTIGATION ENGINE
+// 1. LIFELINE INVESTIGATION ENGINE (REAL DATABASE TELEMETRY ONLY)
 // ==========================================
-const generateSampleOrders = (baseOrderId, count = 6) => {
-  const dates = [
-    'Aug 03 2026, 10:31 PM',
-    'Jul 22 2026, 08:14 PM',
-    'Jun 15 2026, 04:45 PM',
-    'May 10 2026, 11:20 AM',
-    'Apr 02 2026, 02:15 PM',
-    'Mar 18 2026, 09:30 AM',
-  ];
-  const amounts = ['285.03', '21.00', '174.00', '499.00', '21.00', '174.00'];
-  const paidVias = ['CREDIT', 'UPI', 'CREDIT', 'NETBANKING', 'UPI', 'CREDIT'];
-
-  return Array.from({ length: count }, (_, i) => {
-    const num = baseOrderId ? `${baseOrderId.slice(0, 8)}${String(i + 1).padStart(2, '0')}` : `84314329${String(21 - i).padStart(2, '0')}`;
-    return {
-      orderId: num,
-      date: dates[i] || 'Jan 15 2026, 12:00 PM',
-      status: 'Success',
-      amount: amounts[i] || '21.00',
-      currency: '₹',
-      selectedMode: 'Online',
-      paidVia: paidVias[i] || 'CREDIT',
-      txnId: `pay_${num}`,
-      refId: `rcpt_${num}`,
-      directWeb: true,
-      commentsCount: 0,
-      transactionsCount: 1,
-    };
-  });
-};
-
 router.get('/lifeline', async (req, res) => {
   try {
     const rawParam = (req.query.param || req.query.category || req.query.searchParameter || '').trim();
@@ -184,7 +153,7 @@ router.get('/lifeline', async (req, res) => {
         success: true,
         matched: false,
         query: null,
-        message: 'Lifeline Engine Idle: Submit a search parameter to load customer and order telemetry.',
+        message: 'Lifeline Engine Idle: Submit a customer email, phone, or order ID to query live records.',
         data: null,
       });
     }
@@ -198,72 +167,94 @@ router.get('/lifeline', async (req, res) => {
       matchedOrders = ActivityOrderStore.getOrders(matchedUser.email);
     }
 
-    // Attempt MongoDB lookup if connected
+    // Query MongoDB directly if connected
     let dbPayments = [];
     if (mongoose.connection.readyState === 1) {
       try {
-        const directPayment = await Payment.findOne({
+        const directPayments = await Payment.find({
           $or: [
             { orderId: new RegExp(`^${val.trim()}$`, 'i') },
             { razorpayOrderId: new RegExp(`^${val.trim()}$`, 'i') },
+            { razorpayPaymentId: new RegExp(`^${val.trim()}$`, 'i') },
             { paymentId: new RegExp(`^${val.trim()}$`, 'i') },
             { receipt: new RegExp(`^${val.trim()}$`, 'i') },
+            { userEmail: new RegExp(`^${val.trim()}$`, 'i') },
           ],
-        }).maxTimeMS(1500);
+        }).sort({ createdAt: -1 }).limit(50).maxTimeMS(2000);
 
-        if (directPayment) {
-          dbPayments = [directPayment];
+        if (directPayments && directPayments.length > 0) {
+          dbPayments = directPayments;
           if (!matchedUser) {
-            matchedUser = await UserAccess.findOne({
-              $or: [
-                { email: new RegExp(`^${(directPayment.customerEmail || directPayment.userEmail || '').trim()}$`, 'i') },
-                { userId: directPayment.userId },
-              ],
-            }).maxTimeMS(1500);
+            const firstEmail = directPayments[0].userEmail || directPayments[0].customerEmail;
+            if (firstEmail) {
+              matchedUser = await UserAccess.findOne({
+                email: new RegExp(`^${firstEmail.trim()}$`, 'i'),
+              }).maxTimeMS(1500);
+            }
           }
         }
       } catch (_) {}
     }
 
+    // If no matching user or orders exist in database, report unmatched cleanly (no fake data)
+    if (!matchedUser && matchedOrders.length === 0 && dbPayments.length === 0) {
+      return res.json({
+        success: true,
+        matched: false,
+        query: { param: rawParam, value: rawValue },
+        message: `No customer or transactions found matching "${val}" in live database.`,
+        data: null,
+      });
+    }
+
     const isEmail = val.includes('@');
     const isPhone = Boolean(cleanPhone && cleanPhone.length === 10);
-    const resolvedEmail = matchedUser?.email || (isEmail ? val.toLowerCase() : 'artisahu6880@gmail.com');
-    const resolvedName = matchedUser?.name || (isEmail ? val.split('@')[0].replace(/[._-]/g, ' ') : 'Kamaldeep');
-    const resolvedPhone = matchedUser?.phone || (isPhone ? `+91 ${cleanPhone}` : '+91 9876545543');
-    const resolvedCustomerId = matchedUser?.userId || `#${(val.replace(/\D/g, '') || '312795448').slice(-9)}`;
+    const resolvedEmail = matchedUser?.email || (isEmail ? val.toLowerCase() : dbPayments[0]?.userEmail || 'N/A');
+    const resolvedName = matchedUser?.name || (isEmail ? val.split('@')[0].replace(/[._-]/g, ' ') : dbPayments[0]?.customerName || 'Customer');
+    const resolvedPhone = matchedUser?.phone || (isPhone ? `+91 ${cleanPhone}` : dbPayments[0]?.customerPhone || 'N/A');
+    const resolvedCustomerId = matchedUser?.userId || matchedUser?._id || dbPayments[0]?.userId || `#${(val.replace(/\D/g, '') || String(Date.now())).slice(-9)}`;
 
-    let allOrders = [];
-    if (matchedOrders.length > 0 || dbPayments.length > 0) {
-      const sourceList = matchedOrders.length > 0 ? matchedOrders : dbPayments;
-      allOrders = sourceList.map((p, idx) => {
-        const rawAmt = Number(p.amount) || 285.03;
-        const inrAmt = rawAmt > 1000 ? (rawAmt / 100).toFixed(2) : rawAmt.toFixed(2);
-        const orderNum = p.orderId || p.razorpayOrderId || `843143292${idx + 1}`;
-        return {
-          orderId: orderNum,
-          date: p.date || 'Nov 09 2026, 10:31 PM',
-          status: p.status === 'CAPTURED' || p.status === 'captured' || p.status === 'success' ? 'Success' : p.status || 'Success',
-          amount: inrAmt,
-          currency: '₹',
-          selectedMode: 'Online',
-          paidVia: (p.paidVia || p.method || 'UPI').toUpperCase(),
-          txnId: p.txnId || p.paymentId || `pay_${orderNum.slice(-8)}`,
-          refId: p.refId || p.receipt || `rcpt_${orderNum.slice(-8)}`,
-          directWeb: true,
-          commentsCount: 0,
-          transactionsCount: 1,
-        };
-      });
-    } else {
-      const baseNum = val.replace(/\D/g, '').slice(0, 10) || '8431432921';
-      allOrders = generateSampleOrders(baseNum, 6);
-    }
+    // Build real orders list strictly from database / live records
+    const sourceList = dbPayments.length > 0 ? dbPayments : matchedOrders;
+    const allOrders = sourceList.map((p, idx) => {
+      const rawAmt = Number(p.amount) || 0;
+      const inrAmt = rawAmt > 1000 ? (rawAmt / 100).toFixed(2) : rawAmt.toFixed(2);
+      const orderNum = p.razorpayOrderId || p.orderId || `order_${idx + 1}`;
+      const statusRaw = String(p.status || '').toLowerCase();
+      const statusLabel =
+        statusRaw === 'captured' || statusRaw === 'success'
+          ? 'Success'
+          : statusRaw === 'refunded'
+          ? 'Refunded'
+          : statusRaw === 'failed'
+          ? 'Failed'
+          : 'Canceled';
+
+      return {
+        orderId: orderNum,
+        date: p.date || (p.createdAt ? new Date(p.createdAt).toLocaleString('en-IN') : 'N/A'),
+        status: statusLabel,
+        amount: inrAmt,
+        currency: p.currency || '₹',
+        selectedMode: 'Online',
+        paidVia: (p.paymentMethod || p.paidVia || p.method || 'UPI').toUpperCase(),
+        txnId: p.razorpayPaymentId || p.paymentId || p.txnId || 'N/A',
+        refId: p.receipt || p.refId || `rcpt_${orderNum.slice(-8)}`,
+        directWeb: true,
+        commentsCount: (p.comments || []).length,
+        transactionsCount: 1,
+      };
+    });
 
     const totalOrdersCount = allOrders.length;
     const startIndex = (page - 1) * limit;
     const paginatedOrders = allOrders.slice(startIndex, startIndex + limit);
     const hasMoreOrders = startIndex + limit < totalOrdersCount;
-    const totalLifetimeVolume = allOrders.reduce((sum, o) => sum + parseFloat(o.amount || 0), 0).toFixed(2);
+    const totalLifetimeVolume = allOrders
+      .filter((o) => o.status === 'Success')
+      .reduce((sum, o) => sum + parseFloat(o.amount || 0), 0)
+      .toFixed(2);
+
     const masterclassCourse = CourseStore.getById('masterclass') || DEFAULT_COURSES[0];
 
     return res.json({
@@ -275,17 +266,16 @@ router.get('/lifeline', async (req, res) => {
         name: resolvedName,
         email: resolvedEmail,
         phone: resolvedPhone,
-        totalLifetimeVolume: totalLifetimeVolume || '285.03',
+        totalLifetimeVolume,
         ordersCount: totalOrdersCount,
-        hasActiveSubscription: matchedUser?.hasActiveSubscription ?? true,
-        enrolledCourses: matchedUser?.enrolledCourses?.length
-          ? matchedUser.enrolledCourses
-          : [{ courseId: 'masterclass', title: 'Strivers Placement Masterclass', status: 'Active' }],
+        hasActiveSubscription: Boolean(matchedUser?.hasActiveSubscription),
+        enrolledCourses: matchedUser?.enrolledCourses || [],
         activeBatch: {
           title: masterclassCourse.title || 'Strivers Masterclass',
           description: masterclassCourse.description || '',
           meetingLink: masterclassCourse.activeMeetingLink || 'https://meet.google.com/strivers-placement-live',
           sessionDate: masterclassCourse.sessionDate || 'Sunday, 15 Nov, 11:00 AM IST',
+          whatsappGroupLink: masterclassCourse.whatsappGroupLink || 'https://chat.whatsapp.com/strivers-placement-masterclass',
           mentors: masterclassCourse.mentors || [],
         },
         orders: paginatedOrders,
@@ -431,14 +421,30 @@ router.post('/masterclasses/:id/materials', (req, res) => {
     const { id } = req.params;
     const current = CourseStore.getById(id) || {};
     const existingMaterials = Array.isArray(current.notesAndPdfs) ? current.notesAndPdfs : [];
-    const textContent = req.body.content || `# ${req.body.title || 'Study Material'}\n\nProtected DRM Study Guide.`;
-    const fileData = req.body.fileData || Buffer.from(textContent).toString('base64');
+    const fileType = (req.body.fileType || 'notes').toLowerCase();
+    const mimeType =
+      req.body.mimeType ||
+      (fileType === 'pdf'
+        ? 'application/pdf'
+        : fileType === 'html'
+        ? 'text/html'
+        : 'text/markdown');
+    const textContent =
+      req.body.content ||
+      req.body.htmlContent ||
+      `# ${req.body.title || 'Study Material'}\n\nProtected DRM Study Guide.`;
+    const fileData =
+      req.body.fileData ||
+      (req.body.htmlContent
+        ? Buffer.from(req.body.htmlContent, 'utf-8').toString('base64')
+        : Buffer.from(textContent, 'utf-8').toString('base64'));
+
     const newDoc = {
       materialId: `mat_${Date.now()}`,
       title: req.body.title || 'Masterclass Study Material',
-      description: req.body.description || 'DRM Protected Study Resource',
-      fileType: req.body.fileType || 'pdf',
-      mimeType: req.body.mimeType || 'text/markdown',
+      description: req.body.description || (fileType === 'html' ? 'Rich HTML Study Guide' : 'DRM Protected Study Resource'),
+      fileType,
+      mimeType,
       fileData,
       fileSize: fileData.length,
       drmLevel: req.body.drmLevel || 'DRM_ENFORCED',
@@ -547,8 +553,8 @@ router.get('/orders', async (req, res) => {
             customerEmail: p.userEmail || p.customerEmail || 'N/A',
             customerName: p.customerName || 'Student',
             planId: (p.planId || 'masterclass').toUpperCase(),
-            courseTitle: p.planId === 'channel' ? 'Paid Job Channel' : 'Strivers Masterclass',
-            amount: p.amount || 21,
+            courseTitle: CourseStore.getById(p.planId)?.title || (p.planId === 'channel' ? 'Paid Job Channel' : 'Strivers Masterclass'),
+            amount: p.amount ? (Number(p.amount) > 1000 ? Math.round(Number(p.amount) / 100) : Number(p.amount)) : 0,
             status: p.status === 'success' || p.status === 'captured' ? 'CAPTURED' : p.status === 'refunded' ? 'REFUNDED' : p.status === 'canceled' ? 'PAYMENT CANCELED' : 'FAILED',
             remark: p.errorDescription || (p.status === 'captured' ? 'Payment Captured' : 'User Canceled Midway'),
           }));
@@ -742,9 +748,29 @@ router.delete('/users/:id', async (req, res) => {
 // ==========================================
 // 7. SYSTEM TELEMETRY & AUDIT LOGS
 // ==========================================
-router.get('/telemetry', (req, res) => {
+router.get('/telemetry', async (req, res) => {
   const memory = process.memoryUsage();
-  const revStats = ActivityOrderStore.computeRevenueStats();
+  let revStats = ActivityOrderStore.computeRevenueStats();
+
+  if (mongoose.connection.readyState === 1) {
+    try {
+      const agg = await Payment.aggregate([
+        { $match: { status: { $in: ['captured', 'CAPTURED', 'success'] } } },
+        { $group: { _id: null, total: { $sum: '$amount' }, count: { $sum: 1 } } },
+      ]).maxTimeMS(2000);
+
+      if (agg && agg.length > 0) {
+        const rawTot = agg[0].total || 0;
+        const normTot = rawTot > 10000 && agg[0].count > 0 && (rawTot / agg[0].count > 1000) ? Math.round(rawTot / 100) : Math.round(rawTot);
+        revStats = {
+          totalRevenueNum: normTot,
+          totalRevenueFormatted: `₹${normTot.toLocaleString('en-IN')}`,
+          successfulTxns: agg[0].count || 0,
+        };
+      }
+    } catch (_) {}
+  }
+
   const activeSubs = UserStore.countActiveSubscribers();
   const logsData = ActivityOrderStore.getLogs({ limit: 50 });
   const tickets = ActivityOrderStore.getTickets();

@@ -426,6 +426,153 @@
   margin-top: 6px;
 }
 
+/* WHATSAPP PROMPT BANNER */
+.product-access-whatsapp-banner {
+  background: linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%);
+  border: 1px solid #A7F3D0;
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
+  flex-wrap: wrap;
+}
+
+.product-access-whatsapp-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+}
+
+.product-access-whatsapp-text {
+  flex: 1;
+  min-width: 240px;
+}
+
+.product-access-whatsapp-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ENDED MASTERCLASS BOX */
+.product-access-ended-box {
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-radius: 16px;
+  padding: 28px 24px;
+  margin-bottom: 28px;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.08);
+}
+
+.product-access-ended-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.product-access-ended-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #FEF3C7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 2px solid #FDE68A;
+}
+
+.product-access-ended-content {
+  flex: 1;
+}
+
+.product-access-ended-title {
+  margin: 0 0 8px;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #92400E;
+  font-family: var(--font-heading, 'Plus Jakarta Sans', sans-serif);
+}
+
+.product-access-ended-msg {
+  margin: 0 0 18px;
+  font-size: 0.95rem;
+  color: #78350F;
+  line-height: 1.6;
+  max-width: 780px;
+}
+
+.product-access-ended-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.product-access-rearrange-confirmation {
+  font-size: 0.85rem;
+  color: #047857;
+  font-weight: 600;
+  background: #D1FAE5;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+/* COUNTDOWN CONTAINER */
+.product-access-countdown-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 18px 0 10px;
+  flex-wrap: wrap;
+}
+
+.countdown-cell {
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  padding: 8px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 58px;
+}
+
+.countdown-digits {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  line-height: 1.1;
+  font-family: monospace;
+}
+
+.countdown-label {
+  font-size: 0.68rem;
+  color: #93C5FD;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.countdown-colon {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1;
+}
+
 @media (max-width: 768px) {
   .product-access-main {
     margin: 18px auto 36px;
@@ -442,5 +589,19 @@
   .product-access-header-card,
   .product-access-meeting-box {
     padding: 18px 16px;
+  }
+
+  .product-access-ended-top {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .product-access-ended-actions {
+    justify-content: center;
+  }
+
+  .product-access-countdown-container {
+    justify-content: center;
   }
 }

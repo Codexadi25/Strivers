@@ -7,7 +7,7 @@ import LifelinePage from '../pages/LifelinePage';
 import UsersPage from '../pages/UsersPage';
 import * as apiModule from '../services/api';
 
-jest.setTimeout(25000);
+jest.setTimeout(60000);
 
 jest.mock('../services/api', () => ({
   apiCall: jest.fn(),

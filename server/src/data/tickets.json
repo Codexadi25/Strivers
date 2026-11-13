@@ -1,5 +1,33 @@
 [
   {
+    "ticketId": "tkt_1794516122927",
+    "createdAt": "2026-11-12T20:42:02.927Z",
+    "studentContact": "dispute.student@example.com (+91 9999999999)",
+    "customerEmail": "dispute.student@example.com",
+    "userEmail": "dispute.student@example.com",
+    "orderId": "order_test_dispute_12345",
+    "bankRrn": "UTR987654321",
+    "amount": 174,
+    "issueCategory": "BANK_TIMEOUT",
+    "status": "RESOLVED",
+    "slaDeadline": "7 Business Days",
+    "action": "Verify Bank Reversal"
+  },
+  {
+    "ticketId": "tkt_1794516044183",
+    "createdAt": "2026-11-12T20:40:44.183Z",
+    "studentContact": "dispute.student@example.com (+91 9999999999)",
+    "customerEmail": "dispute.student@example.com",
+    "userEmail": "dispute.student@example.com",
+    "orderId": "order_test_dispute_12345",
+    "bankRrn": "UTR987654321",
+    "amount": 174,
+    "issueCategory": "BANK_TIMEOUT",
+    "status": "RESOLVED",
+    "slaDeadline": "7 Business Days",
+    "action": "Verify Bank Reversal"
+  },
+  {
     "ticketId": "tkt_1794513898100",
     "createdAt": "2026-11-12T20:04:58.100Z",
     "studentContact": "dispute.student@example.com (+91 9999999999)",

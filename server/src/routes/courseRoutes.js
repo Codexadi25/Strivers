@@ -197,9 +197,11 @@ router.get('/:id/access', verifyFirebaseToken, async (req, res) => {
     const isAdmin = Boolean(req.user?.role === 'admin' || req.user?.isAdmin);
     const isEnrolledInCourse =
       isAdmin ||
-      (access &&
-        (access.enrolledCourses?.some((c) => c.courseId === courseId) ||
-          (access.hasActiveSubscription && (!access.expiresAt || new Date(access.expiresAt) > new Date()))));
+      Boolean(
+        access?.enrolledCourses?.some(
+          (c) => String(c.courseId).toLowerCase() === String(courseId).toLowerCase()
+        )
+      );
 
     let activeData = CourseStore.getById(courseId);
     if (!activeData && mongoose.connection.readyState === 1) {
@@ -258,6 +260,7 @@ router.get('/:id/access', verifyFirebaseToken, async (req, res) => {
         meetingPlatform: activeData.meetingPlatform || 'Google Meet',
         sessionStatus: activeData.sessionStatus || 'upcoming',
         sessionDate: activeData.sessionDate || 'Sunday, 11:00 AM IST',
+        whatsappGroupLink: activeData.whatsappGroupLink || 'https://chat.whatsapp.com/strivers-placement-masterclass',
         mentors: activeData.mentors || [],
         timingSlots: activeData.timingSlots || [],
         notesAndPdfs: materialsList,
@@ -286,9 +289,11 @@ router.get('/:id/materials/:materialId', verifyFirebaseToken, async (req, res) =
     const isAdmin = Boolean(req.user?.role === 'admin' || req.user?.isAdmin);
     const isEnrolled =
       isAdmin ||
-      (access &&
-        (access.enrolledCourses?.some((c) => c.courseId === courseId) ||
-          (access.hasActiveSubscription && (!access.expiresAt || new Date(access.expiresAt) > new Date()))));
+      Boolean(
+        access?.enrolledCourses?.some(
+          (c) => String(c.courseId).toLowerCase() === String(courseId).toLowerCase()
+        )
+      );
 
     if (!isEnrolled) {
       return res.status(403).json({

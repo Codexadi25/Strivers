@@ -65,6 +65,7 @@ const DEFAULT_COURSES = [
     meetingPlatform: 'Google Meet',
     sessionStatus: 'upcoming',
     sessionDate: 'Sunday, 15 Nov, 11:00 AM IST',
+    whatsappGroupLink: 'https://chat.whatsapp.com/strivers-placement-masterclass',
     secretPasscode: 'STRIVERS2026',
     mentors: [
       {

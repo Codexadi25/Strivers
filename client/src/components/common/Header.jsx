@@ -179,7 +179,7 @@ export function Header({ user: initialUser }) {
 
           {currentUser && (
             <Link
-              to="/courses"
+              to="/courses?tab=my-access"
               className={`header-nav-link ${isCurrent('/courses') ? 'active' : ''}`}
             >
               My Access
@@ -323,7 +323,7 @@ export function Header({ user: initialUser }) {
 
             {currentUser && (
               <Link
-                to="/courses"
+                to="/courses?tab=my-access"
                 onClick={() => setMobileOpen(false)}
                 className={`drawer-nav-item ${isCurrent('/courses') ? 'active' : ''}`}
               >

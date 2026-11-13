@@ -94,10 +94,10 @@ export default function CourseDetail() {
 
   const owned = useMemo(() => {
     if (!user) return false;
+    if (user.role === 'admin' || user.isAdmin) return true;
     const cid = String(course.productId || courseId).toLowerCase();
     return Boolean(
-      user.enrolledCourses?.some((c) => String(c.courseId).toLowerCase() === cid) ||
-        (user.hasActiveSubscription && (cid === 'masterclass' || cid === 'placement_masterclass'))
+      user.enrolledCourses?.some((c) => String(c.courseId).toLowerCase() === cid)
     );
   }, [user, course.productId, courseId]);
 
@@ -132,7 +132,7 @@ export default function CourseDetail() {
         className="course-detail-owned-btn"
         sx={fullWidthMobile ? { width: { xs: '100%', sm: 'auto' } } : undefined}
       >
-        Start Learning
+        Start Learning Now
       </Button>
     ) : (
       <Button

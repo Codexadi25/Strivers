@@ -21,16 +21,19 @@ async function runLifelineHubDynamicTests() {
   console.log(`    ✓ Lifeline [customer_phone]: Resolved phone ${phoneRes.data.data.phone}`);
 
   // Test 3: Category - Order ID
-  const orderRes = await apiRequest('/api/v2/adminaccess/lifeline?param=order_id&query=8431432921');
+  const orderRes = await apiRequest('/api/v2/adminaccess/lifeline?param=order_id&query=order_Kml2837192011');
   assert.strictEqual(orderRes.status, 200, 'Lifeline order search must return 200');
+  assert(orderRes.data && orderRes.data.matched, 'Lifeline must match genuine database order');
   assert(orderRes.data.data.orders.length > 0, 'Orders list must contain transactions');
-  console.log(`    ✓ Lifeline [order_id]: Resolved order data for 8431432921`);
+  console.log(`    ✓ Lifeline [order_id]: Resolved order data for order_Kml2837192011`);
 
   // Test 4: Category - Txn ID & Ref ID
-  const txnRes = await apiRequest('/api/v2/adminaccess/lifeline?param=txn_id&query=pay_8431432921');
+  const txnRes = await apiRequest('/api/v2/adminaccess/lifeline?param=txn_id&query=pay_Kml2837192011_1');
   assert.strictEqual(txnRes.status, 200, 'Lifeline txn_id search must return 200');
-  const refRes = await apiRequest('/api/v2/adminaccess/lifeline?param=ref_id&query=rcpt_8431432921');
+  assert(txnRes.data && txnRes.data.matched, 'Lifeline must match genuine transaction');
+  const refRes = await apiRequest('/api/v2/adminaccess/lifeline?param=ref_id&query=rcpt_al_dev_1794246100111');
   assert.strictEqual(refRes.status, 200, 'Lifeline ref_id search must return 200');
+  assert(refRes.data && refRes.data.matched, 'Lifeline must match genuine receipt');
   console.log('    ✓ Lifeline [txn_id & ref_id]: Successfully resolved transaction references');
 
   // Test 5: Dynamic Pagination Check
@@ -52,13 +55,14 @@ async function runLifelineHubDynamicTests() {
   // Case B: Special characters and symbols
   const fuzzRes = await apiRequest('/api/v2/adminaccess/lifeline?query=@@!!$$%^&*');
   assert.strictEqual(fuzzRes.status, 200, 'Fuzz query must not crash and return 200');
-  assert(fuzzRes.data.data !== undefined, 'Fuzz query returns valid response');
+  assert.strictEqual(fuzzRes.data.matched, false, 'Fuzz query returns matched: false cleanly without crashing');
 
-  // Case C: Non-existent identifier
+  // Case C: Non-existent identifier (strict real data, no synthetic mocks)
   const nonExistentRes = await apiRequest('/api/v2/adminaccess/lifeline?query=totally_non_existent_99999');
-  assert.strictEqual(nonExistentRes.status, 200, 'Non-existent identifier handled with high-availability fallback');
-  assert(nonExistentRes.data.data, 'Data object present');
-  console.log('    ✓ High-Availability Fallback: Lifeline never crashed on fuzzing, special chars, or empty inputs');
+  assert.strictEqual(nonExistentRes.status, 200, 'Non-existent identifier handled safely');
+  assert.strictEqual(nonExistentRes.data.matched, false, 'Non-existent query accurately reports matched: false');
+  assert.strictEqual(nonExistentRes.data.data, null, 'No synthetic orders generated');
+  console.log('    ✓ High-Availability & Real Data Fallback: Lifeline never crashes on fuzzing or non-existent inputs and loads only authentic DB records');
 
   console.log('  ✅ Lifeline Hub Dynamic Flow: ALL PASSED');
   return true;
