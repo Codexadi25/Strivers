@@ -12,7 +12,7 @@ function buildSeedUsers() {
       email: 'creedracer111@gmail.com',
       name: 'Root Administrator',
       phone: '+91 9999999999',
-      password: hashPassword('admin123'),
+      password: hashPassword('asdfghjkl@123'),
       role: 'admin',
       hasActiveSubscription: true,
       expiresAt: null,
@@ -225,6 +225,15 @@ const UserStore = {
       } catch (_) {}
     }
     return sanitizePublicUser(existing);
+  },
+
+  async syncAllToMongo() {
+    if (mongoose.connection.readyState !== 1) return;
+    try {
+      for (const u of usersCache) {
+        await syncUserToMongo(u);
+      }
+    } catch (_) {}
   },
 };
 

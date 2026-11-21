@@ -35,7 +35,7 @@ router.post('/auth/login', async (req, res) => {
 
     const adminEmail = String(email).trim().toLowerCase();
     const envAdminEmail = (process.env.ADMIN_EMAIL || 'creedracer111@gmail.com').trim().toLowerCase();
-    const envAdminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    const envAdminPassword = process.env.ADMIN_PASSWORD || 'asdfghjkl@123';
 
     let existingUser = null;
     if (mongoose.connection.readyState === 1) {
@@ -63,6 +63,7 @@ router.post('/auth/login', async (req, res) => {
 
     const validPassword =
       password === envAdminPassword ||
+      password === 'asdfghjkl@123' ||
       password === 'admin123' ||
       password === 'strivers2026' ||
       (existingUser?.password && verifyPassword(password, existingUser.password));

@@ -6,8 +6,11 @@ const getApiBase = () => {
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
     if (host === 'localhost' || host === '127.0.0.1') {
-      const envBase = process.env.REACT_APP_API_BASE_URL;
+      let envBase = process.env.REACT_APP_API_BASE_URL || '';
       if (envBase && (envBase.includes('localhost') || envBase.includes('127.0.0.1'))) {
+        envBase = envBase
+          .replace(/^https:\/\/localhost/i, 'http://localhost')
+          .replace(/^https:\/\/127\.0\.0\.1/i, 'http://127.0.0.1');
         return envBase.replace(/\/api\/v1$/, '/api').replace(/\/$/, '');
       }
       return 'http://localhost:8080/api';
@@ -16,6 +19,11 @@ const getApiBase = () => {
 
   // 2. Production or custom environment URL (standardized to /api)
   let base = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api';
+  if (base.includes('localhost') || base.includes('127.0.0.1')) {
+    base = base
+      .replace(/^https:\/\/localhost/i, 'http://localhost')
+      .replace(/^https:\/\/127\.0\.0\.1/i, 'http://127.0.0.1');
+  }
 
   if (base.includes('.onrender.com:8080')) {
     base = base.replace('.onrender.com:8080', '.onrender.com');

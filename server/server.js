@@ -38,6 +38,8 @@ connectDB().then(async () => {
   try {
     await seedCoursesIfEmpty();
     await seedPracticeSheetsIfEmpty();
+    const UserStore = require('./src/utils/userStore');
+    await UserStore.syncAllToMongo();
   } catch (seedErr) {
     console.warn('[Seed Notice]', seedErr.message);
   }

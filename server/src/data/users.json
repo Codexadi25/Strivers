@@ -1,5 +1,23 @@
 [
   {
+    "_id": "usr_1795278931318_333l8",
+    "userId": "usr_1795278931318_333l8",
+    "email": "aditya@strivers.app",
+    "name": "Aditya",
+    "phone": "",
+    "password": "6d103259fbe5ec46efd615c5f32cdd02:d2bab8a756648a3285fe216fe8a3582bd20426db2a29db6005779ccbb86ffacce54948b0c85bf192b6e36108198f96f82caea90de7094f6dbeb7dec678a19cfb",
+    "role": "user",
+    "hasActiveSubscription": false,
+    "expiresAt": null,
+    "watermarkIdentifier": "aditya@strivers.app | usr_17",
+    "enrolledCourses": [],
+    "enrolledPracticeSheets": [],
+    "maxPracticeSheetsAllowed": 2,
+    "unlockedNotes": [],
+    "createdAt": "2026-11-21T16:35:31.360Z",
+    "updatedAt": "2026-11-21T16:48:00.210Z"
+  },
+  {
     "_id": "usr_1794314534430_kr9lr",
     "userId": "usr_1794314534430_kr9lr",
     "email": "artisahu68802@gmail.com",
@@ -23,7 +41,7 @@
     "email": "creedracer111@gmail.com",
     "name": "Root Administrator",
     "phone": "+91 9999999999",
-    "password": "f440071e040dcca85acbe0b2b62b7578:696dd80b8a7b909318f001efa6abc9069d316ec7433d18284c343f2b680707c666564d8354741af493110ab00b9d64c38b1660fe503398ebad63d8a85eed0965",
+    "password": "5ab73146cac285363556636d9249769b:5d9f80b5f06427af755db0535546ca676e82aabcd7232ed9c95428f42e7211487b1f151031dd0bd8e17bf65a2331362fc50fb7911d857d7ba0fbb0bda8ae4b7c",
     "role": "admin",
     "hasActiveSubscription": true,
     "expiresAt": null,
@@ -51,7 +69,7 @@
     "enrolledPracticeSheets": [],
     "maxPracticeSheetsAllowed": 5,
     "createdAt": "2026-10-01T08:00:00.000Z",
-    "updatedAt": "2026-11-12T20:42:03.121Z"
+    "updatedAt": "2026-11-21T16:48:01.234Z"
   },
   {
     "_id": "usr_admin",
