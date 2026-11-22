@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import api from '../utils/api';
+import api, { API_BASE } from '../utils/api';
 import Header from '../components/common/Header';
 import Footer from '../components/common/Footer';
 import './Auth.css';
@@ -61,7 +61,7 @@ export default function Register() {
         if (serverMsg) {
           setError(serverMsg);
         } else if (err.message && (err.message.includes('Network Error') || err.code === 'ERR_NETWORK')) {
-          setError('Cannot reach server at http://localhost:8080. Please ensure the backend server is running.');
+          setError(`Cannot reach backend server at ${API_BASE}. Please ensure the backend server is online and publicly accessible.`);
         } else {
           setError('Registration failed. Please check your information.');
         }

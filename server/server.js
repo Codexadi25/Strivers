@@ -30,8 +30,10 @@ const startServer = () => {
   });
 };
 
-// Start HTTP server immediately so port 8080 is available in milliseconds
-startServer();
+// Start HTTP server immediately so port 8080 is available in milliseconds (skip in Vercel serverless)
+if (process.env.VERCEL !== '1' && !process.env.NOW_REGION) {
+  startServer();
+}
 
 // Connect to MongoDB asynchronously in the background without blocking HTTP traffic
 connectDB().then(async () => {
@@ -46,3 +48,5 @@ connectDB().then(async () => {
 }).catch((err) => {
   console.warn('[Server Boot Notice]', err.message);
 });
+
+module.exports = app;

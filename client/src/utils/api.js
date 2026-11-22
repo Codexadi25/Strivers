@@ -18,7 +18,7 @@ const getApiBase = () => {
   }
 
   // 2. Production or custom environment URL (standardized to /api)
-  let base = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api';
+  let base = process.env.REACT_APP_API_BASE_URL;
   if (base.includes('localhost') || base.includes('127.0.0.1')) {
     base = base
       .replace(/^https:\/\/localhost/i, 'http://localhost')
@@ -29,7 +29,8 @@ const getApiBase = () => {
     base = base.replace('.onrender.com:8080', '.onrender.com');
   }
 
-  return base.replace(/\/api\/v1$/, '/api').replace(/\/$/, '');
+  const clean = base.replace(/\/api\/v1$/, '/api').replace(/\/$/, '');
+  return clean.endsWith('/api') ? clean : `${clean}/api`;
 };
 
 export const API_BASE = getApiBase();

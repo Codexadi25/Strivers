@@ -3,7 +3,7 @@
  * Connects securely via Bearer JWT to /api/v2/adminaccess with local dev, Render & Firebase Hosting support
  */
 
-export const DEFAULT_PRODUCTION_BACKEND = 'https://strivers-hr5g.onrender.com/api/v2/adminaccess';
+export const DEFAULT_PRODUCTION_BACKEND = 'https://server-atdteam.vercel.app/api/v2/adminaccess';
 
 let cachedWorkingBase = null;
 

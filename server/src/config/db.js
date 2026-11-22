@@ -6,6 +6,9 @@ mongoose.set('bufferCommands', false);
 const FALLBACK_DIRECT_URI = 'mongodb://server:N0hC41Gka9vDCtD2@ac-xwqk5zk-shard-00-00.bm9wmnx.mongodb.net:27017,ac-xwqk5zk-shard-00-01.bm9wmnx.mongodb.net:27017,ac-xwqk5zk-shard-00-02.bm9wmnx.mongodb.net:27017/strivers?ssl=true&replicaSet=atlas-rwrh8u-shard-0&authSource=admin';
 
 const connectDB = async () => {
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.connection;
+  }
   const uri = process.env.MONGO_URI || FALLBACK_DIRECT_URI;
 
   try {

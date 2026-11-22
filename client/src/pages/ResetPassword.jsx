@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import api from '../utils/api';
+import api, { API_BASE } from '../utils/api';
 import Header from '../components/common/Header';
 import Footer from '../components/common/Footer';
 import './Auth.css';
@@ -57,7 +57,7 @@ export default function ResetPassword() {
       if (serverMsg) {
         setError(serverMsg);
       } else if (err.message && (err.message.includes('Network Error') || err.code === 'ERR_NETWORK')) {
-        setError('Cannot reach server. Please ensure the backend is running.');
+        setError(`Cannot reach backend server at ${API_BASE}. Please ensure the backend is online and accessible.`);
       } else {
         setError('Password reset failed. The link may have expired or is invalid.');
       }
