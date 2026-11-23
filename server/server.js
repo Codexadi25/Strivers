@@ -33,20 +33,20 @@ const startServer = () => {
 // Start HTTP server immediately so port 8080 is available in milliseconds (skip in Vercel serverless)
 if (process.env.VERCEL !== '1' && !process.env.NOW_REGION) {
   startServer();
-}
 
-// Connect to MongoDB asynchronously in the background without blocking HTTP traffic
-connectDB().then(async () => {
-  try {
-    await seedCoursesIfEmpty();
-    await seedPracticeSheetsIfEmpty();
-    const UserStore = require('./src/utils/userStore');
-    await UserStore.syncAllToMongo();
-  } catch (seedErr) {
-    console.warn('[Seed Notice]', seedErr.message);
-  }
-}).catch((err) => {
-  console.warn('[Server Boot Notice]', err.message);
-});
+  // Connect to MongoDB asynchronously in standalone local mode and seed if needed
+  connectDB().then(async () => {
+    try {
+      await seedCoursesIfEmpty();
+      await seedPracticeSheetsIfEmpty();
+      const UserStore = require('./src/utils/userStore');
+      await UserStore.syncAllToMongo();
+    } catch (seedErr) {
+      console.warn('[Seed Notice]', seedErr.message);
+    }
+  }).catch((err) => {
+    console.warn('[Server Boot Notice]', err.message);
+  });
+}
 
 module.exports = app;

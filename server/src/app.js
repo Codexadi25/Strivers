@@ -1,9 +1,12 @@
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const mongoose = require('mongoose');
+const connectDB = require('./config/db');
 
 const paymentRoutes = require('./routes/paymentRoutes');
 const ticketRoutes = require('./routes/ticketRoutes');
@@ -41,6 +44,21 @@ app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ limit: '25mb', extended: true }));
 app.use(morgan('dev'));
 
+// Serverless / Cold-Start MongoDB Connection Assurance Middleware
+let lastConnectAttempt = 0;
+app.use(async (req, res, next) => {
+  const now = Date.now();
+  if (mongoose.connection.readyState !== 1 && (now - lastConnectAttempt > 30000)) {
+    lastConnectAttempt = now;
+    try {
+      await connectDB();
+    } catch (e) {
+      // Non-blocking fallback handled by db.js
+    }
+  }
+  next();
+});
+
 // Basic Server Admin Console Static Assets (User Access, Security Logs, Telemetry only)
 const adminStaticPath = path.join(__dirname, '../public/admin');
 app.use(
@@ -56,19 +74,25 @@ app.use(
 
 // Shifted serverClient GUI Static Assets (Lifeline Hub, Pricing, Masterclasses, Orders, etc.)
 const serverClientStaticPath = path.join(__dirname, '../../serverClient/dist');
-app.use(
-  ['/serverclient', '/gui'],
-  (req, res, next) => {
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-    next();
-  },
-  express.static(serverClientStaticPath, { etag: false, maxAge: 0 })
-);
-
-// Assets folder for serverClient bundle
-app.use('/assets', express.static(path.join(serverClientStaticPath, 'assets')));
+if (fs.existsSync(serverClientStaticPath)) {
+  app.use(
+    ['/serverclient', '/gui'],
+    (req, res, next) => {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      next();
+    },
+    express.static(serverClientStaticPath, { etag: false, maxAge: 0 })
+  );
+  // Assets folder for serverClient bundle
+  app.use('/assets', express.static(path.join(serverClientStaticPath, 'assets')));
+} else {
+  // Graceful fallback for standalone serverless deployment (Vercel) where serverClient is hosted on Firebase
+  app.get(['/serverclient', '/gui', '/serverclient/*', '/gui/*'], (req, res) => {
+    res.redirect('https://externalstrivers.web.app');
+  });
+}
 
 // Health check and warm-up endpoints
 app.get(['/health', '/ping', '/api/v1/ping', '/api/ping'], (req, res) => {
