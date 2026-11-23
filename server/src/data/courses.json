@@ -284,6 +284,58 @@
         "capacity": 150,
         "active": true,
         "addedAt": "2026-11-22T18:00:30.716Z"
+      },
+      {
+        "slotId": "slot_1795374091362",
+        "title": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "date": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "dateTime": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "startTime": "11:00 AM",
+        "endTime": "01:00 PM",
+        "timezone": "IST",
+        "mentorName": "Unicorn Mentors",
+        "capacity": 150,
+        "active": true,
+        "addedAt": "2026-11-22T19:01:31.362Z"
+      },
+      {
+        "slotId": "slot_1795374224542",
+        "title": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "date": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "dateTime": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "startTime": "11:00 AM",
+        "endTime": "01:00 PM",
+        "timezone": "IST",
+        "mentorName": "Unicorn Mentors",
+        "capacity": 150,
+        "active": true,
+        "addedAt": "2026-11-22T19:03:44.542Z"
+      },
+      {
+        "slotId": "slot_1795374275399",
+        "title": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "date": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "dateTime": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "startTime": "11:00 AM",
+        "endTime": "01:00 PM",
+        "timezone": "IST",
+        "mentorName": "Unicorn Mentors",
+        "capacity": 150,
+        "active": true,
+        "addedAt": "2026-11-22T19:04:35.399Z"
+      },
+      {
+        "slotId": "slot_1795436655842",
+        "title": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "date": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "dateTime": "Sunday, 22 Nov 2026 - 11:00 AM IST (Aditya & Lead Mentors)",
+        "startTime": "11:00 AM",
+        "endTime": "01:00 PM",
+        "timezone": "IST",
+        "mentorName": "Unicorn Mentors",
+        "capacity": 150,
+        "active": true,
+        "addedAt": "2026-11-23T12:24:15.842Z"
       }
     ],
     "notesAndPdfs": [
@@ -509,10 +561,58 @@
         "drmLevel": "HIGH_SECURITY",
         "viewOnly": true,
         "addedAt": "2026-11-22T18:00:30.713Z"
+      },
+      {
+        "materialId": "mat_1795374091360",
+        "title": "Dynamic Testing & Security Cheatsheet (Automated)",
+        "description": "DRM Protected Study Resource",
+        "fileType": "pdf",
+        "mimeType": "application/pdf",
+        "fileData": "IyBEeW5hbWljIFRlc3RpbmcgJiBTZWN1cml0eSBDaGVhdHNoZWV0IChBdXRvbWF0ZWQpCgpQcm90ZWN0ZWQgRFJNIFN0dWR5IEd1aWRlLg==",
+        "fileSize": 108,
+        "drmLevel": "HIGH_SECURITY",
+        "viewOnly": true,
+        "addedAt": "2026-11-22T19:01:31.360Z"
+      },
+      {
+        "materialId": "mat_1795374224540",
+        "title": "Dynamic Testing & Security Cheatsheet (Automated)",
+        "description": "DRM Protected Study Resource",
+        "fileType": "pdf",
+        "mimeType": "application/pdf",
+        "fileData": "IyBEeW5hbWljIFRlc3RpbmcgJiBTZWN1cml0eSBDaGVhdHNoZWV0IChBdXRvbWF0ZWQpCgpQcm90ZWN0ZWQgRFJNIFN0dWR5IEd1aWRlLg==",
+        "fileSize": 108,
+        "drmLevel": "HIGH_SECURITY",
+        "viewOnly": true,
+        "addedAt": "2026-11-22T19:03:44.540Z"
+      },
+      {
+        "materialId": "mat_1795374275396",
+        "title": "Dynamic Testing & Security Cheatsheet (Automated)",
+        "description": "DRM Protected Study Resource",
+        "fileType": "pdf",
+        "mimeType": "application/pdf",
+        "fileData": "IyBEeW5hbWljIFRlc3RpbmcgJiBTZWN1cml0eSBDaGVhdHNoZWV0IChBdXRvbWF0ZWQpCgpQcm90ZWN0ZWQgRFJNIFN0dWR5IEd1aWRlLg==",
+        "fileSize": 108,
+        "drmLevel": "HIGH_SECURITY",
+        "viewOnly": true,
+        "addedAt": "2026-11-22T19:04:35.396Z"
+      },
+      {
+        "materialId": "mat_1795436655840",
+        "title": "Dynamic Testing & Security Cheatsheet (Automated)",
+        "description": "DRM Protected Study Resource",
+        "fileType": "pdf",
+        "mimeType": "application/pdf",
+        "fileData": "IyBEeW5hbWljIFRlc3RpbmcgJiBTZWN1cml0eSBDaGVhdHNoZWV0IChBdXRvbWF0ZWQpCgpQcm90ZWN0ZWQgRFJNIFN0dWR5IEd1aWRlLg==",
+        "fileSize": 108,
+        "drmLevel": "HIGH_SECURITY",
+        "viewOnly": true,
+        "addedAt": "2026-11-23T12:24:15.840Z"
       }
     ],
     "isActive": true,
-    "updatedAt": "2026-11-22T18:00:30.716Z",
+    "updatedAt": "2026-11-23T12:24:15.842Z",
     "meetingLink": "https://meet.google.com/dynamic-test-session",
     "imageUrl": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80",
     "duration": "Weekend Live Cohort",

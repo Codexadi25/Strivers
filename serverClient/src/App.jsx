@@ -97,7 +97,7 @@ export default function App() {
       case 'masterclasses':
         return <MasterclassesPage key={refreshKey} />;
       case 'telemetry':
-        return <TelemetryPage key={refreshKey} />;
+        return <TelemetryPage key={refreshKey} onTabChange={setActiveTab} />;
       case 'orders':
         return <OrdersPage key={refreshKey} />;
       case 'lifeline':

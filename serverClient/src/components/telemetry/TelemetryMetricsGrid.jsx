@@ -7,9 +7,10 @@ import SchoolIcon from '@mui/icons-material/School';
 import SecurityIcon from '@mui/icons-material/Security';
 import './TelemetryMetricsGrid.css';
 
-export default function TelemetryMetricsGrid({ metrics = {}, activitiesCount = 0 }) {
+export default function TelemetryMetricsGrid({ metrics = {}, activitiesCount = 0, onSelectMetric }) {
   const cards = [
     {
+      key: 'revenue',
       label: 'Total Revenue',
       value: metrics.totalRevenue || '₹0',
       sub: 'Captured in production',
@@ -18,6 +19,7 @@ export default function TelemetryMetricsGrid({ metrics = {}, activitiesCount = 0
       Icon: AttachMoneyIcon,
     },
     {
+      key: 'transactions',
       label: 'Successful Transactions',
       value: metrics.successfulTxns ?? 0,
       sub: 'Verified payments',
@@ -25,6 +27,7 @@ export default function TelemetryMetricsGrid({ metrics = {}, activitiesCount = 0
       Icon: PaymentIcon,
     },
     {
+      key: 'subscribers',
       label: 'Active Subscribers',
       value: metrics.activeSubscribers ?? 0,
       sub: 'Permanent & 30-day access',
@@ -32,6 +35,7 @@ export default function TelemetryMetricsGrid({ metrics = {}, activitiesCount = 0
       Icon: SchoolIcon,
     },
     {
+      key: 'logs',
       label: 'Audit Logs Recorded',
       value: metrics.auditLogsRecorded ?? activitiesCount,
       sub: 'Security & payment events',
@@ -45,11 +49,25 @@ export default function TelemetryMetricsGrid({ metrics = {}, activitiesCount = 0
       {cards.map((c) => {
         const IconComp = c.Icon;
         return (
-          <Card key={c.label} variant="outlined" className="sc-telem-metric-card">
+          <Card
+            key={c.key}
+            variant="outlined"
+            className="sc-telem-metric-card interactive"
+            onClick={() => onSelectMetric && onSelectMetric(c.key)}
+            role="button"
+            tabIndex={0}
+            title={`Click to view live ${c.label} data`}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onSelectMetric && onSelectMetric(c.key);
+              }
+            }}
+          >
             <div className={`sc-telem-icon-box ${c.iconClass}`}>
               <IconComp />
             </div>
-            <div>
+            <div style={{ flex: 1 }}>
               <Typography variant="caption" color="text.secondary" fontWeight={700}>
                 {c.label}
               </Typography>
@@ -57,6 +75,9 @@ export default function TelemetryMetricsGrid({ metrics = {}, activitiesCount = 0
               <Typography variant="caption" sx={{ color: c.subColor || 'text.secondary', fontWeight: 600 }}>
                 {c.sub}
               </Typography>
+              <div className="sc-telem-click-hint">
+                View data list &rarr;
+              </div>
             </div>
           </Card>
         );

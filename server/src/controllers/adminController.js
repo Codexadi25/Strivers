@@ -10,182 +10,56 @@ const CourseStore = require('../utils/courseStore');
 const UserStore = require('../utils/userStore');
 const ActivityOrderStore = require('../utils/activityOrderStore');
 const { signSessionToken } = require('../utils/token');
-const { hashPassword } = require('../utils/password');
+const { hashPassword, verifyPasswordHash } = require('../utils/password');
 
-// In-memory refund log backup
-const inMemoryRefunds = [];
-
-const inMemoryUsers = [
-  {
-    _id: 'usr_312795448',
-    userId: '#312795448',
-    name: 'Kamaldeep',
-    email: 'kamaldeep@gmail.com',
-    phone: '+91 9876545543',
-    role: 'user',
-    hasActiveSubscription: true,
-    enrolledCourses: [{ courseId: 'masterclass', title: 'Strivers Placement Masterclass' }],
-    status: 'Active',
-    isPermanent: true,
-    createdAt: '2026-10-15T12:00:00.000Z',
-  },
-  {
-    _id: 'usr_creedracer',
-    userId: 'usr_creedracer_01',
-    name: 'Root Administrator',
-    email: 'creedracer111@gmail.com',
-    phone: '+91 9999999999',
-    role: 'admin',
-    hasActiveSubscription: true,
-    enrolledCourses: [{ courseId: 'masterclass' }, { courseId: 'channel' }, { courseId: 'course_fullstack' }],
-    status: 'Active',
-    isPermanent: true,
-    createdAt: '2026-10-01T08:00:00.000Z',
-  },
-  {
-    _id: 'usr_admin',
-    userId: 'admin_root',
-    name: 'Aditya Sahu',
-    email: 'artisahu6880@gmail.com',
-    phone: '+91 8888888888',
-    role: 'admin',
-    hasActiveSubscription: true,
-    enrolledCourses: [{ courseId: 'masterclass' }, { courseId: 'channel' }, { courseId: 'course_fullstack' }],
-    status: 'Active',
-    isPermanent: true,
-    createdAt: '2026-10-01T08:00:00.000Z',
-  },
-];
-
-const sampleAuditLogs = [
-  {
-    action: 'SECURE_DOCUMENT_VIEW',
-    event: 'SECURE_DOCUMENT_VIEW',
-    userEmail: 'admin@yourdomain.com',
-    userId: 'admin_root',
-    ipAddress: '::1',
-    ip: '::1',
-    time: '9/11/2026, 11:48:35 pm',
-    createdAt: '2026-11-09T23:48:35.000Z',
-    metaData: { courseId: 'masterclass', materialId: 'mat_ats_blueprint', type: 'DRM_CANVAS' },
-    metadata: { courseId: 'masterclass', materialId: 'mat_ats_blueprint', type: 'DRM_CANVAS' },
-    tag: 'DOC',
-  },
-  {
-    action: 'PAYMENT_INIT',
-    event: 'PAYMENT_INIT',
-    userEmail: 'admin@yourdomain.com',
-    userId: 'admin_root',
-    ipAddress: '::1',
-    ip: '::1',
-    time: '9/11/2026, 11:42:10 pm',
-    createdAt: '2026-11-09T23:42:10.000Z',
-    metaData: { orderId: 'order_TyAgCeDPvmTPOX', amount: 174, currency: 'INR' },
-    metadata: { orderId: 'order_TyAgCeDPvmTPOX', amount: 174, currency: 'INR' },
-    tag: 'TXN',
-  },
-  {
-    action: 'PAYMENT_INIT',
-    event: 'PAYMENT_INIT',
-    userEmail: 'admin@yourdomain.com',
-    userId: 'admin_root',
-    ipAddress: '::1',
-    ip: '::1',
-    time: '9/11/2026, 11:42:00 pm',
-    createdAt: '2026-11-09T23:42:00.000Z',
-    metaData: { orderId: 'order_TyAg2Ra7PZJtZv', amount: 74, currency: 'INR' },
-    metadata: { orderId: 'order_TyAg2Ra7PZJtZv', amount: 74, currency: 'INR' },
-    tag: 'TXN',
-  },
-  {
-    action: 'LOGIN',
-    event: 'LOGIN',
-    userEmail: 'creedracer111@gmail.com',
-    userId: 'usr_creedracer_01',
-    ipAddress: '::1',
-    ip: '::1',
-    time: '9/11/2026, 8:00:43 pm',
-    createdAt: '2026-11-09T20:00:43.000Z',
-    metaData: { plan: 'masterclass', alreadyOwnsCourse: true },
-    metadata: { plan: 'masterclass', alreadyOwnsCourse: true },
-    tag: 'AUTH',
-  },
-  {
-    action: 'ROLE_UPDATED',
-    event: 'ROLE_UPDATED',
-    userEmail: 'admin@yourdomain.com',
-    userId: 'admin_root',
-    ipAddress: '::1',
-    ip: '::1',
-    time: '9/11/2026, 7:58:57 pm',
-    createdAt: '2026-11-09T19:58:57.000Z',
-    metaData: { targetEmail: 'creedracer111@gmail.com', role: 'admin' },
-    metadata: { targetEmail: 'creedracer111@gmail.com', role: 'admin' },
-    tag: 'ADMIN',
-  },
-  {
-    action: 'COURSE_UPSERTED',
-    event: 'COURSE_UPSERTED',
-    userEmail: 'admin@yourdomain.com',
-    userId: 'admin_root',
-    ipAddress: '::1',
-    ip: '::1',
-    time: '9/11/2026, 6:02:00 pm',
-    createdAt: '2026-11-09T18:02:00.000Z',
-    metaData: { productId: 'masterclass', productTitle: 'Strivers Placement Masterclass' },
-    metadata: { productId: 'masterclass', productTitle: 'Strivers Placement Masterclass' },
-    tag: 'CATALOG',
-  },
-  {
-    action: 'LOGIN',
-    event: 'LOGIN',
-    userEmail: 'admin@yourdomain.com',
-    userId: 'admin_root',
-    ipAddress: '::1',
-    ip: '::1',
-    time: '9/11/2026, 5:59:57 pm',
-    createdAt: '2026-11-09T17:59:57.000Z',
-    metaData: { plan: 'masterclass', alreadyOwnsCourse: true },
-    metadata: { plan: 'masterclass', alreadyOwnsCourse: true },
-    tag: 'AUTH',
-  },
-];
 
 /**
  * Admin Authentication Controller
  */
 exports.adminLogin = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
     if (!email) {
       return res.status(400).json({ success: false, message: 'Admin email is required.' });
     }
+    if (!password) {
+      return res.status(400).json({ success: false, message: 'Admin password is required.' });
+    }
 
     const adminEmail = (email || '').trim().toLowerCase();
-    const envAdminEmail = (process.env.ADMIN_EMAIL || 'admin@yourdomain.com').trim().toLowerCase();
-    const envAdminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    const envAdminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
 
-    const isEnvEmail = adminEmail === envAdminEmail;
+    const isEnvEmail = Boolean(envAdminEmail && adminEmail === envAdminEmail);
     let existingAdminUser = null;
     if (mongoose.connection.readyState === 1) {
-      existingAdminUser = await UserAccess.findOne({ email: adminEmail, role: 'admin' }).maxTimeMS(1500).catch(() => null);
+      existingAdminUser = await UserAccess.findOne({ email: adminEmail }).maxTimeMS(1500).catch(() => null);
     }
     if (!existingAdminUser) {
-      const storeUser = UserStore.findRaw(adminEmail);
-      if (storeUser?.role === 'admin') existingAdminUser = storeUser;
+      existingAdminUser = UserStore.findRaw(adminEmail);
     }
 
-    if (!isEnvEmail && !existingAdminUser) {
+    const isAdmin = isEnvEmail || existingAdminUser?.role === 'admin';
+    if (!isAdmin) {
       return res.status(403).json({
         success: false,
-        message: 'Access denied. This email does not have administrative privileges.',
+        message: 'Access denied. This user is not found or may not have administrative privileges.',
       });
     }
 
-    if (password && password !== envAdminPassword && password !== 'admin123' && password !== 'strivers2026') {
+    // Exclusively verify against the database-stored password hash (no hardcoded password comparison)
+    const storedHash = existingAdminUser?.password;
+    if (!storedHash) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid administrative password or passkey.',
+        message: 'Invalid administrative email or password.',
+      });
+    }
+
+    const isPasswordValid = verifyPasswordHash(password, storedHash);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid administrative email or password.',
       });
     }
 
@@ -241,13 +115,44 @@ exports.getDashboardStats = async (req, res, next) => {
 
     if (mongoose.connection.readyState === 1) {
       try {
-        const dbTxns = await Payment.countDocuments({ status: 'captured' }).maxTimeMS(1500).catch(() => 0);
-        if (dbTxns > 0) totalTransactions = dbTxns;
+        const dbTxns = await Payment.countDocuments({ status: { $in: ['captured', 'CAPTURED', 'success'] } }).maxTimeMS(1500).catch(() => 0);
+        totalTransactions = dbTxns;
         const totalRevenueResult = await Payment.aggregate([
-          { $match: { status: 'captured' } },
+          { $match: { status: { $in: ['captured', 'CAPTURED', 'success'] } } },
           { $group: { _id: null, total: { $sum: '$amount' } } },
         ]).maxTimeMS(1500).catch(() => []);
-        if (totalRevenueResult[0]?.total) totalRevenue = totalRevenueResult[0].total;
+        totalRevenue = totalRevenueResult[0]?.total || 0;
+
+        activeSubscribers = await UserAccess.countDocuments({
+          $or: [
+            { hasActiveSubscription: true },
+            { 'enrolledCourses.0': { $exists: true } },
+          ],
+        }).maxTimeMS(1500).catch(() => 0);
+
+        totalUsers = await UserAccess.countDocuments().maxTimeMS(1500).catch(() => 0);
+
+        totalLogs = await ActivityLog.countDocuments().maxTimeMS(1500).catch(() => 0);
+        const dbLogs = await ActivityLog.find().sort({ createdAt: -1 }).limit(15).lean().maxTimeMS(1500).catch(() => []);
+        if (dbLogs) {
+          recentActivities = dbLogs.map((l) => ({
+            event: l.action || 'ACTION',
+            userEmail: l.userEmail || 'system',
+            time: l.createdAt ? new Date(l.createdAt).toLocaleString('en-IN') : 'Just now',
+            tag: l.tag || 'SYSTEM',
+          }));
+        }
+
+        const dbPayments = await Payment.find().sort({ createdAt: -1 }).limit(10).lean().maxTimeMS(1500).catch(() => []);
+        if (dbPayments) {
+          recentPayments = dbPayments.map((p) => ({
+            orderId: p.razorpayOrderId || p.orderId,
+            customerEmail: p.userEmail || p.customerEmail || 'N/A',
+            amount: p.amount || 0,
+            status: p.status === 'captured' ? 'CAPTURED' : p.status === 'canceled' ? 'PAYMENT CANCELED' : (p.status || '').toUpperCase(),
+            date: p.createdAt ? new Date(p.createdAt).toLocaleString('en-IN') : 'Just now',
+          }));
+        }
       } catch (dbErr) {
         console.warn('[DashboardStats DB Notice]', dbErr.message);
       }

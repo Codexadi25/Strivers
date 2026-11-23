@@ -17,39 +17,39 @@ export class TelemetryPageView {
 
         <!-- KPI Grid -->
         <div class="kpi-grid">
-          <div class="kpi-card">
+          <div class="kpi-card" onclick="window.switchTab && window.switchTab('users')" role="button" tabindex="0" title="Click to view User and Order records" style="cursor: pointer;">
             <div class="kpi-icon emerald">₹</div>
             <div class="kpi-content">
               <span class="kpi-label">Total Revenue</span>
               <span class="kpi-value" id="kpi-revenue">₹0</span>
-              <span class="kpi-sub green">Captured in production</span>
+              <span class="kpi-sub green">Captured in production &bull; View details &rarr;</span>
             </div>
           </div>
 
-          <div class="kpi-card">
+          <div class="kpi-card" onclick="window.switchTab && window.switchTab('users')" role="button" tabindex="0" title="Click to view User and Transaction records" style="cursor: pointer;">
             <div class="kpi-icon blue">💳</div>
             <div class="kpi-content">
               <span class="kpi-label">Successful Transactions</span>
               <span class="kpi-value" id="kpi-transactions">0</span>
-              <span class="kpi-sub">Verified payments</span>
+              <span class="kpi-sub">Verified payments &bull; View details &rarr;</span>
             </div>
           </div>
 
-          <div class="kpi-card">
+          <div class="kpi-card" onclick="window.switchTab && window.switchTab('users')" role="button" tabindex="0" title="Click to view Active Subscribers list" style="cursor: pointer;">
             <div class="kpi-icon indigo">🎓</div>
             <div class="kpi-content">
               <span class="kpi-label">Active Subscribers</span>
               <span class="kpi-value" id="kpi-subscribers">0</span>
-              <span class="kpi-sub">Active 30-day access</span>
+              <span class="kpi-sub">Active 30-day access &bull; View details &rarr;</span>
             </div>
           </div>
 
-          <div class="kpi-card">
+          <div class="kpi-card" onclick="window.switchTab && window.switchTab('logs')" role="button" tabindex="0" title="Click to view Audit and Security logs" style="cursor: pointer;">
             <div class="kpi-icon purple">🛡️</div>
             <div class="kpi-content">
               <span class="kpi-label">Audit Logs Recorded</span>
               <span class="kpi-value" id="kpi-logs">0</span>
-              <span class="kpi-sub">Security & payment events</span>
+              <span class="kpi-sub">Security & payment events &bull; View details &rarr;</span>
             </div>
           </div>
         </div>

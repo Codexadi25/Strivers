@@ -65,7 +65,42 @@ function verifyPassword(password, storedHash) {
   }
 }
 
+/**
+ * Strictly verifies a plaintext password against a stored salted hash
+ * without any hardcoded bypasses or fallback plaintext comparisons.
+ * Uses constant-time buffer comparison to prevent timing attacks.
+ *
+ * @param {string} password - Incoming plaintext password
+ * @param {string} storedHash - Stored hash from database
+ * @returns {boolean} True if password cryptographically matches the stored hash
+ */
+function verifyPasswordHash(password, storedHash) {
+  if (!password || typeof password !== 'string' || !storedHash || typeof storedHash !== 'string') {
+    return false;
+  }
+
+  try {
+    // Case 1: Modern `<salt>:<hash>` scrypt format
+    if (storedHash.includes(':')) {
+      const [salt, key] = storedHash.split(':');
+      if (!salt || !key) return false;
+
+      const keyBuffer = Buffer.from(key, 'hex');
+      const derivedKey = crypto.scryptSync(password, salt, keyBuffer.length);
+
+      return crypto.timingSafeEqual(keyBuffer, derivedKey);
+    }
+
+    // Case 2: Legacy single-salt format
+    const legacyDerived = crypto.scryptSync(password, LEGACY_SALT, 32).toString('hex');
+    return legacyDerived === storedHash;
+  } catch (err) {
+    return false;
+  }
+}
+
 module.exports = {
   hashPassword,
   verifyPassword,
+  verifyPasswordHash,
 };

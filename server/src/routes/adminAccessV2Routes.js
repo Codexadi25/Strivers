@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const UserAccess = require('../models/UserAccess');
 const Payment = require('../models/Payment');
 const SupportTicket = require('../models/SupportTicket');
+const ActivityLog = require('../models/ActivityLog');
 const { DEFAULT_COURSES } = require('../config/seedCourses');
 const CourseStore = require('../utils/courseStore');
 const UserStore = require('../utils/userStore');
@@ -13,7 +14,7 @@ const PracticeStore = require('../utils/practiceStore');
 const ActivityOrderStore = require('../utils/activityOrderStore');
 const { verifyFirebaseToken, verifyAdmin } = require('../middlewares/authMiddleware');
 const { signSessionToken } = require('../utils/token');
-const { verifyPassword } = require('../utils/password');
+const { verifyPassword, verifyPasswordHash } = require('../utils/password');
 
 // Preflight CORS handler for all /api/v2 admin access endpoints
 router.use((req, res, next) => {
@@ -35,7 +36,6 @@ router.post('/auth/login', async (req, res) => {
 
     const adminEmail = String(email).trim().toLowerCase();
     const envAdminEmail = (process.env.ADMIN_EMAIL || 'creedracer111@gmail.com').trim().toLowerCase();
-    const envAdminPassword = process.env.ADMIN_PASSWORD || 'asdfghjkl@123';
 
     let existingUser = null;
     if (mongoose.connection.readyState === 1) {
@@ -61,14 +61,8 @@ router.post('/auth/login', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Password is required.' });
     }
 
-    const validPassword =
-      password === envAdminPassword ||
-      password === 'asdfghjkl@123' ||
-      password === 'admin123' ||
-      password === 'strivers2026' ||
-      (existingUser?.password && verifyPassword(password, existingUser.password));
-
-    if (!validPassword) {
+    const storedHash = existingUser?.password;
+    if (!storedHash || !verifyPasswordHash(password, storedHash)) {
       return res.status(401).json({
         success: false,
         message: 'Invalid administrator credentials.',
@@ -544,7 +538,7 @@ router.get('/orders', async (req, res) => {
             }
           : {};
         const dbOrders = await Payment.find(filter).sort({ createdAt: -1 }).limit(100).maxTimeMS(1500);
-        if (dbOrders && dbOrders.length > 0) {
+        if (dbOrders) {
           allOrders = dbOrders.map((p) => ({
             orderId: p.razorpayOrderId || p.orderId,
             txnId: p.razorpayPaymentId || p.paymentId || 'N/A',
@@ -684,6 +678,37 @@ router.put('/tickets/:id', async (req, res) => {
 // ==========================================
 router.get('/users', async (req, res) => {
   try {
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const q = (req.query.q || '').trim();
+        const role = req.query.role || 'all';
+        const subscription = req.query.subscription || 'all';
+        const filter = {};
+        if (role && role !== 'all') filter.role = role;
+        if (subscription === 'active') {
+          filter.$or = [{ hasActiveSubscription: true }, { 'enrolledCourses.0': { $exists: true } }];
+        } else if (subscription === 'expired') {
+          filter.hasActiveSubscription = false;
+          filter.enrolledCourses = { $size: 0 };
+        }
+        if (q) {
+          filter.$or = [
+            { email: new RegExp(q, 'i') },
+            { name: new RegExp(q, 'i') },
+            { userId: new RegExp(q, 'i') },
+            { phone: new RegExp(q, 'i') },
+          ];
+        }
+        const dbUsers = await UserAccess.find(filter).lean().maxTimeMS(2000);
+        if (dbUsers) {
+          const sanitized = dbUsers.map((u) => {
+            const { password, resetPasswordToken, resetPasswordExpires, ...rest } = u;
+            return rest;
+          });
+          return res.json({ success: true, count: sanitized.length, users: sanitized });
+        }
+      } catch (_) {}
+    }
     const users = UserStore.getAll({
       q: req.query.q || '',
       role: req.query.role || 'all',
@@ -752,6 +777,12 @@ router.delete('/users/:id', async (req, res) => {
 router.get('/telemetry', async (req, res) => {
   const memory = process.memoryUsage();
   let revStats = ActivityOrderStore.computeRevenueStats();
+  let activeSubs = UserStore.countActiveSubscribers();
+  let logsData = ActivityOrderStore.getLogs({ limit: 50 });
+  let totalUsers = UserStore.getAll().length;
+  let totalOrders = ActivityOrderStore.getOrders().length;
+  const tickets = ActivityOrderStore.getTickets();
+  let openTickets = tickets.filter((t) => t.status !== 'resolved').length;
 
   if (mongoose.connection.readyState === 1) {
     try {
@@ -760,21 +791,45 @@ router.get('/telemetry', async (req, res) => {
         { $group: { _id: null, total: { $sum: '$amount' }, count: { $sum: 1 } } },
       ]).maxTimeMS(2000);
 
-      if (agg && agg.length > 0) {
-        const rawTot = agg[0].total || 0;
-        const normTot = rawTot > 10000 && agg[0].count > 0 && (rawTot / agg[0].count > 1000) ? Math.round(rawTot / 100) : Math.round(rawTot);
-        revStats = {
-          totalRevenueNum: normTot,
-          totalRevenueFormatted: `₹${normTot.toLocaleString('en-IN')}`,
-          successfulTxns: agg[0].count || 0,
-        };
-      }
+      const capturedCount = agg && agg.length > 0 ? (agg[0].count || 0) : 0;
+      const rawTot = agg && agg.length > 0 ? (agg[0].total || 0) : 0;
+      const normTot = rawTot > 10000 && capturedCount > 0 && (rawTot / capturedCount > 1000) ? Math.round(rawTot / 100) : Math.round(rawTot);
+
+      revStats = {
+        totalRevenueNum: normTot,
+        totalRevenueFormatted: `₹${normTot.toLocaleString('en-IN')}`,
+        successfulTxns: capturedCount,
+      };
+
+      activeSubs = await UserAccess.countDocuments({
+        $or: [
+          { hasActiveSubscription: true },
+          { 'enrolledCourses.0': { $exists: true } },
+        ],
+      }).maxTimeMS(2000).catch(() => 0);
+
+      totalUsers = await UserAccess.countDocuments().maxTimeMS(2000).catch(() => 0);
+      totalOrders = await Payment.countDocuments().maxTimeMS(2000).catch(() => 0);
+      openTickets = await SupportTicket.countDocuments({ status: { $ne: 'resolved' } }).maxTimeMS(2000).catch(() => 0);
+
+      const dbLogsCount = await ActivityLog.countDocuments().maxTimeMS(2000).catch(() => 0);
+      const dbLogs = await ActivityLog.find().sort({ createdAt: -1 }).limit(50).lean().maxTimeMS(2000).catch(() => []);
+      logsData = {
+        total: dbLogsCount,
+        logs: dbLogs.map((l) => ({
+          id: String(l._id),
+          event: l.action || 'SYSTEM_ACTION',
+          action: l.action || 'SYSTEM_ACTION',
+          userEmail: l.userEmail || 'system',
+          ip: l.ipAddress || '127.0.0.1',
+          date: l.createdAt ? new Date(l.createdAt).toLocaleString('en-IN') : 'Just now',
+          createdAt: l.createdAt,
+          tag: l.tag || 'SYSTEM',
+          metadata: l.metaData || {},
+        })),
+      };
     } catch (_) {}
   }
-
-  const activeSubs = UserStore.countActiveSubscribers();
-  const logsData = ActivityOrderStore.getLogs({ limit: 50 });
-  const tickets = ActivityOrderStore.getTickets();
 
   res.json({
     success: true,
@@ -809,24 +864,67 @@ router.get('/telemetry', async (req, res) => {
         auditLogsRecorded: logsData.total,
       },
       counts: {
-        users: UserStore.getAll().length,
-        orders: ActivityOrderStore.getOrders().length,
+        users: totalUsers,
+        orders: totalOrders,
         activeCourses: CourseStore.getActive().length,
-        openTickets: tickets.filter((t) => t.status !== 'resolved').length,
+        openTickets,
       },
       activities: logsData.logs,
     },
   });
 });
 
-router.get('/audit-logs', (req, res) => {
-  const data = ActivityOrderStore.getLogs({
-    q: req.query.q || '',
-    action: req.query.action || 'all',
-    page: req.query.page || 1,
-    limit: req.query.limit || 100,
-  });
-  res.json({ success: true, count: data.total, logs: data.logs });
+router.get('/audit-logs', async (req, res) => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const q = (req.query.q || '').trim();
+        const action = req.query.action || 'all';
+        const filter = {};
+        if (action && action !== 'all') filter.action = action;
+        if (q) {
+          filter.$or = [
+            { userEmail: new RegExp(q, 'i') },
+            { action: new RegExp(q, 'i') },
+            { ipAddress: new RegExp(q, 'i') },
+          ];
+        }
+        const total = await ActivityLog.countDocuments(filter).maxTimeMS(2000).catch(() => 0);
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const limit = Math.max(1, parseInt(req.query.limit, 10) || 50);
+        const dbLogs = await ActivityLog.find(filter)
+          .sort({ createdAt: -1 })
+          .skip((page - 1) * limit)
+          .limit(limit)
+          .lean()
+          .maxTimeMS(2000)
+          .catch(() => []);
+        if (dbLogs) {
+          const formattedLogs = dbLogs.map((l) => ({
+            id: String(l._id),
+            event: l.action || 'ACTION',
+            action: l.action || 'ACTION',
+            userEmail: l.userEmail || 'system',
+            ip: l.ipAddress || '127.0.0.1',
+            date: l.createdAt ? new Date(l.createdAt).toLocaleString('en-IN') : 'Just now',
+            createdAt: l.createdAt,
+            tag: l.tag || 'SYSTEM',
+            metadata: l.metaData || {},
+          }));
+          return res.json({ success: true, count: total, logs: formattedLogs });
+        }
+      } catch (_) {}
+    }
+    const data = ActivityOrderStore.getLogs({
+      q: req.query.q || '',
+      action: req.query.action || 'all',
+      page: req.query.page || 1,
+      limit: req.query.limit || 100,
+    });
+    res.json({ success: true, count: data.total, logs: data.logs });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 });
 
 // ==========================================

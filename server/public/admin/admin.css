@@ -806,6 +806,8 @@ textarea.input-control {
   gap: 16px;
   box-shadow: var(--shadow-sm);
   transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  cursor: pointer;
+  user-select: none;
 }
 .kpi-card:hover {
   transform: translateY(-2px);

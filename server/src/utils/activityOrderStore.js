@@ -58,8 +58,8 @@ const SEED_ORDERS = [
     amount: 111,
     currency: 'INR',
     paidVia: 'UPI',
-    status: 'CAPTURED',
-    remark: 'Payment Captured Successfully via UPI',
+    status: 'PAYMENT CANCELED',
+    remark: 'User Canceled Midway at Gateway',
   },
   {
     orderId: 'order_Kml2837192011',
@@ -76,8 +76,8 @@ const SEED_ORDERS = [
     amount: 174,
     currency: 'INR',
     paidVia: 'CREDIT',
-    status: 'CAPTURED',
-    remark: 'Payment Captured Successfully via Credit Card',
+    status: 'PAYMENT CANCELED',
+    remark: 'User Canceled Midway at Gateway',
   },
   {
     orderId: 'order_Kml2837192012',
@@ -94,8 +94,8 @@ const SEED_ORDERS = [
     amount: 499,
     currency: 'INR',
     paidVia: 'NETBANKING',
-    status: 'CAPTURED',
-    remark: 'Payment Captured Successfully via NetBanking',
+    status: 'PAYMENT CANCELED',
+    remark: 'User Canceled Midway at Gateway',
   },
   {
     orderId: 'order_Kml2837192013',
@@ -130,8 +130,8 @@ const SEED_ORDERS = [
     amount: 499,
     currency: 'INR',
     paidVia: 'NETBANKING',
-    status: 'CAPTURED',
-    remark: 'Payment Captured Successfully via NetBanking',
+    status: 'PAYMENT CANCELED',
+    remark: 'User Canceled Midway at Gateway',
   },
 ];
 
