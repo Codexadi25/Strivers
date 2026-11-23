@@ -1,56 +1,33 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import Drawer from '@mui/material/Drawer';
-import IconButton from '@mui/material/IconButton';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
+import { useNavigate } from 'react-router-dom';
 import Paper from '@mui/material/Paper';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
-import MenuIcon from '@mui/icons-material/Menu';
-import CloseIcon from '@mui/icons-material/Close';
-import AssignmentIcon from '@mui/icons-material/Assignment';
-import LiveTvIcon from '@mui/icons-material/LiveTv';
-import MenuBookIcon from '@mui/icons-material/MenuBook';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import SearchIcon from '@mui/icons-material/Search';
-import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
-import BusinessCenterOutlinedIcon from '@mui/icons-material/BusinessCenterOutlined';
-import CodeOutlinedIcon from '@mui/icons-material/CodeOutlined';
-import FolderOpenOutlinedIcon from '@mui/icons-material/FolderOpenOutlined';
-import FolderOutlinedIcon from '@mui/icons-material/FolderOutlined';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import StarIcon from '@mui/icons-material/Star';
-import StarBorderIcon from '@mui/icons-material/StarBorder';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
-import PlayCircleOutlinedIcon from '@mui/icons-material/PlayCircleOutlined';
-import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
-import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined';
-import BoltOutlinedIcon from '@mui/icons-material/BoltOutlined';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import BookmarkBorderOutlinedIcon from '@mui/icons-material/BookmarkBorderOutlined';
-import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
+import { onAuthStateChanged } from 'firebase/auth';
+
 import Header from '../components/common/Header';
 import Footer from '../components/common/Footer';
-import StudentWatermarkOverlay from '../components/secureViewer/StudentWatermarkOverlay';
+import DashboardSidebar from '../components/dashboard/DashboardSidebar';
+import DashboardHeader from '../components/dashboard/DashboardHeader';
+import PracticeSheetsView from '../components/dashboard/PracticeSheetsView';
+import MentorshipView from '../components/dashboard/MentorshipView';
+import NotesResourcesView from '../components/dashboard/NotesResourcesView';
+import AnalyticsProfileView from '../components/dashboard/AnalyticsProfileView';
+import DashboardModals from '../components/dashboard/DashboardModals';
+
 import { TOPICS } from '../data/practiceSheetData';
 import { DOWNLOADABLE_NOTES } from '../data/downloadableNotesData';
-import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../services/firebase';
-import { LIVE_MENTORSHIP } from '../data/mentorshipData';
-import CompanyMarquee from '../components/common/CompanyMarquee';
-import PlacementDisclaimer from '../components/common/PlacementDisclaimer';
 import api from '../utils/api';
 import '../assets/styles/practiceDashboard.css';
 
 export default function PracticeDashboard() {
   const navigate = useNavigate();
+
+  // Navigation & View Mode
   const [activeTab, setActiveTab] = useState('dsa'); // 'dsa' | 'mentorship' | 'notes' | 'analytics'
   const [practiceViewMode, setPracticeViewMode] = useState('all'); // 'my' | 'all'
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -60,22 +37,19 @@ export default function PracticeDashboard() {
   const [onlySaved, setOnlySaved] = useState(false);
   const [onlyRevision, setOnlyRevision] = useState(false);
 
-  // User Profile & Authentication loaded from backend (fetched ONCE on mount, NO continuous polling)
+  // User Profile & Authentication loaded from backend
   const [authChecked, setAuthChecked] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const [userAuthData, setUserAuthData] = useState(null);
   const [userEnrolledSheets, setUserEnrolledSheets] = useState([]);
   const [userEnrolledCourses, setUserEnrolledCourses] = useState([]);
   const [liveProducts, setLiveProducts] = useState([]);
-  const [copiedLinkNotice, setCopiedLinkNotice] = useState(false);
 
   // Live dynamic Practice Sheets from Backend
   const [practiceSheets, setPracticeSheets] = useState([]);
   const [selectedTrackCategory, setSelectedTrackCategory] = useState('non-tech'); // 'non-tech' | 'tech'
   const [activeSheetId, setActiveSheetId] = useState('non-tech-ops-zomato-blinkit');
   const [activeScenarioModal, setActiveScenarioModal] = useState(null);
-  const [newProfilePassword, setNewProfilePassword] = useState('');
-  const [passwordResetStatus, setPasswordResetStatus] = useState(null);
   const [enrollmentNotice, setEnrollmentNotice] = useState(null);
 
   // Downloadable Notes & Strict In-App Viewer Engine
@@ -95,6 +69,17 @@ export default function PracticeDashboard() {
   const [solvedMap, setSolvedMap] = useState({});
   const [revisionMap, setRevisionMap] = useState({});
   const [notesMap, setNotesMap] = useState({});
+
+  // Accordion state (day-1 open by default)
+  const [openDays, setOpenDays] = useState({ 'day-1': true });
+
+  // Dialog Modals
+  const [isStreakModalOpen, setIsStreakModalOpen] = useState(false);
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+  const [isGroupStudyModalOpen, setIsGroupStudyModalOpen] = useState(false);
+  const [activeNoteProblem, setActiveNoteProblem] = useState(null);
+  const [currentNoteText, setCurrentNoteText] = useState('');
+  const [selectedNoteFile, setSelectedNoteFile] = useState(null);
 
   // Fetch user profile & practice sheets cleanly on mount and auth transitions
   useEffect(() => {
@@ -224,7 +209,7 @@ export default function PracticeDashboard() {
       }
     } catch (_) {}
 
-    // 3. Fetch Live Practice Sheets (Public Catalog)
+    // Fetch Live Practice Sheets (Public Catalog)
     api
       .get('/practice/sheets')
       .then((res) => {
@@ -241,7 +226,7 @@ export default function PracticeDashboard() {
         console.warn('Practice sheets fetch fallback:', err?.message || err);
       });
 
-    // 4. Fetch Live Courses & Masterclasses for Live Mentorship Room
+    // Fetch Live Courses & Masterclasses for Live Mentorship Room
     api
       .get('/courses')
       .then((res) => {
@@ -260,33 +245,7 @@ export default function PracticeDashboard() {
     };
   }, []);
 
-  // Accordion state (day-1 open by default)
-  const [openDays, setOpenDays] = useState({ 'day-1': true });
-
-  // Modals
-  const [isStreakModalOpen, setIsStreakModalOpen] = useState(false);
-  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
-  const [isGroupStudyModalOpen, setIsGroupStudyModalOpen] = useState(false);
-  const [activeNoteProblem, setActiveNoteProblem] = useState(null);
-  const [currentNoteText, setCurrentNoteText] = useState('');
-  const [selectedNoteFile, setSelectedNoteFile] = useState(null);
-
-  // Countdown timer for Live Mentorship
-  const [countdown, setCountdown] = useState({ hours: 42, minutes: 18, seconds: 45 });
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev.seconds > 0) return { ...prev, seconds: prev.seconds - 1 };
-        if (prev.minutes > 0) return { ...prev, minutes: 59, seconds: 59 };
-        if (prev.hours > 0) return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        return prev;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  // On-demand progress saving: only called when user takes an explicit action (never in intervals)
+  // On-demand progress saving: only called when user takes an explicit action
   const toggleSolve = (problemId) => {
     setSolvedMap((prev) => {
       const next = { ...prev, [problemId]: !prev[problemId] };
@@ -294,7 +253,6 @@ export default function PracticeDashboard() {
         localStorage.setItem('strivers_solved_problems', JSON.stringify(next));
       } catch {}
 
-      // On-demand sync to backend (only on user action, never in polling loops)
       const solvedList = Object.keys(next).filter((k) => next[k]);
       api
         .post('/profile/progress', { solvedProblems: solvedList })
@@ -314,7 +272,6 @@ export default function PracticeDashboard() {
         localStorage.setItem('strivers_revision_problems', JSON.stringify(next));
       } catch {}
 
-      // On-demand sync to backend
       const starredList = Object.keys(next).filter((k) => next[k]);
       api.post('/profile/progress', { starredProblems: starredList }).catch(() => {});
 
@@ -339,7 +296,6 @@ export default function PracticeDashboard() {
         localStorage.setItem('strivers_problem_notes', JSON.stringify(next));
       } catch {}
 
-      // On-demand sync note
       api.post('/profile/progress', { problemNotes: next }).catch(() => {});
       setActiveNoteProblem(null);
     }
@@ -350,14 +306,15 @@ export default function PracticeDashboard() {
     return practiceSheets.filter((s) => s.roleType === 'non-tech');
   }, [practiceSheets]);
 
-
   const activeNonTechSheet = useMemo(() => {
     return nonTechSheets.find((s) => s.sheetId === activeSheetId) || nonTechSheets[0] || null;
   }, [nonTechSheets, activeSheetId]);
 
   const isUserEnrolledInActiveSheet = useMemo(() => {
     if (selectedTrackCategory === 'tech') return true;
-    return userEnrolledSheets.some((s) => s.sheetId === (activeNonTechSheet?.sheetId || activeSheetId));
+    return userEnrolledSheets.some(
+      (s) => s.sheetId === (activeNonTechSheet?.sheetId || activeSheetId)
+    );
   }, [selectedTrackCategory, userEnrolledSheets, activeNonTechSheet, activeSheetId]);
 
   // Operational Problems for active Non-Tech Sheet
@@ -368,25 +325,28 @@ export default function PracticeDashboard() {
 
   const filteredNonTechTopics = useMemo(() => {
     if (!activeNonTechSheet || !Array.isArray(activeNonTechSheet.topics)) return [];
-    return activeNonTechSheet.topics.map((top) => {
-      const filtered = (top.problems || []).filter((p) => {
-        const matchesSearch =
-          !searchQuery ||
-          p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (p.company && p.company.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          (p.type && p.type.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          (p.scenario && p.scenario.toLowerCase().includes(searchQuery.toLowerCase()));
+    return activeNonTechSheet.topics
+      .map((top) => {
+        const filtered = (top.problems || []).filter((p) => {
+          const matchesSearch =
+            !searchQuery ||
+            p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (p.company && p.company.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (p.type && p.type.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (p.scenario && p.scenario.toLowerCase().includes(searchQuery.toLowerCase()));
 
-        const matchesDiff =
-          difficultyFilter === 'all' || p.difficulty.toLowerCase() === difficultyFilter.toLowerCase();
+          const matchesDiff =
+            difficultyFilter === 'all' ||
+            p.difficulty.toLowerCase() === difficultyFilter.toLowerCase();
 
-        const matchesSaved = !onlySaved || revisionMap[p.id];
-        const matchesRev = !onlyRevision || revisionMap[p.id];
+          const matchesSaved = !onlySaved || revisionMap[p.id];
+          const matchesRev = !onlyRevision || revisionMap[p.id];
 
-        return matchesSearch && matchesDiff && matchesSaved && matchesRev;
-      });
-      return { ...top, problems: filtered };
-    }).filter((t) => t.problems.length > 0);
+          return matchesSearch && matchesDiff && matchesSaved && matchesRev;
+        });
+        return { ...top, problems: filtered };
+      })
+      .filter((t) => t.problems.length > 0);
   }, [activeNonTechSheet, searchQuery, difficultyFilter, onlySaved, onlyRevision, revisionMap]);
 
   const handleEnrollPracticeSheet = async (sheet) => {
@@ -421,7 +381,9 @@ export default function PracticeDashboard() {
         if (errData?.limitReached) {
           setEnrollmentNotice({
             type: 'warning',
-            message: `⚠️ Practice Sheet Limit Reached: Limited Practice Sheet Access is granted per user (${errData.maxAllowed || 2} sheets maximum). Please manage your active tracks or contact mentorship support.`,
+            message: `⚠️ Practice Sheet Limit Reached: Limited Practice Sheet Access is granted per user (${
+              errData.maxAllowed || 2
+            } sheets maximum). Please manage your active tracks or contact mentorship support.`,
           });
         } else {
           setEnrollmentNotice({
@@ -433,37 +395,18 @@ export default function PracticeDashboard() {
     } else {
       setEnrollmentNotice({
         type: 'info',
-        message: `💳 This specialized practice track requires an access fee of ₹${sheet.price.toFixed(2)}. Please complete payment to unlock.`,
+        message: `💳 This specialized practice track requires an access fee of ₹${sheet.price.toFixed(
+          2
+        )}. Please complete payment to unlock.`,
       });
-    }
-  };
-
-  const handleInProfilePasswordReset = async (e) => {
-    e.preventDefault();
-    if (!newProfilePassword || newProfilePassword.length < 4) {
-      setPasswordResetStatus({ type: 'error', message: 'Password must be at least 4 characters.' });
-      return;
-    }
-    const email = userAuthData?.email || userProfile?.email;
-    if (!email) {
-      setPasswordResetStatus({ type: 'error', message: 'User session email not identified.' });
-      return;
-    }
-    try {
-      await api.post('/auth/reset-password', {
-        email,
-        newPassword: newProfilePassword,
-      });
-      setPasswordResetStatus({ type: 'success', message: '✓ Password updated successfully!' });
-      setNewProfilePassword('');
-    } catch (err) {
-      setPasswordResetStatus({ type: 'error', message: err.response?.data?.message || 'Password update failed.' });
     }
   };
 
   // Dynamic Tech sheets from backend (with baseline fallback if offline)
   const techTopicsSource = useMemo(() => {
-    const techSheets = practiceSheets.filter((s) => s.roleType === 'tech' && Array.isArray(s.topics) && s.topics.length > 0);
+    const techSheets = practiceSheets.filter(
+      (s) => s.roleType === 'tech' && Array.isArray(s.topics) && s.topics.length > 0
+    );
     if (techSheets.length > 0) {
       return techSheets[0].topics.map((t, idx) => ({
         id: t.topicId || `day-${idx + 1}`,
@@ -510,24 +453,27 @@ export default function PracticeDashboard() {
 
   // Filtered Topics
   const filteredTopics = useMemo(() => {
-    return techTopicsSource.map((day) => {
-      const filtered = day.problems.filter((p) => {
-        const matchesSearch =
-          !searchQuery ||
-          p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.companies.some((c) => c.toLowerCase().includes(searchQuery.toLowerCase()));
+    return techTopicsSource
+      .map((day) => {
+        const filtered = day.problems.filter((p) => {
+          const matchesSearch =
+            !searchQuery ||
+            p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.companies.some((c) => c.toLowerCase().includes(searchQuery.toLowerCase()));
 
-        const matchesDiff =
-          difficultyFilter === 'all' || p.difficulty.toLowerCase() === difficultyFilter.toLowerCase();
+          const matchesDiff =
+            difficultyFilter === 'all' ||
+            p.difficulty.toLowerCase() === difficultyFilter.toLowerCase();
 
-        const matchesSaved = !onlySaved || revisionMap[p.id];
-        const matchesRev = !onlyRevision || revisionMap[p.id];
+          const matchesSaved = !onlySaved || revisionMap[p.id];
+          const matchesRev = !onlyRevision || revisionMap[p.id];
 
-        return matchesSearch && matchesDiff && matchesSaved && matchesRev;
-      });
+          return matchesSearch && matchesDiff && matchesSaved && matchesRev;
+        });
 
-      return { ...day, problems: filtered };
-    }).filter((day) => day.problems.length > 0);
+        return { ...day, problems: filtered };
+      })
+      .filter((day) => day.problems.length > 0);
   }, [techTopicsSource, searchQuery, difficultyFilter, onlySaved, onlyRevision, revisionMap]);
 
   // Downloadable notes (Dynamic from MongoDB with Free & Paid classification)
@@ -561,7 +507,7 @@ export default function PracticeDashboard() {
     );
   }, [searchQuery, combinedNotesList]);
 
-  // Percentage helper for each sheet (tracked dynamically from user profile)
+  // Percentage helper for each sheet
   const getSheetProgress = (sheet) => {
     if (!sheet) return 0;
     if (sheet.sheetId === 'strivers-sde-sheet' || sheet.roleType === 'tech') {
@@ -573,7 +519,7 @@ export default function PracticeDashboard() {
     return Math.round((solved / sheetProblems.length) * 100);
   };
 
-  // Dynamic Streak & Calendar Computations from User Activity
+  // Dynamic Streak & Calendar Computations
   const streakData = useMemo(() => {
     const rawStreak = userProfile?.streak || {};
     const currentStreak = rawStreak.currentStreak ?? 0;
@@ -594,7 +540,10 @@ export default function PracticeDashboard() {
     activeDatesList.forEach((dStr) => {
       if (typeof dStr === 'string' && dStr.includes('-')) {
         const parts = dStr.split('-');
-        if (parseInt(parts[0], 10) === currentYear && parseInt(parts[1], 10) === currentMonthIndex + 1) {
+        if (
+          parseInt(parts[0], 10) === currentYear &&
+          parseInt(parts[1], 10) === currentMonthIndex + 1
+        ) {
           activeDaysSet.add(parseInt(parts[2], 10));
         }
       } else if (!isNaN(Number(dStr))) {
@@ -606,23 +555,26 @@ export default function PracticeDashboard() {
       activeDaysSet.add(todayDateNum);
     }
 
-    const dailySubmissions = rawStreak.dailySubmissions instanceof Map
-      ? Object.fromEntries(rawStreak.dailySubmissions)
-      : (rawStreak.dailySubmissions || {});
+    const dailySubmissions =
+      rawStreak.dailySubmissions instanceof Map
+        ? Object.fromEntries(rawStreak.dailySubmissions)
+        : rawStreak.dailySubmissions || {};
 
-    const weeklyDistribution = rawStreak.weeklyDistribution && rawStreak.weeklyDistribution.length === 7
-      ? rawStreak.weeklyDistribution
-      : [
-          { day: 'S', dayIndex: 0, minutes: 0, time: '0h 0m' },
-          { day: 'M', dayIndex: 1, minutes: 0, time: '0h 0m' },
-          { day: 'T', dayIndex: 2, minutes: 0, time: '0h 0m' },
-          { day: 'W', dayIndex: 3, minutes: 0, time: '0h 0m' },
-          { day: 'T', dayIndex: 4, minutes: 0, time: '0h 0m' },
-          { day: 'F', dayIndex: 5, minutes: 0, time: '0h 0m' },
-          { day: 'S', dayIndex: 6, minutes: 0, time: '0h 0m' },
-        ];
+    const weeklyDistribution =
+      rawStreak.weeklyDistribution && rawStreak.weeklyDistribution.length === 7
+        ? rawStreak.weeklyDistribution
+        : [
+            { day: 'S', dayIndex: 0, minutes: 0, time: '0h 0m' },
+            { day: 'M', dayIndex: 1, minutes: 0, time: '0h 0m' },
+            { day: 'T', dayIndex: 2, minutes: 0, time: '0h 0m' },
+            { day: 'W', dayIndex: 3, minutes: 0, time: '0h 0m' },
+            { day: 'T', dayIndex: 4, minutes: 0, time: '0h 0m' },
+            { day: 'F', dayIndex: 5, minutes: 0, time: '0h 0m' },
+            { day: 'S', dayIndex: 6, minutes: 0, time: '0h 0m' },
+          ];
 
-    const streakSuffix = currentStreak === 1 ? 'st' : currentStreak === 2 ? 'nd' : currentStreak === 3 ? 'rd' : 'th';
+    const streakSuffix =
+      currentStreak === 1 ? 'st' : currentStreak === 2 ? 'nd' : currentStreak === 3 ? 'rd' : 'th';
 
     return {
       currentStreak,
@@ -642,6 +594,43 @@ export default function PracticeDashboard() {
     };
   }, [userProfile, totalSolvedCount]);
 
+  // Analytics preparation
+  const analyticsData = useMemo(() => {
+    const topicBreakdown = (
+      selectedTrackCategory === 'non-tech' && activeNonTechSheet?.topics
+        ? activeNonTechSheet.topics
+        : techTopicsSource
+    ).map((t) => {
+      const title = t.topicTitle || t.title;
+      const tProblems = t.problems || [];
+      const solved = tProblems.filter((p) => solvedMap[p.id]).length;
+      const total = tProblems.length;
+      const percent = total > 0 ? Math.round((solved / total) * 100) : 0;
+      return { topic: title, solved, total, percent };
+    });
+
+    return {
+      topicBreakdown,
+      easySolved,
+      easyTotal: easyProblems.length,
+      mediumSolved,
+      mediumTotal: mediumProblems.length,
+      hardSolved,
+      hardTotal: hardProblems.length,
+    };
+  }, [
+    selectedTrackCategory,
+    activeNonTechSheet,
+    techTopicsSource,
+    solvedMap,
+    easySolved,
+    easyProblems.length,
+    mediumSolved,
+    mediumProblems.length,
+    hardSolved,
+    hardProblems.length,
+  ]);
+
   // Enrolled masterclass for live room - Strictly distinguished from generic courses using schema
   const enrolledCourseProduct = useMemo(() => {
     if (!liveProducts || liveProducts.length === 0) return null;
@@ -659,12 +648,15 @@ export default function PracticeDashboard() {
     );
   }, [liveProducts, userEnrolledCourses, userAuthData]);
 
-  // Active Live Mentorship class - Strictly distinguished using schema value (category: 'masterclass' or isMasterclass: true)
+  // Active Live Mentorship class
   const activeMentorshipClass = useMemo(() => {
     const masterclassesOnly = liveProducts.filter(
       (p) => p.category === 'masterclass' || p.isMasterclass === true || p.productId === 'masterclass'
     );
-    if (enrolledCourseProduct && (enrolledCourseProduct.category === 'masterclass' || enrolledCourseProduct.isMasterclass)) {
+    if (
+      enrolledCourseProduct &&
+      (enrolledCourseProduct.category === 'masterclass' || enrolledCourseProduct.isMasterclass)
+    ) {
       return enrolledCourseProduct;
     }
     const liveNow = masterclassesOnly.find((p) => p.sessionStatus === 'live');
@@ -678,14 +670,12 @@ export default function PracticeDashboard() {
 
   // Handle Opening Downloadable Notes (Enforces Login & Paid/Free Access)
   const handleOpenNote = async (note) => {
-    // 1. Check if user is logged in
     if (!userAuthData && !userProfile) {
       alert('Authentication required. A regular user who has not logged in cannot access Downloadable Notes.');
       navigate('/login');
       return;
     }
 
-    // 2. If Paid note and user does not have access, open Secret Code / Enrollment prompt
     if (note.type === 'paid' && (note.isLocked || !note.hasAccess)) {
       setActiveSecretCodeNote(note);
       setInputSecretCode('');
@@ -694,7 +684,6 @@ export default function PracticeDashboard() {
       return;
     }
 
-    // 3. Open DRM Document Viewer
     setDrmActiveNote(note);
     setIsDrmLoading(true);
     setDrmContent(null);
@@ -718,7 +707,6 @@ export default function PracticeDashboard() {
             'This is a Paid Note. You must be enrolled in the Masterclass or enter the attendee secret code to view.'
         );
       } else {
-        // Fallback for demo preview
         setDrmContent({
           title: note.title,
           fileType: note.fileType || 'html',
@@ -903,12 +891,21 @@ export default function PracticeDashboard() {
     };
   }, [drmActiveNote]);
 
+  // Loading state
   if (!authChecked) {
     return (
       <div className="pd-auth-gate-shell">
         <Header user={null} />
         <main className="pd-auth-gate-main">
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, color: '#64748B' }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 14,
+              color: '#64748B',
+            }}
+          >
             <CircularProgress size={32} />
             <Typography variant="body2">Verifying session and loading your profile...</Typography>
           </div>
@@ -918,6 +915,7 @@ export default function PracticeDashboard() {
     );
   }
 
+  // Unauthenticated Paywall/Sign-in Gate
   if (!userAuthData) {
     return (
       <div className="pd-auth-gate-shell">
@@ -929,7 +927,8 @@ export default function PracticeDashboard() {
               Sign In Required
             </Typography>
             <Typography variant="body2" sx={{ color: '#64748B', lineHeight: 1.6, mb: 3 }}>
-              Practice sheets, live mentorship sessions, study notes, and your personal stats are only available after signing in to your Strivers account.
+              Practice sheets, live mentorship sessions, study notes, and your personal stats are
+              only available after signing in to your Strivers account.
             </Typography>
             <div className="pd-auth-gate-actions">
               <Button
@@ -957,2890 +956,170 @@ export default function PracticeDashboard() {
 
   return (
     <div className="dashboard-layout">
-      {/* ====================================================================
-          1. Left Navigation Sidebar
-          ==================================================================== */}
-      <aside className={`dashboard-sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
-        <div className="sidebar-header">
-          {!isSidebarCollapsed && (
-            <Link to="/" className="sidebar-logo">
-              <img
-                src="/favicon.ico"
-                alt="Strivers logo"
-                width="26"
-                height="26"
-                style={{ borderRadius: 6, objectFit: 'contain', display: 'block' }}
-              />
-              <span>Strivers</span>
-            </Link>
-          )}
-          <button
-            className="sidebar-collapse-btn"
-            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            title={isSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-          >
-            {isSidebarCollapsed ? '›' : '‹'}
-          </button>
-        </div>
+      {/* 1. Left Navigation Sidebar */}
+      <DashboardSidebar
+        isSidebarCollapsed={isSidebarCollapsed}
+        setIsSidebarCollapsed={setIsSidebarCollapsed}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        practiceViewMode={practiceViewMode}
+        setPracticeViewMode={setPracticeViewMode}
+        userEnrolledSheets={userEnrolledSheets}
+        practiceSheets={practiceSheets}
+        streakData={streakData}
+        onOpenStreakModal={() => setIsStreakModalOpen(true)}
+      />
 
-        <nav className="sidebar-nav">
-          <button
-            className={`nav-item-btn ${activeTab === 'dsa' ? 'active' : ''}`}
-            onClick={() => setActiveTab('dsa')}
-            title="Sheets & Practice Problems"
-          >
-            <AssignmentIcon fontSize="small" />
-            {!isSidebarCollapsed && <span>Sheets</span>}
-          </button>
-
-          {!isSidebarCollapsed && activeTab === 'dsa' && (
-            <div className="sidebar-subnav">
-              <button
-                className={`subnav-btn ${practiceViewMode === 'my' ? 'active' : ''}`}
-                onClick={() => setPracticeViewMode('my')}
-              >
-                My Practice Sheets ({userEnrolledSheets.length})
-              </button>
-              <button
-                className={`subnav-btn ${practiceViewMode === 'all' ? 'active' : ''}`}
-                onClick={() => setPracticeViewMode('all')}
-              >
-                All Practice Sheets ({practiceSheets.length})
-              </button>
-            </div>
-          )}
-
-          <button
-            className={`nav-item-btn ${activeTab === 'mentorship' ? 'active' : ''}`}
-            onClick={() => setActiveTab('mentorship')}
-            title="Live Mentorship & Masterclasses"
-          >
-            <LiveTvIcon fontSize="small" />
-            {!isSidebarCollapsed && (
-              <>
-                <span>Live Mentorship</span>
-                <span className="nav-item-badge">LIVE</span>
-              </>
-            )}
-          </button>
-
-          <button
-            className={`nav-item-btn ${activeTab === 'notes' ? 'active' : ''}`}
-            onClick={() => setActiveTab('notes')}
-            title="Downloadable Notes & Cheatsheets"
-          >
-            <MenuBookIcon fontSize="small" />
-            {!isSidebarCollapsed && <span>Downloadable Notes</span>}
-          </button>
-
-          <button
-            className={`nav-item-btn ${activeTab === 'analytics' ? 'active' : ''}`}
-            onClick={() => setActiveTab('analytics')}
-            title="Profile & Consistency Analytics"
-          >
-            <BarChartIcon fontSize="small" />
-            {!isSidebarCollapsed && <span>Profile & Stats</span>}
-          </button>
-        </nav>
-
-        {!isSidebarCollapsed && (
-          <div className="sidebar-footer">
-            <div className="streak-card-mini" onClick={() => setIsStreakModalOpen(true)}>
-              <LocalFireDepartmentIcon sx={{ fontSize: 24, color: '#D97706' }} />
-              <div>
-                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#92400E' }}>
-                  {streakData.currentStreak}{streakData.streakSuffix} Day Streak
-                </div>
-                <div style={{ fontSize: '0.75rem', color: '#B45309' }}>
-                  {streakData.totalActiveDays} days active · Click for details
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </aside>
-
-      {/* ====================================================================
-          2. Main Layout Area
-          ==================================================================== */}
+      {/* 2. Main Layout Area */}
       <div className="dashboard-main">
-        {/* Top Header Bar */}
-        <header className="dashboard-topbar">
-          <div className="mobile-nav-toggle-wrap">
-            <IconButton
-              size="medium"
-              onClick={() => setMobileDrawerOpen(true)}
-              aria-label="open dashboard menu"
-              sx={{ color: '#0E1B3D', padding: '6px' }}
-            >
-              <MenuIcon />
-            </IconButton>
-            <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none', marginLeft: 4 }}>
-              <img
-                src="/favicon.ico"
-                alt="Strivers logo"
-                width="24"
-                height="24"
-                style={{ borderRadius: 6, objectFit: 'contain', display: 'block' }}
-              />
-              <span style={{ fontWeight: 800, fontSize: '1.05rem', color: '#0E1B3D', fontFamily: 'var(--display)' }}>Strivers</span>
-            </Link>
-          </div>
-
-          <div className="topbar-search">
-            <SearchIcon sx={{ fontSize: 18, color: '#64748B' }} />
-            <input
-              type="text"
-              placeholder={activeTab === 'notes' ? 'Search study notes, cheatsheets...' : 'Search topics, problems, companies...'}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-
-          <div className="topbar-actions">
-            <button className="streak-pill-btn" onClick={() => setIsStreakModalOpen(true)}>
-              <LocalFireDepartmentIcon sx={{ fontSize: 16, color: '#D97706' }} />
-              <span>
-                {streakData.currentStreak}{streakData.streakSuffix} day streak
-              </span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('analytics')}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-            >
-              <div className="user-profile-badge">
-                <div className="user-avatar-circle">
-                  {((userProfile?.name || userAuthData?.name || userAuthData?.email?.split('@')[0] || 'ST').split(' ').map((n) => n[0]).join('') || 'ST').slice(0, 2).toUpperCase()}
-                </div>
-                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#0F172A' }}>
-                  {userProfile?.name || userAuthData?.name || userAuthData?.email?.split('@')[0] || 'Student'}
-                </span>
-              </div>
-            </button>
-
-            <Link className="btn btn-ghost pd-mobile-hide" to="/" style={{ padding: '6px 14px', fontSize: '0.85rem' }}>
-              Home
-            </Link>
-          </div>
-        </header>
-
-        {/* Mobile Persistent Horizontal Tab Strip using Material UI Tabs */}
-        <div className="mobile-dashboard-tabs-bar">
-          <Tabs
-            value={activeTab}
-            onChange={(e, val) => setActiveTab(val)}
-            variant="scrollable"
-            scrollButtons="auto"
-            allowScrollButtonsMobile
-            sx={{
-              minHeight: 40,
-              width: '100%',
-              '& .MuiTabs-indicator': { backgroundColor: '#2563EB', height: 2.5, borderRadius: '2px 2px 0 0' },
-              '& .MuiTabs-flexContainer': { gap: '4px' },
-              '& .MuiTab-root': {
-                minHeight: 40,
-                minWidth: 'auto',
-                padding: '6px 12px',
-                fontSize: '0.8rem',
-                fontWeight: 700,
-                textTransform: 'none',
-                color: '#64748B',
-                borderRadius: '6px 6px 0 0',
-                whiteSpace: 'nowrap',
-                '&.Mui-selected': { color: '#2563EB', background: 'rgba(37, 99, 235, 0.06)' },
-              },
-            }}
-          >
-            <Tab
-              value="dsa"
-              icon={<AssignmentIcon sx={{ fontSize: 16 }} />}
-              iconPosition="start"
-              label="Sheets"
-            />
-            <Tab
-              value="mentorship"
-              icon={<LiveTvIcon sx={{ fontSize: 16 }} />}
-              iconPosition="start"
-              label="Mentorship"
-            />
-            <Tab
-              value="notes"
-              icon={<MenuBookIcon sx={{ fontSize: 16 }} />}
-              iconPosition="start"
-              label="Notes"
-            />
-            <Tab
-              value="analytics"
-              icon={<BarChartIcon sx={{ fontSize: 16 }} />}
-              iconPosition="start"
-              label="Stats"
-            />
-          </Tabs>
-        </div>
-
-        {/* Mobile Material UI Sidebar Drawer */}
-        <Drawer
-          anchor="left"
-          open={mobileDrawerOpen}
-          onClose={() => setMobileDrawerOpen(false)}
-          ModalProps={{ keepMounted: true }}
-          slotProps={{
-            paper: {
-              sx: {
-                width: 'min(82vw, 300px)',
-                background: '#FFFFFF',
-                boxSizing: 'border-box',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                boxShadow: '4px 0 24px rgba(0,0,0,0.12)',
-              },
-            },
-          }}
-        >
-          <div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '18px 20px',
-                borderBottom: '1px solid #E2E8F0',
-              }}
-            >
-              <Link to="/" className="sidebar-logo" onClick={() => setMobileDrawerOpen(false)}>
-                <img
-                  src="/favicon.ico"
-                  alt="Strivers logo"
-                  width="26"
-                  height="26"
-                  style={{ borderRadius: 6, objectFit: 'contain', display: 'block' }}
-                />
-                <span>Strivers</span>
-              </Link>
-
-              <IconButton
-                size="small"
-                onClick={() => setMobileDrawerOpen(false)}
-                aria-label="close navigation drawer"
-                sx={{ color: '#64748B' }}
-              >
-                <CloseIcon />
-              </IconButton>
-            </div>
-
-            <nav style={{ padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <button
-                className={`nav-item-btn ${activeTab === 'dsa' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveTab('dsa');
-                  setMobileDrawerOpen(false);
-                }}
-                style={{ width: '100%' }}
-              >
-                <AssignmentIcon fontSize="small" />
-                <span>Sheets &amp; Tracks</span>
-              </button>
-
-              {activeTab === 'dsa' && (
-                <div style={{ paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <button
-                    className={`subnav-btn ${practiceViewMode === 'my' ? 'active' : ''}`}
-                    onClick={() => {
-                      setPracticeViewMode('my');
-                      setMobileDrawerOpen(false);
-                    }}
-                  >
-                    My Practice Sheets ({userEnrolledSheets.length})
-                  </button>
-                  <button
-                    className={`subnav-btn ${practiceViewMode === 'all' ? 'active' : ''}`}
-                    onClick={() => {
-                      setPracticeViewMode('all');
-                      setMobileDrawerOpen(false);
-                    }}
-                  >
-                    All Practice Sheets ({practiceSheets.length})
-                  </button>
-                </div>
-              )}
-
-              <button
-                className={`nav-item-btn ${activeTab === 'mentorship' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveTab('mentorship');
-                  setMobileDrawerOpen(false);
-                }}
-                style={{ width: '100%' }}
-              >
-                <LiveTvIcon fontSize="small" />
-                <span style={{ flex: 1, textAlign: 'left' }}>Live Mentorship</span>
-                <span className="nav-item-badge">LIVE</span>
-              </button>
-
-              <button
-                className={`nav-item-btn ${activeTab === 'notes' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveTab('notes');
-                  setMobileDrawerOpen(false);
-                }}
-                style={{ width: '100%' }}
-              >
-                <MenuBookIcon fontSize="small" />
-                <span>Downloadable Notes</span>
-              </button>
-
-              <button
-                className={`nav-item-btn ${activeTab === 'analytics' ? 'active' : ''}`}
-                onClick={() => {
-                  setActiveTab('analytics');
-                  setMobileDrawerOpen(false);
-                }}
-                style={{ width: '100%' }}
-              >
-                <BarChartIcon fontSize="small" />
-                <span>Profile &amp; Stats</span>
-              </button>
-            </nav>
-          </div>
-
-          <div style={{ padding: '16px', borderTop: '1px solid #E2E8F0', background: '#F8FAFC' }}>
-            <div
-              className="streak-card-mini"
-              onClick={() => {
-                setIsStreakModalOpen(true);
-                setMobileDrawerOpen(false);
-              }}
-              style={{ cursor: 'pointer' }}
-            >
-              <LocalFireDepartmentIcon sx={{ fontSize: 24, color: '#D97706' }} />
-              <div>
-                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#92400E' }}>
-                  {streakData.currentStreak}{streakData.streakSuffix} Day Streak
-                </div>
-                <div style={{ fontSize: '0.75rem', color: '#B45309' }}>
-                  {streakData.totalActiveDays} days active · Tap for details
-                </div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-              <Link
-                to="/"
-                onClick={() => setMobileDrawerOpen(false)}
-                className="btn btn-ghost btn-block"
-                style={{ fontSize: '0.82rem', padding: '8px' }}
-              >
-                Home
-              </Link>
-              <Link
-                to="/courses"
-                onClick={() => setMobileDrawerOpen(false)}
-                className="btn btn-primary btn-block"
-                style={{ fontSize: '0.82rem', padding: '8px' }}
-              >
-                My Access
-              </Link>
-            </div>
-          </div>
-        </Drawer>
+        {/* Top Header Bar & Mobile Drawers */}
+        <DashboardHeader
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          practiceViewMode={practiceViewMode}
+          setPracticeViewMode={setPracticeViewMode}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          mobileDrawerOpen={mobileDrawerOpen}
+          setMobileDrawerOpen={setMobileDrawerOpen}
+          userProfile={userProfile}
+          userAuthData={userAuthData}
+          streakData={streakData}
+          userEnrolledSheets={userEnrolledSheets}
+          practiceSheets={practiceSheets}
+          onOpenStreakModal={() => setIsStreakModalOpen(true)}
+        />
 
         {/* Dashboard Content Container */}
         <div className="dashboard-content-container">
-          {/* ================================================================
-              VIEW 1: DSA Practice Sheet (Image 1)
-              ================================================================ */}
+          {/* VIEW 1: Practice Sheets (Non-Tech & Tech Tracks) */}
           {activeTab === 'dsa' && (
-            <div className="dsa-content-layout">
-              {/* Left Main: Problem Accordions & Header */}
-              <div className="dsa-sheet-main-column">
-                {/* Track Category Selector: Non-Tech Active vs Tech Template */}
-                <div className="track-category-selector-row">
-                  <button
-                    className={`sheet-btn track-category-btn ${selectedTrackCategory === 'non-tech' ? 'primary' : ''}`}
-                    onClick={() => setSelectedTrackCategory('non-tech')}
-                  >
-                    <BusinessCenterOutlinedIcon sx={{ fontSize: 16 }} />
-                    <span>Non-Tech Operations</span>
-                  </button>
-                  <button
-                    className={`sheet-btn track-category-btn ${selectedTrackCategory === 'tech' ? 'primary' : ''}`}
-                    onClick={() => setSelectedTrackCategory('tech')}
-                  >
-                    <CodeOutlinedIcon sx={{ fontSize: 16 }} />
-                    <span>Technical SDE</span>
-                  </button>
-                </div>
-
-                {enrollmentNotice && (
-                  <div
-                    style={{
-                      padding: '12px 16px',
-                      borderRadius: 8,
-                      marginBottom: 16,
-                      fontSize: '0.9rem',
-                      lineHeight: 1.5,
-                      background:
-                        enrollmentNotice.type === 'success'
-                          ? '#ECFDF5'
-                          : enrollmentNotice.type === 'warning'
-                          ? '#FFFBEB'
-                          : '#EFF6FF',
-                      border: `1px solid ${
-                        enrollmentNotice.type === 'success'
-                          ? '#A7F3D0'
-                          : enrollmentNotice.type === 'warning'
-                          ? '#FDE68A'
-                          : '#BFDBFE'
-                      }`,
-                      color:
-                        enrollmentNotice.type === 'success'
-                          ? '#065F46'
-                          : enrollmentNotice.type === 'warning'
-                          ? '#92400E'
-                          : '#1E40AF',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <span>{enrollmentNotice.message}</span>
-                    <button
-                      onClick={() => setEnrollmentNotice(null)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '1rem' }}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                )}
-
-                {/* =======================================================
-                    BRANCH 1: NON-TECHNICAL JOB TRACKS
-                    Target: Zomato, Blinkit, Hyperpure, District, Porter, Amazon, Flipkart, Swiggy
-                    ======================================================= */}
-                {selectedTrackCategory === 'non-tech' && (
-                  <div>
-                    {/* Header */}
-                    <div className="sheet-header-card">
-                      <div className="breadcrumb pd-mobile-hide">
-                        <span>Mentorship Tracks</span>
-                        <span>›</span>
-                        <span>Non-Technical Operations &amp; Growth</span>
-                      </div>
-
-                      <h1 className="sheet-title">Non-Tech Operations &amp; Growth</h1>
-                      <p className="sheet-subtitle pd-mobile-hide">
-                        Practical operational problem scenarios for dark store, logistics &amp; category management interviews.
-                      </p>
-
-                      {/* Marquee & Placement Notice (Desktop Only) */}
-                      <div className="pd-mobile-hide" style={{ margin: '14px 0' }}>
-                        <CompanyMarquee />
-                        <div style={{ marginTop: 10 }}>
-                          <PlacementDisclaimer compact />
-                        </div>
-                      </div>
-
-                      {/* Quota & Access Status (Desktop Only) */}
-                      <div className="pd-mobile-hide" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, background: '#F1F5F9', padding: '10px 16px', borderRadius: 8, marginTop: 14 }}>
-                        <div>
-                          <strong style={{ fontSize: '0.9rem', color: '#0F172A' }}>Practice Sheet Quota:</strong>{' '}
-                          <span style={{ fontSize: '0.85rem', color: '#475569' }}>
-                            {userEnrolledSheets.length} / {userAuthData?.maxPracticeSheetsAllowed || 2} Enrolled
-                          </span>
-                        </div>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 700, background: '#DBEAFE', color: '#1E40AF', padding: '3px 8px', borderRadius: 99 }}>
-                          {userEnrolledSheets.length >= (userAuthData?.maxPracticeSheetsAllowed || 2)
-                            ? 'Quota Reached'
-                            : `${(userAuthData?.maxPracticeSheetsAllowed || 2) - userEnrolledSheets.length} Slots Available`}
-                        </span>
-                      </div>
-
-                      {/* Practice Sheet Selector Cards */}
-                      <div style={{ marginTop: 14 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: 10 }}>
-                          <h3 style={{ fontSize: '1rem', margin: 0, color: '#0E1B3D' }}>
-                            {practiceViewMode === 'my' ? 'My Enrolled Practice Sheets' : 'Practice Sheets Catalog'}
-                          </h3>
-                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                            <button
-                              className={`sheet-btn ${practiceViewMode === 'my' ? 'primary' : ''}`}
-                              style={{ padding: '4px 12px', fontSize: '0.82rem' }}
-                              onClick={() => setPracticeViewMode('my')}
-                            >
-                              My Sheets ({userEnrolledSheets.length})
-                            </button>
-                            <button
-                              className={`sheet-btn ${practiceViewMode === 'all' ? 'primary' : ''}`}
-                              style={{ padding: '4px 12px', fontSize: '0.82rem' }}
-                              onClick={() => setPracticeViewMode('all')}
-                            >
-                              All Sheets ({nonTechSheets.length})
-                            </button>
-                          </div>
-                        </div>
-
-                        {practiceViewMode === 'my' && nonTechSheets.filter((s) => userEnrolledSheets.some((u) => u.sheetId === s.sheetId)).length === 0 ? (
-                          <div style={{ textAlign: 'center', padding: '24px 16px', background: '#F8FAFC', borderRadius: 10, border: '1px dashed #CBD5E1' }}>
-                            <AssignmentIcon sx={{ fontSize: 36, color: '#2563EB', mb: 1 }} />
-                            <h4 style={{ margin: '0 0 6px', color: '#0F172A' }}>No Enrolled Practice Sheets Yet</h4>
-                            <p className="pd-mobile-hide" style={{ margin: '0 0 14px', color: '#64748B', fontSize: '0.86rem' }}>
-                              Browse available practice sheets to enroll and track your progress.
-                            </p>
-                            <button className="sheet-btn primary" onClick={() => setPracticeViewMode('all')}>
-                              Browse All Practice Sheets ({nonTechSheets.length})
-                            </button>
-                          </div>
-                        ) : (
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))', gap: 12 }}>
-                            {nonTechSheets
-                              .filter((sheet) => (practiceViewMode === 'my' ? userEnrolledSheets.some((s) => s.sheetId === sheet.sheetId) : true))
-                              .map((sheet) => {
-                                const isEnrolled = userEnrolledSheets.some((s) => s.sheetId === sheet.sheetId);
-                                const isSelected = activeSheetId === sheet.sheetId;
-                                const isFree = sheet.price === 0 || sheet.isFree;
-                                const progressPct = getSheetProgress(sheet);
-
-                                return (
-                                  <div
-                                    key={sheet.sheetId}
-                                    onClick={() => setActiveSheetId(sheet.sheetId)}
-                                    style={{
-                                      padding: 14,
-                                      borderRadius: 10,
-                                      border: isSelected ? '2px solid #2563EB' : '1px solid #E2E8F0',
-                                      background: isSelected ? '#EFF6FF' : '#FFFFFF',
-                                      cursor: 'pointer',
-                                      display: 'flex',
-                                      flexDirection: 'column',
-                                      justifyContent: 'space-between',
-                                      gap: 8,
-                                      transition: 'all 0.15s ease',
-                                    }}
-                                  >
-                                    <div>
-                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                                        <span
-                                          style={{
-                                            fontSize: '0.75rem',
-                                            fontWeight: 700,
-                                            padding: '2px 8px',
-                                            borderRadius: 99,
-                                            background: isFree ? '#DCFCE7' : '#FEF3C7',
-                                            color: isFree ? '#16A34A' : '#D97706',
-                                          }}
-                                        >
-                                          {isFree ? '₹0.00 Free Enrollment' : `₹${sheet.price.toFixed(2)} Paid Track`}
-                                        </span>
-                                        {isEnrolled && (
-                                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#2563EB' }}>
-                                            ✓ Enrolled
-                                          </span>
-                                        )}
-                                      </div>
-                                      <strong style={{ fontSize: '0.95rem', color: '#0F172A', lineHeight: 1.3 }}>{sheet.title}</strong>
-                                      <div style={{ fontSize: '0.8rem', color: '#64748B', marginTop: 4 }}>{sheet.targetRole}</div>
-                                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 8 }}>
-                                        {(sheet.targetCompanies || []).slice(0, 4).map((comp) => (
-                                          <span key={comp} className="company-badge" style={{ fontSize: '0.72rem' }}>
-                                            {comp}
-                                          </span>
-                                        ))}
-                                      </div>
-
-                                      {isEnrolled && (
-                                        <div style={{ marginTop: 10 }}>
-                                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: '#64748B', marginBottom: 3 }}>
-                                            <span>Progress</span>
-                                            <strong>{progressPct}%</strong>
-                                          </div>
-                                          <div style={{ width: '100%', height: 6, background: '#E2E8F0', borderRadius: 99, overflow: 'hidden' }}>
-                                            <div style={{ width: `${progressPct}%`, height: '100%', background: '#10B981', borderRadius: 99 }} />
-                                          </div>
-                                        </div>
-                                      )}
-                                    </div>
-
-                                    <div style={{ marginTop: 8, display: 'flex', justifyContent: 'flex-end' }}>
-                                      {isEnrolled ? (
-                                        <button
-                                          className="sheet-btn primary"
-                                          style={{ padding: '6px 14px', fontSize: '0.85rem' }}
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setActiveSheetId(sheet.sheetId);
-                                          }}
-                                        >
-                                          ✓ Continue Practice
-                                        </button>
-                                      ) : isFree ? (
-                                        <button
-                                          className="sheet-btn primary"
-                                          style={{ padding: '6px 14px', fontSize: '0.85rem' }}
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleEnrollPracticeSheet(sheet);
-                                          }}
-                                        >
-                                          Enroll for Free (₹0.00)
-                                        </button>
-                                      ) : (
-                                        <button
-                                          className="sheet-btn"
-                                          style={{ padding: '6px 14px', fontSize: '0.85rem' }}
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleEnrollPracticeSheet(sheet);
-                                          }}
-                                        >
-                                          Unlock for ₹{sheet.price.toFixed(2)}
-                                        </button>
-                                      )}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Active Non-Tech Sheet Details & Scenarios Accordion */}
-                    {activeNonTechSheet && (
-                      <div style={{ marginTop: 24 }}>
-                        <div style={{ padding: '16px 20px', background: '#FFFFFF', borderRadius: 12, border: '1px solid #E2E8F0', marginBottom: 20 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-                            <div>
-                              <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#2563EB', textTransform: 'uppercase' }}>
-                                Active Practice Curriculum
-                              </div>
-                              <h2 style={{ margin: '4px 0', fontSize: '1.4rem', color: '#0E1B3D' }}>{activeNonTechSheet.title}</h2>
-                              <p style={{ margin: 0, fontSize: '0.88rem', color: '#64748B' }}>{activeNonTechSheet.description}</p>
-                            </div>
-                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                              {isUserEnrolledInActiveSheet ? (
-                                <button className="sheet-btn primary" style={{ cursor: 'default' }}>
-                                  ✓ Start Learning
-                                </button>
-                              ) : (
-                                <button
-                                  className="sheet-btn primary"
-                                  onClick={() => handleEnrollPracticeSheet(activeNonTechSheet)}
-                                >
-                                  {activeNonTechSheet.price === 0 ? 'Enroll for Free (₹0.00)' : `Unlock for ₹${activeNonTechSheet.price.toFixed(2)}`}
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Topics and Problems for Active Non-Tech Sheet */}
-                        <div className="days-accordion-list">
-                          {filteredNonTechTopics.map((topic, topicIdx) => {
-                            const topicKey = `topic-${topic.topicId || topicIdx}`;
-                            const isOpen = openDays[topicKey] !== false; // open by default
-
-                            return (
-                              <div key={topicKey} className={`day-accordion-card ${isOpen ? 'open' : ''}`}>
-                                <div className="day-accordion-header" onClick={() => toggleDayAccordion(topicKey)}>
-                                  <div className="day-title-group">
-                                    {isOpen ? (
-                                      <FolderOpenOutlinedIcon sx={{ fontSize: 20, color: '#2563EB' }} />
-                                    ) : (
-                                      <FolderOutlinedIcon sx={{ fontSize: 20, color: '#64748B' }} />
-                                    )}
-                                    <div>
-                                      <span className="day-title-text">{topic.topicTitle}</span>
-                                      {topic.summary && (
-                                        <div className="pd-mobile-hide" style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 400 }}>{topic.summary}</div>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-                                    <span className="day-progress-pill">
-                                      {topic.problems.filter((p) => solvedMap[p.id]).length}/{topic.problems.length}
-                                    </span>
-                                    {isOpen ? (
-                                      <ExpandLessIcon sx={{ fontSize: 18, color: '#64748B' }} />
-                                    ) : (
-                                      <ExpandMoreIcon sx={{ fontSize: 18, color: '#64748B' }} />
-                                    )}
-                                  </div>
-                                </div>
-
-                                {isOpen && (
-                                  <div className="problems-table-wrapper">
-                                    <table className="problems-table">
-                                      <thead>
-                                        <tr>
-                                          <th style={{ width: 44 }}>Status</th>
-                                          <th>Interview Scenario</th>
-                                          <th style={{ width: 110 }}>Company</th>
-                                          <th style={{ width: 90 }}>Level</th>
-                                          <th style={{ width: 130 }} className="pd-mobile-hide">Domain Type</th>
-                                          <th style={{ width: 120, textAlign: 'center' }}>Guidance</th>
-                                          <th style={{ width: 50, textAlign: 'center' }} className="pd-mobile-hide">Notes</th>
-                                          <th style={{ width: 50, textAlign: 'center' }}>Revise</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody>
-                                        {topic.problems.map((problem) => {
-                                          const isSolved = !!solvedMap[problem.id];
-                                          const isRev = !!revisionMap[problem.id];
-                                          const hasNote = !!notesMap[problem.id];
-
-                                          return (
-                                            <tr key={problem.id} className={isSolved ? 'solved-row' : ''}>
-                                              <td>
-                                                <div
-                                                  className={`custom-checkbox ${isSolved ? 'checked' : ''}`}
-                                                  onClick={() => toggleSolve(problem.id)}
-                                                  title={isSolved ? 'Mark as Unsolved' : 'Mark as Solved'}
-                                                >
-                                                  {isSolved ? '✓' : ''}
-                                                </div>
-                                              </td>
-                                              <td className="pd-col-title">
-                                                <strong style={{ color: isSolved ? '#047857' : '#0F172A', cursor: 'pointer' }} onClick={() => setActiveScenarioModal(problem)}>
-                                                  {problem.title}
-                                                </strong>
-                                                <div className="pd-mobile-hide" style={{ fontSize: '0.8rem', color: '#64748B', marginTop: 2 }}>
-                                                  {problem.scenario.slice(0, 90)}...
-                                                </div>
-                                              </td>
-                                              <td>
-                                                <span className="company-badge" style={{ fontWeight: 700 }}>
-                                                  {problem.company}
-                                                </span>
-                                              </td>
-                                              <td>
-                                                <span className={`diff-pill ${problem.difficulty.toLowerCase()}`}>
-                                                  {problem.difficulty}
-                                                </span>
-                                              </td>
-                                              <td className="pd-mobile-hide">
-                                                <span style={{ fontSize: '0.8rem', color: '#475569' }}>
-                                                  {problem.type}
-                                                </span>
-                                              </td>
-                                              <td style={{ textAlign: 'center' }}>
-                                                <button
-                                                  className="sheet-btn primary"
-                                                  style={{ padding: '4px 10px', fontSize: '0.78rem' }}
-                                                  onClick={() => setActiveScenarioModal(problem)}
-                                                >
-                                                  Solution →
-                                                </button>
-                                              </td>
-                                              <td className="pd-mobile-hide" style={{ textAlign: 'center' }}>
-                                                <button
-                                                  onClick={() => openNoteModal(problem)}
-                                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: hasNote ? '#2563EB' : '#94A3B8', display: 'inline-flex' }}
-                                                  title={hasNote ? 'Edit note' : 'Add note'}
-                                                >
-                                                  <EditOutlinedIcon fontSize="small" />
-                                                </button>
-                                              </td>
-                                              <td style={{ textAlign: 'center' }}>
-                                                <button
-                                                  onClick={() => toggleRevision(problem.id)}
-                                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: isRev ? '#F59E0B' : '#CBD5E1', display: 'inline-flex' }}
-                                                  title={isRev ? 'Starred for Revision' : 'Star for Revision'}
-                                                >
-                                                  {isRev ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}
-                                                </button>
-                                              </td>
-                                            </tr>
-                                          );
-                                        })}
-                                      </tbody>
-                                    </table>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* =======================================================
-                    BRANCH 2: TECHNICAL SDE TRACK (TEMPLATE MODE)
-                    Preserved for Technical Background Users
-                    ======================================================= */}
-                {selectedTrackCategory === 'tech' && (
-                  <div>
-                    {/* Template Notice (Desktop Only) */}
-                    <div
-                      className="pd-mobile-hide"
-                      style={{
-                        padding: '14px 18px',
-                        background: '#FEF3C7',
-                        border: '1px solid #FDE68A',
-                        borderRadius: 10,
-                        color: '#92400E',
-                        marginBottom: 20,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 12,
-                      }}
-                    >
-                      <BoltOutlinedIcon sx={{ fontSize: 22, color: '#D97706' }} />
-                      <div>
-                        <strong style={{ fontSize: '0.95rem' }}>Technical SDE Master Preparation Sheet (Template Mode)</strong>
-                        <div style={{ fontSize: '0.85rem', color: '#B45309', marginTop: 2 }}>
-                          This 193-problem Data Structures &amp; Algorithms curriculum is preserved as a structured reference template for technical candidates.
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="sheet-header-card">
-                      <div className="breadcrumb pd-mobile-hide">
-                        <span>Technical Track</span>
-                        <span>›</span>
-                        <span>SDE Master Preparation Template</span>
-                      </div>
-
-                      <h1 className="sheet-title">SDE Sheet - Interview Questions</h1>
-                      <p className="sheet-subtitle pd-mobile-hide">
-                        Preserved Technical DSA curriculum covering core interview patterns.
-                      </p>
-
-                      <div className="sheet-action-btns pd-mobile-hide">
-                        <button className="sheet-btn" onClick={() => setIsGroupStudyModalOpen(true)}>
-                          <GroupsOutlinedIcon fontSize="small" />
-                          <span>Group Study</span>
-                        </button>
-                        <button
-                          className={`sheet-btn ${onlySaved ? 'primary' : ''}`}
-                          onClick={() => setOnlySaved(!onlySaved)}
-                        >
-                          <BookmarkBorderOutlinedIcon fontSize="small" />
-                          <span>{onlySaved ? 'Show All Questions' : 'Saved Questions'}</span>
-                        </button>
-                      </div>
-
-                      {/* Level & Revision Filter Pills */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#64748B' }}>Level:</span>
-                        {['all', 'easy', 'medium', 'hard'].map((diff) => (
-                          <button
-                            key={diff}
-                            className={`sheet-btn ${difficultyFilter === diff ? 'primary' : ''}`}
-                            style={{ padding: '4px 10px', fontSize: '0.8rem', textTransform: 'capitalize' }}
-                            onClick={() => setDifficultyFilter(diff)}
-                          >
-                            {diff}
-                          </button>
-                        ))}
-                        <button
-                          className={`sheet-btn pd-mobile-hide ${onlyRevision ? 'primary' : ''}`}
-                          style={{ padding: '4px 10px', fontSize: '0.8rem', marginLeft: 'auto' }}
-                          onClick={() => setOnlyRevision(!onlyRevision)}
-                        >
-                          {onlyRevision ? 'Showing Starred' : 'Filter Revision Starred'}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Day by Day Accordions (Preserved 193 questions) */}
-                    <div className="days-accordion-list">
-                      {filteredTopics.map((day) => {
-                        const isOpen = !!openDays[day.id];
-                        const daySolved = day.problems.filter((p) => solvedMap[p.id]).length;
-                        const isCompleted = daySolved === day.problems.length && day.problems.length > 0;
-
-                        return (
-                          <div key={day.id} className={`day-accordion-card ${isOpen ? 'open' : ''}`}>
-                            <div className="day-accordion-header" onClick={() => toggleDayAccordion(day.id)}>
-                              <div className="day-title-group">
-                                {isOpen ? (
-                                  <FolderOpenOutlinedIcon sx={{ fontSize: 20, color: '#2563EB' }} />
-                                ) : (
-                                  <FolderOutlinedIcon sx={{ fontSize: 20, color: '#64748B' }} />
-                                )}
-                                <span className="day-title-text">{day.title}</span>
-                              </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-                                <span className={`day-progress-pill ${isCompleted ? 'completed' : ''}`}>
-                                  {daySolved}/{day.problems.length}
-                                </span>
-                                {isOpen ? (
-                                  <ExpandLessIcon sx={{ fontSize: 18, color: '#64748B' }} />
-                                ) : (
-                                  <ExpandMoreIcon sx={{ fontSize: 18, color: '#64748B' }} />
-                                )}
-                              </div>
-                            </div>
-
-                            {isOpen && (
-                              <div className="problems-table-wrapper">
-                                <table className="problems-table">
-                                  <thead>
-                                    <tr>
-                                      <th style={{ width: 44 }}>Status</th>
-                                      <th>Problem</th>
-                                      <th style={{ width: 80, textAlign: 'center' }} className="pd-mobile-hide">Editorial</th>
-                                      <th style={{ width: 80, textAlign: 'center' }}>Practice</th>
-                                      <th style={{ width: 90 }}>Level</th>
-                                      <th style={{ width: 60, textAlign: 'center' }} className="pd-mobile-hide">Notes</th>
-                                      <th className="pd-mobile-hide">Companies</th>
-                                      <th style={{ width: 50, textAlign: 'center' }}>Revise</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {day.problems.map((problem) => {
-                                      const isSolved = !!solvedMap[problem.id];
-                                      const isRev = !!revisionMap[problem.id];
-                                      const hasNote = !!notesMap[problem.id];
-
-                                      return (
-                                        <tr key={problem.id} className={isSolved ? 'solved-row' : ''}>
-                                          <td>
-                                            <div
-                                              className={`custom-checkbox ${isSolved ? 'checked' : ''}`}
-                                              onClick={() => toggleSolve(problem.id)}
-                                              title={isSolved ? 'Mark as Unsolved' : 'Mark as Solved'}
-                                            >
-                                              {isSolved ? '✓' : ''}
-                                            </div>
-                                          </td>
-                                          <td className="pd-col-title">
-                                            <a
-                                              href={problem.practiceUrl}
-                                              target="_blank"
-                                              rel="noreferrer"
-                                              style={{
-                                                fontWeight: 600,
-                                                color: isSolved ? '#047857' : '#0F172A',
-                                                textDecoration: 'none',
-                                              }}
-                                            >
-                                              {problem.title}
-                                            </a>
-                                          </td>
-                                          <td className="pd-mobile-hide" style={{ textAlign: 'center' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'center', gap: 6 }}>
-                                              <a className="action-icon-link" href={problem.articleUrl} target="_blank" rel="noreferrer" title="Article">
-                                                <DescriptionOutlinedIcon fontSize="small" />
-                                              </a>
-                                              <a className="action-icon-link" href={problem.videoUrl} target="_blank" rel="noreferrer" title="Video">
-                                                <PlayCircleOutlinedIcon fontSize="small" />
-                                              </a>
-                                            </div>
-                                          </td>
-                                          <td style={{ textAlign: 'center' }}>
-                                            <a
-                                              href={problem.practiceUrl}
-                                              target="_blank"
-                                              rel="noreferrer"
-                                              style={{ fontSize: '0.8rem', fontWeight: 700, padding: '3px 9px', background: '#EFF6FF', borderRadius: 6, color: '#2563EB', textDecoration: 'none' }}
-                                            >
-                                              Solve →
-                                            </a>
-                                          </td>
-                                          <td>
-                                            <span className={`diff-pill ${problem.difficulty.toLowerCase()}`}>
-                                              {problem.difficulty}
-                                            </span>
-                                          </td>
-                                          <td className="pd-mobile-hide" style={{ textAlign: 'center' }}>
-                                            <button
-                                              onClick={() => openNoteModal(problem)}
-                                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: hasNote ? '#2563EB' : '#94A3B8', display: 'inline-flex' }}
-                                              title={hasNote ? 'Edit note' : 'Add note'}
-                                            >
-                                              <EditOutlinedIcon fontSize="small" />
-                                            </button>
-                                          </td>
-                                          <td className="pd-mobile-hide">
-                                            <div className="company-badges-cell">
-                                              {problem.companies.slice(0, 3).map((comp) => (
-                                                <span key={comp} className="company-badge">{comp}</span>
-                                              ))}
-                                              {problem.companies.length > 3 && (
-                                                <span className="company-badge" style={{ color: '#64748B' }}>+{problem.companies.length - 3}</span>
-                                              )}
-                                            </div>
-                                          </td>
-                                          <td style={{ textAlign: 'center' }}>
-                                            <button
-                                              onClick={() => toggleRevision(problem.id)}
-                                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: isRev ? '#F59E0B' : '#CBD5E1', display: 'inline-flex' }}
-                                              title={isRev ? 'Starred for Revision' : 'Star for Revision'}
-                                            >
-                                              {isRev ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}
-                                            </button>
-                                          </td>
-                                        </tr>
-                                      );
-                                    })}
-                                  </tbody>
-                                </table>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Right Sidebar: Progress Gauge & Streak Calendar */}
-              <aside className="dsa-right-sidebar">
-                {/* Total Progress Card */}
-                <div className="progress-overview-card">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                    <TrendingUpIcon sx={{ fontSize: 22, color: '#2563EB' }} />
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0E1B3D' }}>
-                        {progressPercent > 0 ? "You're making great progress!" : "Let's get started!"}
-                      </div>
-                      <div style={{ fontSize: '0.8rem', color: '#64748B' }}>
-                        {totalProblemsCount - totalSolvedCount} questions left to solve
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="progress-gauge-box">
-                    <div className="gauge-svg-wrap">
-                      <svg width="80" height="80" viewBox="0 0 36 36">
-                        <path
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="#E2E8F0"
-                          strokeWidth="3.5"
-                        />
-                        <path
-                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          fill="none"
-                          stroke="#2563EB"
-                          strokeWidth="3.5"
-                          strokeDasharray={`${progressPercent}, 100`}
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                      <span className="gauge-center-text">{progressPercent}%</span>
-                    </div>
-
-                    <div className="gauge-label-group">
-                      <h4>Total Progress</h4>
-                      <p>
-                        <strong>{totalSolvedCount}</strong> / {totalProblemsCount} Solved
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Difficulty breakdown */}
-                  <div className="diff-bars-list">
-                    <div className="diff-bar-item">
-                      <div className="diff-bar-header">
-                        <span style={{ color: '#16A34A' }}>Easy</span>
-                        <span>
-                          {easySolved} / {easyProblems.length}
-                        </span>
-                      </div>
-                      <div className="diff-bar-track">
-                        <div
-                          className="diff-bar-fill easy"
-                          style={{ width: `${(easySolved / (easyProblems.length || 1)) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="diff-bar-item">
-                      <div className="diff-bar-header">
-                        <span style={{ color: '#D97706' }}>Medium</span>
-                        <span>
-                          {mediumSolved} / {mediumProblems.length}
-                        </span>
-                      </div>
-                      <div className="diff-bar-track">
-                        <div
-                          className="diff-bar-fill medium"
-                          style={{ width: `${(mediumSolved / (mediumProblems.length || 1)) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="diff-bar-item">
-                      <div className="diff-bar-header">
-                        <span style={{ color: '#DC2626' }}>Hard</span>
-                        <span>
-                          {hardSolved} / {hardProblems.length}
-                        </span>
-                      </div>
-                      <div className="diff-bar-track">
-                        <div
-                          className="diff-bar-fill hard"
-                          style={{ width: `${(hardSolved / (hardProblems.length || 1)) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Streak Calendar Mini Widget - Fully Dynamic */}
-                <div className="streak-calendar-card">
-                  <div className="calendar-header">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <LocalFireDepartmentIcon sx={{ fontSize: 18, color: '#D97706' }} />
-                      <strong style={{ fontSize: '0.95rem', color: '#0F172A' }}>
-                        {streakData.currentStreak}{streakData.streakSuffix} Day Streak
-                      </strong>
-                    </div>
-                    <span style={{ fontSize: '0.85rem', color: '#64748B' }}>
-                      {streakData.monthName} {streakData.currentYear}
-                    </span>
-                  </div>
-
-                  <div className="calendar-grid">
-                    <div className="calendar-day-label">Su</div>
-                    <div className="calendar-day-label">Mo</div>
-                    <div className="calendar-day-label">Tu</div>
-                    <div className="calendar-day-label">We</div>
-                    <div className="calendar-day-label">Th</div>
-                    <div className="calendar-day-label">Fr</div>
-                    <div className="calendar-day-label">Sa</div>
-
-                    {/* Empty placeholder cells for weekday offset before 1st of month */}
-                    {Array.from({ length: streakData.firstDayIndex }, (_, i) => (
-                      <div key={`empty-pre-${i}`} className="calendar-date-cell empty" style={{ opacity: 0 }} />
-                    ))}
-
-                    {/* Dynamic month days */}
-                    {Array.from({ length: streakData.daysInMonth }, (_, i) => i + 1).map((day) => {
-                      const isActiveStreak = streakData.activeDaysSet.has(day);
-                      const isToday = day === streakData.todayDateNum;
-
-                      return (
-                        <div
-                          key={day}
-                          className={`calendar-date-cell ${isActiveStreak ? 'active-streak' : ''} ${isToday ? 'today' : ''}`}
-                          onClick={() => setIsStreakModalOpen(true)}
-                          title={`${streakData.monthName} ${day}: ${isActiveStreak ? 'Active streak day 🔥' : 'Inactive'}`}
-                        >
-                          {day}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="calendar-footer-link" onClick={() => setIsStreakModalOpen(true)}>
-                    <span>Total Active Days: {streakData.totalActiveDays}</span>
-                    <span>View Details ›</span>
-                  </div>
-                </div>
-              </aside>
-            </div>
+            <PracticeSheetsView
+              selectedTrackCategory={selectedTrackCategory}
+              setSelectedTrackCategory={setSelectedTrackCategory}
+              enrollmentNotice={enrollmentNotice}
+              setEnrollmentNotice={setEnrollmentNotice}
+              userEnrolledSheets={userEnrolledSheets}
+              userAuthData={userAuthData}
+              practiceViewMode={practiceViewMode}
+              setPracticeViewMode={setPracticeViewMode}
+              nonTechSheets={nonTechSheets}
+              activeSheetId={activeSheetId}
+              setActiveSheetId={setActiveSheetId}
+              activeNonTechSheet={activeNonTechSheet}
+              isUserEnrolledInActiveSheet={isUserEnrolledInActiveSheet}
+              handleEnrollPracticeSheet={handleEnrollPracticeSheet}
+              filteredNonTechTopics={filteredNonTechTopics}
+              openDays={openDays}
+              toggleDayAccordion={toggleDayAccordion}
+              solvedMap={solvedMap}
+              revisionMap={revisionMap}
+              notesMap={notesMap}
+              toggleSolve={toggleSolve}
+              toggleRevision={toggleRevision}
+              openNoteModal={openNoteModal}
+              setActiveScenarioModal={setActiveScenarioModal}
+              onlySaved={onlySaved}
+              setOnlySaved={setOnlySaved}
+              onlyRevision={onlyRevision}
+              setOnlyRevision={setOnlyRevision}
+              difficultyFilter={difficultyFilter}
+              setDifficultyFilter={setDifficultyFilter}
+              filteredTopics={filteredTopics}
+              setIsGroupStudyModalOpen={setIsGroupStudyModalOpen}
+              progressPercent={progressPercent}
+              totalProblemsCount={totalProblemsCount}
+              totalSolvedCount={totalSolvedCount}
+              easySolved={easySolved}
+              easyProblems={easyProblems}
+              mediumSolved={mediumSolved}
+              mediumProblems={mediumProblems}
+              hardSolved={hardSolved}
+              hardProblems={hardProblems}
+              streakData={streakData}
+              setIsStreakModalOpen={setIsStreakModalOpen}
+              getSheetProgress={getSheetProgress}
+            />
           )}
 
-          {/* ================================================================
-              VIEW 2: Live Mentorship Sessions & Attendance (Requested feature)
-              ================================================================ */}
+          {/* VIEW 2: Live Mentorship Sessions & Masterclasses */}
           {activeTab === 'mentorship' && (
-            <div className="mentorship-container">
-              {/* Live Session Hero Card - Dynamic from CMS & User Enrollment */}
-              <div className="live-hero-card">
-                <div
-                  className="live-pulse-badge"
-                  style={{
-                    background: isUserEnrolledInClass
-                      ? 'rgba(239, 68, 68, 0.18)'
-                      : 'rgba(245, 158, 11, 0.18)',
-                    borderColor: isUserEnrolledInClass
-                      ? 'rgba(239, 68, 68, 0.4)'
-                      : 'rgba(245, 158, 11, 0.4)',
-                    color: isUserEnrolledInClass ? '#FCA5A5' : '#FCD34D',
-                  }}
-                >
-                  <div
-                    className="live-pulse-dot"
-                    style={{
-                      background: isUserEnrolledInClass ? '#EF4444' : '#F59E0B',
-                    }}
-                  />
-                  <span>
-                    {isUserEnrolledInClass
-                      ? '⚡ YOUR ENROLLED BATCH • LIVE ROOM ACCESS'
-                      : activeMentorshipClass?.sessionStatus === 'live'
-                      ? '🔴 LIVE CLASS RUNNING NOW • PAYMENT REQUIRED'
-                      : '🔒 UPCOMING MASTERCLASS • ENROLLMENT REQUIRED'}
-                  </span>
-                </div>
-
-                <h2 className="live-hero-title">
-                  {activeMentorshipClass?.title || 'Strivers Masterclass'}
-                </h2>
-                <p className="live-hero-desc">
-                  {activeMentorshipClass?.description ||
-                    'Live online session, basics to advanced. Live Sunday interactive workshop on resume, portfolio, LinkedIn/Naukri & cold emails.'}
-                </p>
-
-                {/* Countdown Timer */}
-                <div style={{ display: 'flex', gap: 14, marginBottom: 24, flexWrap: 'wrap' }}>
-                  <div style={{ background: 'rgba(255,255,255,0.08)', padding: '12px 20px', borderRadius: 10, textAlign: 'center', minWidth: 84 }}>
-                    <div style={{ fontFamily: 'var(--mono)', fontSize: '1.5rem', fontWeight: 800 }}>{String(countdown.hours).padStart(2, '0')}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Hours</div>
-                  </div>
-                  <div style={{ background: 'rgba(255,255,255,0.08)', padding: '12px 20px', borderRadius: 10, textAlign: 'center', minWidth: 84 }}>
-                    <div style={{ fontFamily: 'var(--mono)', fontSize: '1.5rem', fontWeight: 800 }}>{String(countdown.minutes).padStart(2, '0')}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Minutes</div>
-                  </div>
-                  <div style={{ background: 'rgba(255,255,255,0.08)', padding: '12px 20px', borderRadius: 10, textAlign: 'center', minWidth: 84 }}>
-                    <div style={{ fontFamily: 'var(--mono)', fontSize: '1.5rem', fontWeight: 800, color: '#38BDF8' }}>{String(countdown.seconds).padStart(2, '0')}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#94A3B8' }}>Seconds</div>
-                  </div>
-                </div>
-
-                {/* Mentors Row - Dynamic from backend CMS with default fallback */}
-                <div className="mentors-row-grid">
-                  {(activeMentorshipClass?.mentors && activeMentorshipClass.mentors.length > 0
-                    ? activeMentorshipClass.mentors
-                    : [
-                        {
-                          name: 'Alex Morgan',
-                          role: 'Ex-Google · SDE-2 @ Blinkit',
-                          avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80',
-                        },
-                        {
-                          name: 'Priya Sharma',
-                          role: 'Staff Engineer @ Zomato',
-                          avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&h=200&q=80',
-                        },
-                        {
-                          name: 'Rahul Verma',
-                          role: 'Engineering Lead @ Porter',
-                          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&h=200&q=80',
-                        },
-                      ]
-                  ).map((m) => (
-                    <div key={m.name} className="mentor-card-bubble">
-                      <img src={m.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80'} alt={m.name} />
-                      <div>
-                        <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{m.name}</div>
-                        <div style={{ fontSize: '0.8rem', color: '#94A3B8' }}>{m.role || m.company}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {copiedLinkNotice && (
-                  <div style={{ background: 'rgba(16, 185, 129, 0.2)', border: '1px solid #10b981', color: '#34d399', padding: '10px 16px', borderRadius: 8, fontSize: '0.9rem', marginBottom: 14 }}>
-                    ✓ Meeting Link Copied to Clipboard! Ready to paste into browser.
-                  </div>
-                )}
-
-                <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
-                  {isUserEnrolledInClass ? (
-                    <a
-                      className="live-join-btn"
-                      href={activeMentorshipClass?.activeMeetingLink || activeMentorshipClass?.meetingLink || 'https://meet.google.com/strivers-placement-live'}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      <span>🎥</span>
-                      <span>Join Live Mentorship Room (Google Meet)</span>
-                    </a>
-                  ) : (
-                    <button
-                      className="live-join-btn"
-                      style={{ background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)' }}
-                      onClick={() => navigate(`/courses?checkout=${encodeURIComponent(activeMentorshipClass?.productId || 'masterclass')}`)}
-                    >
-                      <span>🔒</span>
-                      <span>Unlock Live Room Access (₹{activeMentorshipClass?.price || 21})</span>
-                    </button>
-                  )}
-
-                  <button
-                    className="sheet-btn"
-                    style={{ background: 'rgba(255,255,255,0.12)', color: '#FFF', borderColor: 'rgba(255,255,255,0.2)' }}
-                    onClick={() => {
-                      if (isUserEnrolledInClass) {
-                        const link = activeMentorshipClass?.activeMeetingLink || activeMentorshipClass?.meetingLink || 'https://meet.google.com/strivers-placement-live';
-                        if (navigator.clipboard) {
-                          navigator.clipboard.writeText(link);
-                          setCopiedLinkNotice(true);
-                          setTimeout(() => setCopiedLinkNotice(false), 3000);
-                        } else {
-                          alert(`Meeting Link: ${link}`);
-                        }
-                      } else {
-                        alert(`🔒 Payment Required:\nYou have not enrolled in ${activeMentorshipClass?.title || 'this Masterclass'}. Please make the payment of ₹${activeMentorshipClass?.price || 21} to unlock your personal Google Meet room link and meeting credentials.`);
-                      }
-                    }}
-                  >
-                    📋 Copy Meeting Link
-                  </button>
-                </div>
-
-                {!isUserEnrolledInClass && (
-                  <div style={{ fontSize: '0.84rem', color: '#94A3B8', marginTop: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span>🔒</span>
-                    <span>This session is for enrolled students only. Complete payment to access the live room, ask questions 1-on-1, and unlock view-only DRM study materials.</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Continuous Loop Company Logo Marquee Ribbon */}
-              <CompanyMarquee title="Organizations Where Our Online Session Mentors Have Worked" />
-
-              {/* Placement Guidance Disclaimer */}
-              <PlacementDisclaimer />
-
-              {/* Agenda & Schedule */}
-              <div className="mentorship-schedule-grid">
-                {/* Agenda */}
-                <div className="agenda-card">
-                  <h3 style={{ margin: '0 0 6px', fontSize: '1.25rem' }}>Masterclass Live Agenda</h3>
-                  <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
-                    Every minute is engineered to maximize your placement conversion rate.
-                  </p>
-
-                  <div className="timeline-list">
-                    {(activeMentorshipClass?.timingSlots?.[0]?.agenda?.length > 0
-                      ? activeMentorshipClass.timingSlots[0].agenda
-                      : LIVE_MENTORSHIP.nextSession.agenda
-                    ).map((item, idx) => (
-                      <div key={idx} className="timeline-item">
-                        <div className="timeline-time-badge">{item.time}</div>
-                        <div style={{ fontSize: '0.92rem', color: '#334155', lineHeight: 1.5 }}>{item.topic}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Weekly Schedule & 1-on-1 Mock Booking */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                  <div className="agenda-card">
-                    <h3 style={{ margin: '0 0 14px', fontSize: '1.15rem' }}>Weekly Live Timetable</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      {(activeMentorshipClass?.timingSlots?.length > 0
-                        ? activeMentorshipClass.timingSlots.map((slot) => ({
-                            day: slot.date || slot.dateTime || 'Live Session',
-                            time: slot.startTime ? `${slot.startTime} - ${slot.endTime || ''}` : 'IST',
-                            title: slot.title || activeMentorshipClass.title,
-                            mentor: slot.mentorName || 'Unicorn Mentors',
-                          }))
-                        : LIVE_MENTORSHIP.weeklySchedule
-                      ).map((s, i) => (
-                        <div
-                          key={i}
-                          style={{
-                            padding: '12px',
-                            background: '#F8FAFC',
-                            border: '1px solid #E2E8F0',
-                            borderRadius: 8,
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                            <strong style={{ fontSize: '0.9rem', color: '#0E1B3D' }}>{s.day}</strong>
-                            <span style={{ fontSize: '0.8rem', color: '#2563EB', fontWeight: 600 }}>{s.time}</span>
-                          </div>
-                          <div style={{ fontSize: '0.85rem', color: '#475569' }}>{s.title}</div>
-                          <div style={{ fontSize: '0.78rem', color: '#94A3B8', marginTop: 4 }}>Mentor: {s.mentor}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div
-                    style={{
-                      background: 'linear-gradient(135deg, #FEF3C7, #FDE68A)',
-                      border: '1px solid #F59E0B',
-                      borderRadius: 14,
-                      padding: 20,
-                    }}
-                  >
-                    <h4 style={{ margin: '0 0 6px', color: '#92400E' }}>Need 1-on-1 Personalized Mentorship?</h4>
-                    <p style={{ margin: '0 0 14px', fontSize: '0.88rem', color: '#B45309' }}>
-                      Schedule a private 45-minute technical mock interview or resume roast with a mentor.
-                    </p>
-                    <button
-                      className="sheet-btn primary"
-                      style={{ background: '#B45309', borderColor: '#B45309' }}
-                      onClick={() => alert('1-on-1 slot booking opens after this Sunday live masterclass!')}
-                    >
-                      Book 1-on-1 Slot →
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Past Recorded Masterclasses */}
-              <div>
-                <h3 style={{ fontSize: '1.35rem', marginBottom: 4 }}>Recorded Masterclasses & Resource Vault</h3>
-                <p className="muted" style={{ margin: '0 0 16px', fontSize: '0.9rem' }}>
-                  Missed a live session? Re-watch in 1080p with complete transcripts, code snippets, and notes.
-                </p>
-
-                <div className="recordings-grid">
-                  {LIVE_MENTORSHIP.recordedSessions.map((rec) => (
-                    <div key={rec.id} className="recording-card">
-                      <div className="recording-thumb">
-                        <img src={rec.thumbnail} alt={rec.title} />
-                        <div className="recording-play-overlay">
-                          <a href={rec.recordingUrl} target="_blank" rel="noreferrer" className="play-circle">
-                            ▶
-                          </a>
-                        </div>
-                      </div>
-                      <div className="recording-body">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#2563EB' }}>{rec.duration}</span>
-                          <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>{rec.recordedDate}</span>
-                        </div>
-                        <h4 style={{ margin: '0 0 8px', fontSize: '0.98rem', color: '#0E1B3D', flex: 1 }}>{rec.title}</h4>
-                        <div style={{ fontSize: '0.82rem', color: '#64748B', marginBottom: 12 }}>Mentor: {rec.mentor}</div>
-                        <a
-                          className="sheet-btn"
-                          href={rec.recordingUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          style={{ textAlign: 'center', width: '100%', justifyContent: 'center' }}
-                        >
-                          Watch Recording ↗
-                        </a>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <MentorshipView
+              activeMentorshipClass={activeMentorshipClass}
+              isUserEnrolledInClass={isUserEnrolledInClass}
+              userAuthData={userAuthData}
+              onNavigateToNotes={() => setActiveTab('notes')}
+              onUnlock={() =>
+                navigate(
+                  `/courses?checkout=${encodeURIComponent(
+                    activeMentorshipClass?.productId || 'masterclass'
+                  )}`
+                )
+              }
+            />
           )}
 
-          {/* ================================================================
-              VIEW 3: Downloadable Notes & Cheat Sheets (Image 2)
-              Enforces: Regular unauthenticated users CANNOT access notes.
-              Notes are of 2 types: Free & Paid.
-              Enrolled masterclass users can enter secret code to unlock Paid Notes for free.
-              ================================================================ */}
+          {/* VIEW 3: Downloadable Notes & Cheat Sheets */}
           {activeTab === 'notes' && (
-            <div>
-              {!userAuthData && !userProfile ? (
-                <div
-                  style={{
-                    padding: '60px 24px',
-                    textAlign: 'center',
-                    background: '#FFFFFF',
-                    borderRadius: 16,
-                    border: '1px solid #E2E8F0',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
-                    margin: '20px 0',
-                  }}
-                >
-                  <div style={{ fontSize: '3.6rem', marginBottom: 16 }}>🔒</div>
-                  <h2 style={{ fontSize: '1.7rem', color: '#0E1B3D', margin: '0 0 10px', fontWeight: 800 }}>
-                    Sign In Required to Access Downloadable Notes
-                  </h2>
-                  <p
-                    style={{
-                      maxWidth: 540,
-                      margin: '0 auto 24px',
-                      color: '#64748B',
-                      lineHeight: 1.6,
-                      fontSize: '0.96rem',
-                    }}
-                  >
-                    A regular user who has not logged in cannot access the Downloadable Notes section. Please sign in or register an account to browse free handwritten notes, cheatsheets, and unlock VIP Masterclass resources.
-                  </p>
-                  <button
-                    className="sheet-btn primary"
-                    style={{ padding: '12px 30px', fontSize: '1rem', fontWeight: 700 }}
-                    onClick={() => navigate('/login')}
-                  >
-                    Sign In to Unlock Notes Vault ↗
-                  </button>
-                </div>
-              ) : (
-                <div>
-                  <div className="notes-page-header">
-                    <div className="breadcrumb">
-                      <span>DSA Sheet</span>
-                      <span>›</span>
-                      <span>Study Material Vault</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 14 }}>
-                      <div>
-                        <h1 style={{ fontFamily: 'var(--display)', fontSize: '2.1rem', margin: '0 0 6px' }}>
-                          Downloadable Notes & Engineering Vault
-                        </h1>
-                        <p className="muted" style={{ margin: 0 }}>
-                          Curated high-yield engineering notes, dark store playbooks, study guides, and cheatsheets.
-                        </p>
-                      </div>
-
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.8rem', padding: '4px 10px', borderRadius: 99, background: '#DCFCE7', color: '#16A34A', fontWeight: 700 }}>
-                          Free Notes
-                        </span>
-                        <span style={{ fontSize: '0.8rem', padding: '4px 10px', borderRadius: 99, background: '#EDE9FE', color: '#7C3AED', fontWeight: 700 }}>
-                          Member Notes
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="notes-grid">
-                    {filteredNotes.map((note) => {
-                      const isPaid = note.type === 'paid';
-                      const isUnlocked = note.hasAccess || !isPaid;
-
-                      return (
-                        <div key={note.noteId || note.id} className="note-card">
-                          <div
-                            className="note-card-banner"
-                            style={{
-                              background: isPaid ? 'linear-gradient(135deg, #7C3AED 0%, #4C1D95 100%)' : undefined,
-                            }}
-                          >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '0 12px' }}>
-                              <span className="note-card-badge">{note.tag}</span>
-                              <span
-                                style={{
-                                  fontSize: '0.72rem',
-                                  fontWeight: 800,
-                                  padding: '2px 8px',
-                                  borderRadius: 99,
-                                  background: isPaid ? (isUnlocked ? '#10B981' : '#F59E0B') : '#10B981',
-                                  color: '#FFFFFF',
-                                  textTransform: 'uppercase',
-                                }}
-                              >
-                                {isPaid ? (isUnlocked ? 'Unlocked' : 'Member Only') : 'Free'}
-                              </span>
-                            </div>
-                            <div style={{ textAlign: 'center', marginTop: 8 }}>
-                              <MenuBookIcon sx={{ fontSize: 38, color: '#FFFFFF' }} />
-                            </div>
-                          </div>
-
-                          <div className="note-card-body">
-                            <h3 className="note-card-title">{note.title}</h3>
-                            <p className="note-card-subtitle">{note.subtitle}</p>
-
-                            <div className="drm-mobile-hide" style={{ fontSize: '0.78rem', color: '#64748B', margin: '8px 0 12px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span style={{ fontWeight: 600, color: '#0F172A' }}>Format:</span>{' '}
-                              <span style={{ textTransform: 'uppercase', background: '#F1F5F9', padding: '2px 6px', borderRadius: 4 }}>
-                                {note.fileType || 'HTML/PDF'}
-                              </span>
-                              {note.fileSize && (
-                                <span>• {(note.fileSize / 1024).toFixed(0)} KB</span>
-                              )}
-                            </div>
-
-                            <div className="note-card-footer">
-                              <span className="note-file-count" style={{ color: isPaid && !isUnlocked ? '#D97706' : '#16A34A', fontWeight: 600 }}>
-                                {isPaid ? (isUnlocked ? '✓ Full Access' : 'Secret Code Required') : 'Free Access'}
-                              </span>
-                              <button
-                                className="sheet-btn primary"
-                                style={{
-                                  padding: '7px 14px',
-                                  fontSize: '0.85rem',
-                                  background: isPaid && !isUnlocked ? '#7C3AED' : undefined,
-                                  borderColor: isPaid && !isUnlocked ? '#7C3AED' : undefined,
-                                }}
-                                onClick={() => handleOpenNote(note)}
-                              >
-                                {isPaid && !isUnlocked ? (
-                                  <span>🔑 Enter Secret Code</span>
-                                ) : (
-                                  <span>View Document ↗</span>
-                                )}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
+            <NotesResourcesView
+              userAuthData={userAuthData}
+              userProfile={userProfile}
+              filteredNotes={filteredNotes}
+              onOpenNote={handleOpenNote}
+            />
           )}
 
-          {/* ================================================================
-              VIEW 4: Profile & Analytics Dashboard (Image 3)
-              ================================================================ */}
+          {/* VIEW 4: Profile & Analytics Dashboard */}
           {activeTab === 'analytics' && (
-            <div className="analytics-grid-layout">
-              {/* Main Column */}
-              <div>
-                {/* Greeting Hero */}
-                <div className="profile-hero-banner">
-                  <div>
-                    <h2 className="profile-hero-title">
-                      Hi, {userProfile?.name || userAuthData?.name || userAuthData?.email?.split('@')[0] || 'Student'}
-                    </h2>
-                    <p className="profile-hero-desc">
-                      Track your placement preparation, inspect topic weaknesses, maintain daily problem streaks, and unlock consistency badges.
-                    </p>
-                  </div>
-                  <div style={{ fontSize: '3.6rem' }}>🎯</div>
-                </div>
-
-                {/* Submissions Heatmap */}
-                <div className="heatmap-card">
-                  <div className="heatmap-header">
-                    <div>
-                      <h3 style={{ margin: 0, fontSize: '1.15rem' }}>All Submissions Heatmap</h3>
-                      <span style={{ fontSize: '0.85rem', color: '#16A34A', fontWeight: 600 }}>
-                        {totalSolvedCount} problem{totalSolvedCount === 1 ? '' : 's'} solved to date
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '0.85rem', color: '#64748B' }}>
-                      <span>
-                        Total active days: <strong>{streakData.totalActiveDays}</strong>
-                      </span>{' '}
-                      &nbsp;•&nbsp;
-                      <span>
-                        Max streak: <strong>{streakData.bestStreak} days</strong>
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Heatmap Grid - Dynamically populated from actual user activity */}
-                  <div className="heatmap-grid-scroll">
-                    <div className="heatmap-matrix">
-                      {Array.from({ length: 364 }, (_, i) => {
-                        const d = new Date();
-                        d.setDate(d.getDate() - (363 - i));
-                        const dStr = d.toISOString().slice(0, 10);
-                        const dayNum = d.getDate();
-                        const isThisMonth = d.getMonth() === streakData.currentMonthIndex && d.getFullYear() === streakData.currentYear;
-
-                        const subCount = streakData.dailySubmissions[dStr] !== undefined
-                          ? streakData.dailySubmissions[dStr]
-                          : (isThisMonth && streakData.activeDaysSet.has(dayNum) ? ((dayNum % 3) + 2) : 0);
-
-                        let level = 'level-0';
-                        if (subCount >= 5) level = 'level-4';
-                        else if (subCount >= 3) level = 'level-3';
-                        else if (subCount >= 2) level = 'level-2';
-                        else if (subCount >= 1) level = 'level-1';
-
-                        return (
-                          <div
-                            key={i}
-                            className={`heatmap-cell ${level}`}
-                            title={`${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}: ${subCount} problems solved`}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6, fontSize: '0.75rem', color: '#64748B', marginTop: 10 }}>
-                    <span>Less</span>
-                    <div className="heatmap-cell" />
-                    <div className="heatmap-cell level-1" />
-                    <div className="heatmap-cell level-2" />
-                    <div className="heatmap-cell level-3" />
-                    <div className="heatmap-cell level-4" />
-                    <span>More</span>
-                  </div>
-                </div>
-
-                {/* Consistency Badges - Dynamic based on actual solved problems */}
-                <div className="heatmap-card">
-                  <h3 style={{ margin: '0 0 6px', fontSize: '1.15rem' }}>Consistency Badges</h3>
-                  <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>
-                    Earn streak trophies by solving interview problems and maintaining learning momentum.
-                  </p>
-
-                  <div className="badges-row">
-                    <div className="badge-item">
-                      <div className="badge-icon">🔥</div>
-                      <div className="badge-name">7 Problems Bronze</div>
-                      <span style={{ fontSize: '0.75rem', color: totalSolvedCount >= 7 ? '#16A34A' : '#94A3B8', fontWeight: 600 }}>
-                        {totalSolvedCount >= 7 ? 'Unlocked ✓' : `${totalSolvedCount}/7 Solved`}
-                      </span>
-                    </div>
-
-                    <div className="badge-item">
-                      <div className="badge-icon">⚡</div>
-                      <div className="badge-name">21 Problems Silver</div>
-                      <span style={{ fontSize: '0.75rem', color: totalSolvedCount >= 21 ? '#16A34A' : '#94A3B8', fontWeight: 600 }}>
-                        {totalSolvedCount >= 21 ? 'Unlocked ✓' : `${totalSolvedCount}/21 Solved`}
-                      </span>
-                    </div>
-
-                    <div className="badge-item">
-                      <div className="badge-icon">⭐</div>
-                      <div className="badge-name">50 Problems Gold</div>
-                      <span style={{ fontSize: '0.75rem', color: totalSolvedCount >= 50 ? '#16A34A' : '#94A3B8', fontWeight: 600 }}>
-                        {totalSolvedCount >= 50 ? 'Unlocked ✓' : `${totalSolvedCount}/50 Solved`}
-                      </span>
-                    </div>
-
-                    <div className="badge-item">
-                      <div className="badge-icon">🏆</div>
-                      <div className="badge-name">100 Problems Legend</div>
-                      <span style={{ fontSize: '0.75rem', color: totalSolvedCount >= 100 ? '#16A34A' : '#2563EB', fontWeight: 600 }}>
-                        {totalSolvedCount >= 100 ? 'Unlocked ✓' : `${totalSolvedCount}/100 Solved`}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 1. My Enrolled Courses & Permanent Lifetime Access */}
-                <div className="heatmap-card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <div>
-                      <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#0E1B3D' }}>
-                        🎓 Lifetime Enrolled Courses & Payment Receipts
-                      </h3>
-                      <p className="muted" style={{ margin: '4px 0 0', fontSize: '0.85rem' }}>
-                        Permanent lifetime course access granted on verified payment. Transaction & Reference details stored for permanent recovery.
-                      </p>
-                    </div>
-                    <span style={{ fontSize: '0.78rem', fontWeight: 700, padding: '4px 10px', borderRadius: 99, background: '#DCFCE7', color: '#15803D' }}>
-                      Permanent Access Active
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    {userEnrolledCourses && userEnrolledCourses.length > 0 ? (
-                      userEnrolledCourses.map((c, idx) => (
-                        <div
-                          key={c.orderId || idx}
-                          style={{
-                            padding: '16px',
-                            background: '#F8FAFC',
-                            border: '1px solid #E2E8F0',
-                            borderRadius: 10,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 10,
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-                            <div>
-                              <strong style={{ fontSize: '1.02rem', color: '#0E1B3D' }}>
-                                {c.courseTitle || c.courseId?.toUpperCase() || 'Full Mentorship Program'}
-                              </strong>
-                              <div style={{ fontSize: '0.82rem', color: '#64748B' }}>
-                                Enrolled: {c.paidAt ? new Date(c.paidAt).toLocaleString() : 'Permanent Lifetime'}
-                              </div>
-                            </div>
-                            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                              <span style={{ background: '#DCFCE7', color: '#16A34A', fontWeight: 700, padding: '3px 8px', borderRadius: 6, fontSize: '0.75rem' }}>
-                                ✓ Lifetime Access
-                              </span>
-                              <span style={{ background: '#EFF6FF', color: '#2563EB', fontWeight: 700, padding: '3px 8px', borderRadius: 6, fontSize: '0.75rem' }}>
-                                Paid: ₹{c.amount || 2999}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Txn ID, Ref ID, and Order Audit Info */}
-                          <div
-                            style={{
-                              display: 'grid',
-                              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                              gap: 10,
-                              background: '#FFFFFF',
-                              padding: '10px 14px',
-                              borderRadius: 8,
-                              border: '1px dashed #CBD5E1',
-                              fontSize: '0.82rem',
-                            }}
-                          >
-                            <div>
-                              <span style={{ color: '#64748B' }}>Txn. ID:</span>{' '}
-                              <code style={{ color: '#0F172A', fontWeight: 700 }}>{c.paymentId || 'pay_verified_permanent'}</code>
-                            </div>
-                            <div>
-                              <span style={{ color: '#64748B' }}>Ref. ID:</span>{' '}
-                              <code style={{ color: '#0F172A', fontWeight: 700 }}>{c.referenceId || c.orderId || 'ref_permanent'}</code>
-                            </div>
-                            <div>
-                              <span style={{ color: '#64748B' }}>Order ID:</span>{' '}
-                              <code style={{ color: '#0F172A', fontWeight: 700 }}>{c.orderId || 'ord_system'}</code>
-                            </div>
-                            <div>
-                              <span style={{ color: '#64748B' }}>Linked Email:</span>{' '}
-                              <strong style={{ color: '#2563EB' }}>{userAuthData?.email || userProfile?.email || 'Active Account'}</strong>
-                            </div>
-                          </div>
-
-                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-                            <Link to="/courses" className="sheet-btn primary" style={{ padding: '6px 14px', fontSize: '0.85rem' }}>
-                              Continue Learning →
-                            </Link>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div
-                        style={{
-                          padding: '16px',
-                          background: '#F8FAFC',
-                          border: '1px solid #E2E8F0',
-                          borderRadius: 10,
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          flexWrap: 'wrap',
-                          gap: 10,
-                        }}
-                      >
-                        <div>
-                          <strong style={{ fontSize: '0.98rem', color: '#0E1B3D' }}>
-                            {userAuthData?.hasActiveAccess ? 'Unicorn Placement Mentorship (Permanent Access)' : 'Explore Our Placement Mentorship Programs'}
-                          </strong>
-                          <div style={{ fontSize: '0.82rem', color: '#64748B', marginTop: 2 }}>
-                            {userAuthData?.hasActiveAccess
-                              ? 'Your account has permanent active membership access. Lifetime curriculum unlocked.'
-                              : 'Unlock 1-on-1 resume reviews, mock interviews, and live offline hiring days.'}
-                          </div>
-                        </div>
-                        <Link to="/courses" className="sheet-btn primary" style={{ padding: '8px 16px', fontSize: '0.88rem' }}>
-                          {userAuthData?.hasActiveAccess ? '✓ Continue Learning' : 'Explore Courses & Pricing →'}
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* 2. Limited Practice Sheet Quota & Enrolled Sheets */}
-                <div className="heatmap-card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <div>
-                      <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#0E1B3D' }}>
-                        📋 Enrolled Practice Sheets (Quota: {userEnrolledSheets.length} / {userAuthData?.maxPracticeSheetsAllowed || 2} Allowed)
-                      </h3>
-                      <p className="muted" style={{ margin: '4px 0 0', fontSize: '0.85rem' }}>
-                        Only limited practice sheet access is granted per user. Only sheets with ₹0.00 access fee are free to enroll.
-                      </p>
-                    </div>
-                    <span
-                      style={{
-                        fontSize: '0.78rem',
-                        fontWeight: 700,
-                        padding: '4px 10px',
-                        borderRadius: 99,
-                        background: userEnrolledSheets.length >= (userAuthData?.maxPracticeSheetsAllowed || 2) ? '#FEF3C7' : '#DCFCE7',
-                        color: userEnrolledSheets.length >= (userAuthData?.maxPracticeSheetsAllowed || 2) ? '#B45309' : '#15803D',
-                      }}
-                    >
-                      {userEnrolledSheets.length} of {userAuthData?.maxPracticeSheetsAllowed || 2} Enrolled
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {userEnrolledSheets && userEnrolledSheets.length > 0 ? (
-                      userEnrolledSheets.map((sheet, idx) => (
-                        <div
-                          key={sheet.sheetId || idx}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: '14px 18px',
-                            background: '#F8FAFC',
-                            borderRadius: 10,
-                            border: '1px solid #E2E8F0',
-                            flexWrap: 'wrap',
-                            gap: 10,
-                          }}
-                        >
-                          <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <strong style={{ fontSize: '0.98rem', color: '#0F172A' }}>{sheet.sheetTitle || sheet.sheetId}</strong>
-                              <span style={{ fontSize: '0.75rem', fontWeight: 700, background: '#DCFCE7', color: '#16A34A', padding: '2px 8px', borderRadius: 99 }}>
-                                ₹0.00 Free Enrollment
-                              </span>
-                            </div>
-                            <div style={{ fontSize: '0.82rem', color: '#64748B', marginTop: 4 }}>
-                              Role Track: <span style={{ textTransform: 'capitalize', fontWeight: 600 }}>{sheet.roleType || 'Non-Technical'}</span> · Enrolled on {sheet.enrolledAt ? new Date(sheet.enrolledAt).toLocaleDateString() : 'Active'}
-                            </div>
-                          </div>
-
-                          <button
-                            className="sheet-btn primary"
-                            style={{ padding: '6px 14px', fontSize: '0.85rem' }}
-                            onClick={() => {
-                              setActiveSheetId(sheet.sheetId);
-                              setSelectedTrackCategory(sheet.roleType || 'non-tech');
-                              setActiveTab('dsa');
-                            }}
-                          >
-                            ✓ Continue Practice →
-                          </button>
-                        </div>
-                      ))
-                    ) : (
-                      <div
-                        style={{
-                          padding: '16px',
-                          textAlign: 'center',
-                          background: '#F8FAFC',
-                          borderRadius: 8,
-                          border: '1px dashed #CBD5E1',
-                        }}
-                      >
-                        <p style={{ margin: '0 0 10px', fontSize: '0.9rem', color: '#64748B' }}>
-                          You have not enrolled in any practice sheets yet. You can enroll in up to 2 practice sheets for ₹0.00 free!
-                        </p>
-                        <button
-                          className="sheet-btn primary"
-                          style={{ padding: '6px 16px', fontSize: '0.85rem' }}
-                          onClick={() => {
-                            setActiveTab('dsa');
-                            setSelectedTrackCategory('non-tech');
-                          }}
-                        >
-                          Explore Practice Sheets →
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* 3. In-Profile Password Reset Mechanism */}
-                <div className="heatmap-card">
-                  <h3 style={{ margin: '0 0 6px', fontSize: '1.15rem', color: '#0E1B3D' }}>
-                    🔒 In-Profile Password Reset Mechanism
-                  </h3>
-                  <p className="muted" style={{ margin: '0 0 14px', fontSize: '0.85rem' }}>
-                    Quickly update your account login credentials directly from your profile dashboard.
-                  </p>
-
-                  <form onSubmit={handleInProfilePasswordReset} style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 450 }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: 4 }}>
-                        New Password
-                      </label>
-                      <input
-                        type="password"
-                        placeholder="Enter your new secure password (min 4 chars)"
-                        value={newProfilePassword}
-                        onChange={(e) => setNewProfilePassword(e.target.value)}
-                        style={{
-                          width: '100%',
-                          padding: '10px 14px',
-                          borderRadius: 8,
-                          border: '1px solid #CBD5E1',
-                          fontSize: '0.9rem',
-                          outline: 'none',
-                          boxSizing: 'border-box',
-                        }}
-                      />
-                    </div>
-
-                    {passwordResetStatus && (
-                      <div
-                        style={{
-                          padding: '10px 14px',
-                          borderRadius: 8,
-                          fontSize: '0.85rem',
-                          background: passwordResetStatus.type === 'success' ? '#ECFDF5' : '#FEF2F2',
-                          border: `1px solid ${passwordResetStatus.type === 'success' ? '#A7F3D0' : '#FECACA'}`,
-                          color: passwordResetStatus.type === 'success' ? '#065F46' : '#991B1B',
-                        }}
-                      >
-                        {passwordResetStatus.message}
-                      </div>
-                    )}
-
-                    <div>
-                      <button type="submit" className="sheet-btn primary" style={{ padding: '8px 18px', fontSize: '0.88rem' }}>
-                        Update Password Now
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-
-              {/* Right Profile Sidebar */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                {/* Personal Profile Card */}
-                <div className="progress-overview-card">
-                  <div style={{ textAlign: 'center', paddingBottom: 16, borderBottom: '1px solid #F1F5F9' }}>
-                    <div
-                      style={{
-                        width: 72,
-                        height: 72,
-                        borderRadius: '50%',
-                        background: '#2563EB',
-                        color: '#FFF',
-                        fontSize: '1.8rem',
-                        fontWeight: 800,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        margin: '0 auto 12px',
-                      }}
-                    >
-                      {((userAuthData?.name || userProfile?.name || 'User').split(' ').map((n) => n[0]).join('') || 'US').slice(0, 2).toUpperCase()}
-                    </div>
-                    <h3 style={{ margin: '0 0 4px', fontSize: '1.2rem' }}>
-                      {userAuthData?.name || userProfile?.name || 'Verified User'}
-                    </h3>
-                    <div style={{ fontSize: '0.85rem', color: '#64748B' }}>
-                      {userAuthData?.email || userProfile?.email || 'user@strivers.in'}
-                    </div>
-                    <div style={{ fontSize: '0.85rem', color: '#2563EB', fontWeight: 600, marginTop: 4 }}>
-                      {userAuthData?.isPermanent || userEnrolledCourses.length > 0
-                        ? 'Permanent Lifetime Member'
-                        : userAuthData?.role === 'admin'
-                        ? 'Platform Admin'
-                        : 'Practice Dashboard Member'}
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10, fontSize: '0.88rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span className="muted">User ID</span>
-                      <code style={{ fontSize: '0.8rem', color: '#0F172A' }}>
-                        {(userAuthData?.uid || 'usr_client').slice(0, 16)}...
-                      </code>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span className="muted">Account Role</span>
-                      <strong style={{ textTransform: 'capitalize' }}>{userAuthData?.role || 'User'}</strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span className="muted">Target Companies</span>
-                      <strong style={{ textAlign: 'right' }}>
-                        {Array.isArray(userProfile?.targetCompanies) && userProfile.targetCompanies.length > 0
-                          ? userProfile.targetCompanies.join(', ')
-                          : 'Not configured'}
-                      </strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span className="muted">Practice Quota</span>
-                      <strong>
-                        {userEnrolledSheets.length} / {userAuthData?.maxPracticeSheetsAllowed || 2} Sheets
-                      </strong>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Weekly Time Graph - Fully Dynamic */}
-                <div className="progress-overview-card">
-                  <h4 style={{ margin: '0 0 12px', fontSize: '1rem' }}>Total Learning Time (Weekly)</h4>
-                  <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: 110, padding: '10px 0', borderBottom: '1px solid #E2E8F0' }}>
-                    {streakData.weeklyDistribution.map((col, idx) => {
-                      const maxMin = Math.max(...streakData.weeklyDistribution.map((c) => c.minutes || 0), 60);
-                      const barHeight = col.minutes > 0 ? Math.min(100, Math.max(12, Math.round((col.minutes / maxMin) * 95))) : 4;
-                      return (
-                        <div key={col.day + idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flex: 1 }}>
-                          <div
-                            style={{
-                              width: 18,
-                              height: `${barHeight}px`,
-                              background: '#2563EB',
-                              borderRadius: 4,
-                              transition: 'height 0.4s ease',
-                            }}
-                            title={`${col.day}: ${col.time || col.minutes + 'm'}`}
-                          />
-                          <span style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 600 }}>{col.day}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div style={{ textAlign: 'center', marginTop: 10, fontSize: '0.85rem', color: '#64748B' }}>
-                    Total this week: <strong>{Math.floor(streakData.weeklyMinutes / 60)}h {streakData.weeklyMinutes % 60}m</strong>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <AnalyticsProfileView
+              userProfile={userProfile}
+              userAuthData={userAuthData}
+              userEnrolledSheets={userEnrolledSheets}
+              totalSolvedCount={totalSolvedCount}
+              streakData={streakData}
+              solvedMap={solvedMap}
+              analyticsData={analyticsData}
+            />
           )}
         </div>
       </div>
 
-      {/* ====================================================================
-          MODAL 1: Streak Details (Image 4)
-          ==================================================================== */}
-      {isStreakModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsStreakModalOpen(false)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div>
-                <h3>Streak Details</h3>
-                <span style={{ fontSize: '0.85rem', color: '#64748B' }}>Your daily consistency overview</span>
-              </div>
-              <button className="modal-close-btn" onClick={() => setIsStreakModalOpen(false)}>
-                ✕
-              </button>
-            </div>
-
-            <div className="modal-body">
-              {/* Quad stats */}
-              <div className="streak-metrics-quad">
-                <div className="quad-card">
-                  <div className="quad-card-title">
-                    <LocalFireDepartmentIcon sx={{ fontSize: 16, color: '#D97706' }} />
-                    <span>Current Week</span>
-                  </div>
-                  <div className="quad-card-value">
-                    {Array.from(streakData.activeDaysSet).filter((d) => Math.abs(d - streakData.todayDateNum) <= 6).length} days
-                  </div>
-                </div>
-
-                <div className="quad-card">
-                  <div className="quad-card-title">
-                    <EmojiEventsOutlinedIcon sx={{ fontSize: 16, color: '#2563EB' }} />
-                    <span>Best Streak</span>
-                  </div>
-                  <div className="quad-card-value">{streakData.bestStreak || 0} days</div>
-                </div>
-
-                <div className="quad-card">
-                  <div className="quad-card-title">
-                    <CalendarTodayOutlinedIcon sx={{ fontSize: 16, color: '#059669' }} />
-                    <span>Current Month</span>
-                  </div>
-                  <div className="quad-card-value">{streakData.activeDaysSet.size} days</div>
-                </div>
-
-                <div className="quad-card">
-                  <div className="quad-card-title">
-                    <TrendingUpIcon sx={{ fontSize: 16, color: '#7C3AED' }} />
-                    <span>Total Active Days</span>
-                  </div>
-                  <div className="quad-card-value">{streakData.totalActiveDays || 0} days</div>
-                </div>
-              </div>
-
-              {/* Total Active Banner */}
-              <div
-                style={{
-                  background: '#EFF6FF',
-                  border: '1px solid #BFDBFE',
-                  borderRadius: 10,
-                  padding: '12px 16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  marginBottom: 20,
-                }}
-              >
-                <BoltOutlinedIcon sx={{ fontSize: 24, color: '#2563EB' }} />
-                <div>
-                  <div style={{ fontSize: '0.8rem', color: '#1E3A8A' }}>Total Active Days</div>
-                  <strong style={{ fontSize: '1.1rem', color: '#1E3A8A' }}>
-                    {streakData.totalActiveDays || 0} days ({streakData.monthName} {streakData.currentYear})
-                  </strong>
-                </div>
-              </div>
-
-              {/* Month Calendar */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, fontSize: '0.9rem', fontWeight: 700 }}>
-                  <span>{streakData.monthName} {streakData.currentYear}</span>
-                  <span style={{ color: '#2563EB' }}>Active Streak ({streakData.activeDaysSet.size} days)</span>
-                </div>
-
-                <div className="calendar-grid">
-                  <div className="calendar-day-label">Su</div>
-                  <div className="calendar-day-label">Mo</div>
-                  <div className="calendar-day-label">Tu</div>
-                  <div className="calendar-day-label">We</div>
-                  <div className="calendar-day-label">Th</div>
-                  <div className="calendar-day-label">Fr</div>
-                  <div className="calendar-day-label">Sa</div>
-
-                  {/* Empty padding cells for first day of month */}
-                  {Array.from({ length: streakData.firstDayIndex }, (_, i) => (
-                    <div key={`modal-empty-${i}`} className="calendar-date-cell empty" style={{ opacity: 0 }} />
-                  ))}
-
-                  {Array.from({ length: streakData.daysInMonth }, (_, i) => i + 1).map((day) => {
-                    const isActive = streakData.activeDaysSet.has(day);
-                    const isToday = day === streakData.todayDateNum;
-
-                    return (
-                      <div
-                        key={day}
-                        className={`calendar-date-cell ${isActive ? 'active-streak' : ''} ${isToday ? 'today' : ''}`}
-                        title={`${streakData.monthName} ${day}: ${isActive ? 'Active streak day 🔥' : 'No activity'}`}
-                      >
-                        {day}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <button
-                className="sheet-btn primary"
-                style={{ width: '100%', marginTop: 24, justifyContent: 'center' }}
-                onClick={() => setIsStreakModalOpen(false)}
-              >
-                Close Streak Overview
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ====================================================================
-          MODAL 2: Personal Problem Note Editor
-          ==================================================================== */}
-      {activeNoteProblem && (
-        <div className="modal-overlay" onClick={() => setActiveNoteProblem(null)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div>
-                <h3>Personal Problem Note</h3>
-                <span style={{ fontSize: '0.85rem', color: '#64748B' }}>{activeNoteProblem.title}</span>
-              </div>
-              <button className="modal-close-btn" onClick={() => setActiveNoteProblem(null)}>
-                ✕
-              </button>
-            </div>
-
-            <div className="modal-body">
-              <p style={{ margin: '0 0 12px', fontSize: '0.9rem', color: '#475569' }}>
-                Save your personal key takeaways, edge cases, time/space complexities, or custom tips for revision.
-              </p>
-              <textarea
-                rows={6}
-                value={currentNoteText}
-                onChange={(e) => setCurrentNoteText(e.target.value)}
-                placeholder="e.g. Remember to handle negative numbers in Kadane's algorithm. Edge case: all elements negative..."
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  border: '1px solid #CBD5E1',
-                  fontFamily: 'var(--body)',
-                  fontSize: '0.92rem',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-              />
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 16 }}>
-                <button className="sheet-btn" onClick={() => setActiveNoteProblem(null)}>
-                  Cancel
-                </button>
-                <button className="sheet-btn primary" onClick={saveNote}>
-                  Save Note
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ====================================================================
-          MODAL 3: Note File Preview / Download Modal
-          ==================================================================== */}
-      {selectedNoteFile && (
-        <div className="modal-overlay" onClick={() => setSelectedNoteFile(null)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div>
-                <h3>{selectedNoteFile.title}</h3>
-                <span style={{ fontSize: '0.85rem', color: '#64748B' }}>{selectedNoteFile.tag}</span>
-              </div>
-              <button className="modal-close-btn" onClick={() => setSelectedNoteFile(null)}>
-                ✕
-              </button>
-            </div>
-
-            <div className="modal-body">
-              <p style={{ fontSize: '0.95rem', lineHeight: 1.6, color: '#334155' }}>
-                {selectedNoteFile.previewText}
-              </p>
-
-              <div
-                style={{
-                  background: '#F8FAFC',
-                  border: '1px dashed #CBD5E1',
-                  borderRadius: 10,
-                  padding: 16,
-                  margin: '16px 0',
-                }}
-              >
-                <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: 6 }}>Included Resources:</div>
-                <ul style={{ margin: 0, paddingLeft: 20, fontSize: '0.85rem', color: '#475569' }}>
-                  <li>Complete handwritten high-yield summary PDF</li>
-                  <li>Interview Q&A bank with solutions & code snippets</li>
-                  <li>Diagrammatic architectures & mental models</li>
-                </ul>
-              </div>
-
-              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-                <button className="sheet-btn" onClick={() => setSelectedNoteFile(null)}>
-                  Close
-                </button>
-                <button
-                  className="sheet-btn primary"
-                  onClick={() => {
-                    alert(`Starting download for ${selectedNoteFile.title} PDF notes!`);
-                    setSelectedNoteFile(null);
-                  }}
-                >
-                  Download PDF Notes 📥
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ====================================================================
-          MODAL 4: Plan Your DSA Journey Creator
-          ==================================================================== */}
-      {isPlanModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsPlanModalOpen(false)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div>
-                <h3>Create Your DSA Roadmap</h3>
-                <span style={{ fontSize: '0.85rem', color: '#64748B' }}>Custom timeline generator</span>
-              </div>
-              <button className="modal-close-btn" onClick={() => setIsPlanModalOpen(false)}>
-                ✕
-              </button>
-            </div>
-
-            <div className="modal-body">
-              <p style={{ fontSize: '0.9rem', color: '#475569', margin: '0 0 16px' }}>
-                Choose your target interview preparation window. We will automatically calculate the daily problem target for you:
-              </p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {[
-                  { weeks: 4, label: 'Fast-Track (4 Weeks)', desc: '6-7 problems daily · For immediate upcoming interviews' },
-                  { weeks: 8, label: 'Standard Master (8 Weeks)', desc: '3-4 problems daily · Recommended for placement season' },
-                  { weeks: 12, label: 'Deep Mastery (12 Weeks)', desc: '2 problems daily · In-depth foundational mastery' },
-                ].map((plan) => (
-                  <div
-                    key={plan.weeks}
-                    style={{
-                      padding: 14,
-                      border: '1.5px solid #E2E8F0',
-                      borderRadius: 10,
-                      cursor: 'pointer',
-                      background: '#F8FAFC',
-                    }}
-                    onClick={() => {
-                      alert(`Personalized ${plan.label} plan activated! Daily goal set.`);
-                      setIsPlanModalOpen(false);
-                    }}
-                  >
-                    <strong style={{ fontSize: '0.95rem', color: '#0E1B3D' }}>{plan.label}</strong>
-                    <div style={{ fontSize: '0.82rem', color: '#64748B', marginTop: 4 }}>{plan.desc}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ====================================================================
-          MODAL 5: Group Study & CodeBuddies
-          ==================================================================== */}
-      {isGroupStudyModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsGroupStudyModalOpen(false)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div>
-                <h3>Find a Group Study Partner</h3>
-                <span style={{ fontSize: '0.85rem', color: '#64748B' }}>Pair programming & peer mock interviews</span>
-              </div>
-              <button className="modal-close-btn" onClick={() => setIsGroupStudyModalOpen(false)}>
-                ✕
-              </button>
-            </div>
-
-            <div className="modal-body">
-              <p style={{ fontSize: '0.9rem', color: '#475569', margin: '0 0 16px' }}>
-                Connect with active strivers preparing for the same target companies. Compare problem approaches, share live code, and conduct peer mocks.
-              </p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {[
-                  { name: 'Kavya R.', target: 'Amazon SDE-1', solved: '124 Qs solved', active: 'Active now' },
-                  { name: 'Rohan M.', target: 'Google SWE', solved: '148 Qs solved', active: 'Active 10m ago' },
-                  { name: 'Sameer K.', target: 'Blinkit / Zomato', solved: '92 Qs solved', active: 'Active now' },
-                ].map((buddy, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '12px 14px',
-                      background: '#F8FAFC',
-                      border: '1px solid #E2E8F0',
-                      borderRadius: 10,
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>{buddy.name}</div>
-                      <div style={{ fontSize: '0.8rem', color: '#64748B' }}>
-                        Target: {buddy.target} • {buddy.solved}
-                      </div>
-                    </div>
-                    <button
-                      className="sheet-btn primary"
-                      style={{ padding: '6px 12px', fontSize: '0.8rem' }}
-                      onClick={() => {
-                        alert(`Study partner request sent to ${buddy.name}!`);
-                        setIsGroupStudyModalOpen(false);
-                      }}
-                    >
-                      Connect
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ====================================================================
-          MODAL 6: Operational Business Scenario & Case Study Modal (Non-Tech)
-          ==================================================================== */}
-      {activeScenarioModal && (
-        <div className="modal-overlay" onClick={() => setActiveScenarioModal(null)}>
-          <div className="modal-card" style={{ maxWidth: 680, width: '92%' }} onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                  <span className="company-badge" style={{ fontWeight: 800 }}>
-                    {activeScenarioModal.company}
-                  </span>
-                  <span className={`diff-pill ${activeScenarioModal.difficulty.toLowerCase()}`}>
-                    {activeScenarioModal.difficulty}
-                  </span>
-                  <span style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 600 }}>
-                    {activeScenarioModal.type}
-                  </span>
-                </div>
-                <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#0E1B3D' }}>
-                  {activeScenarioModal.title}
-                </h3>
-              </div>
-              <button className="modal-close-btn" onClick={() => setActiveScenarioModal(null)}>
-                ✕
-              </button>
-            </div>
-
-            <div className="modal-body" style={{ maxHeight: '72vh', overflowY: 'auto' }}>
-              {/* Scenario Context */}
-              <div style={{ marginBottom: 16 }}>
-                <h4 style={{ margin: '0 0 6px', fontSize: '0.95rem', color: '#1E293B' }}>
-                  📦 Real-World Operational Scenario:
-                </h4>
-                <div
-                  style={{
-                    background: '#F8FAFC',
-                    border: '1px solid #E2E8F0',
-                    borderLeft: '4px solid #2563EB',
-                    borderRadius: 8,
-                    padding: '12px 16px',
-                    fontSize: '0.92rem',
-                    lineHeight: 1.6,
-                    color: '#334155',
-                  }}
-                >
-                  {activeScenarioModal.scenario}
-                </div>
-              </div>
-
-              {/* Key Operational Metrics */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10, marginBottom: 18 }}>
-                <div style={{ background: '#EFF6FF', padding: '10px 12px', borderRadius: 8, textAlign: 'center' }}>
-                  <div style={{ fontSize: '0.72rem', color: '#1E40AF', fontWeight: 600, textTransform: 'uppercase' }}>Delivery SLA</div>
-                  <strong style={{ fontSize: '1rem', color: '#1E3A8A' }}>99.2% Target</strong>
-                </div>
-                <div style={{ background: '#ECFDF5', padding: '10px 12px', borderRadius: 8, textAlign: 'center' }}>
-                  <div style={{ fontSize: '0.72rem', color: '#065F46', fontWeight: 600, textTransform: 'uppercase' }}>Picker Time</div>
-                  <strong style={{ fontSize: '1rem', color: '#065F46' }}>&lt; 90 Seconds</strong>
-                </div>
-                <div style={{ background: '#FEF3C7', padding: '10px 12px', borderRadius: 8, textAlign: 'center' }}>
-                  <div style={{ fontSize: '0.72rem', color: '#92400E', fontWeight: 600, textTransform: 'uppercase' }}>Fill Rate</div>
-                  <strong style={{ fontSize: '1rem', color: '#92400E' }}>&gt; 98.5%</strong>
-                </div>
-                <div style={{ background: '#F1F5F9', padding: '10px 12px', borderRadius: 8, textAlign: 'center' }}>
-                  <div style={{ fontSize: '0.72rem', color: '#475569', fontWeight: 600, textTransform: 'uppercase' }}>Customer NPS</div>
-                  <strong style={{ fontSize: '1rem', color: '#0F172A' }}>4.8 / 5.0</strong>
-                </div>
-              </div>
-
-              {/* Mentor Guidance & Solution Breakdown */}
-              <div style={{ marginBottom: 18 }}>
-                <h4 style={{ margin: '0 0 6px', fontSize: '0.95rem', color: '#1E293B' }}>
-                  💡 Mentor Solution Breakdown & Action Framework:
-                </h4>
-                <div
-                  style={{
-                    background: '#F0FDF4',
-                    border: '1px solid #BBF7D0',
-                    borderRadius: 8,
-                    padding: '14px 16px',
-                    fontSize: '0.9rem',
-                    lineHeight: 1.6,
-                    color: '#166534',
-                  }}
-                >
-                  <p style={{ margin: '0 0 8px', fontWeight: 600 }}>Recommended Ops Playbook:</p>
-                  <ol style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <li><strong>Root Cause Isolation:</strong> Segment order delay into 3 buckets: dark store pick/pack time, rider assignment latency, and last-mile transit hurdles.</li>
-                    <li><strong>Rider Balancing & Surge Protocols:</strong> Activate dynamic radius geo-fencing (reducing delivery radius from 3km to 1.8km during rainfall or order spikes) to maintain 10-minute SLA.</li>
-                    <li><strong>Inventory Buffer Strategy:</strong> Implement fast-moving SKU safety stock (milk, bread, eggs, chips) directly in high-velocity picking zones next to the packing station.</li>
-                    <li><strong>Customer Communication & NPS Retention:</strong> Trigger automated SMS/WhatsApp ETA updates with transparent compensation coupons for orders exceeding 15 minutes.</li>
-                  </ol>
-                </div>
-              </div>
-
-              {/* Interview Takeaways */}
-              <div
-                style={{
-                  background: '#F8FAFC',
-                  border: '1px dashed #CBD5E1',
-                  borderRadius: 8,
-                  padding: '12px 16px',
-                  fontSize: '0.85rem',
-                  color: '#475569',
-                }}
-              >
-                <strong style={{ color: '#0F172A' }}>🎯 Interview Evaluation Tip:</strong>
-                <p style={{ margin: '4px 0 0' }}>
-                  When answering this in an interview with <strong>{activeScenarioModal.company}</strong>, emphasize data-driven trade-offs between customer delivery time (SLA) vs. delivery fleet burn cost. Interviewers look for hands-on operational grit, ownership mindset, and calm escalation handling.
-                </p>
-              </div>
-
-              {/* Actions */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 20 }}>
-                <button
-                  className={`sheet-btn ${solvedMap[activeScenarioModal.id] ? '' : 'primary'}`}
-                  style={{
-                    padding: '8px 18px',
-                    fontSize: '0.88rem',
-                    background: solvedMap[activeScenarioModal.id] ? '#DCFCE7' : undefined,
-                    color: solvedMap[activeScenarioModal.id] ? '#15803D' : undefined,
-                    borderColor: solvedMap[activeScenarioModal.id] ? '#86EFAC' : undefined,
-                  }}
-                  onClick={() => {
-                    toggleSolve(activeScenarioModal.id);
-                  }}
-                >
-                  {solvedMap[activeScenarioModal.id] ? '✓ Marked as Solved' : 'Mark as Solved ✓'}
-                </button>
-
-                <button
-                  className="sheet-btn"
-                  onClick={() => setActiveScenarioModal(null)}
-                >
-                  Close Scenario
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ====================================================================
-          SECURITY BANNER: Mandatory Screen Capture & Print Warning
-          Requirement: "if the user tries to takes screenshots, user must be shown
-          a message 'You can not take Screenshot or Print this page'"
-          ==================================================================== */}
-      {screenshotWarningNotice && (
-        <div className="drm-security-toast" role="alert">
-          <span style={{ fontSize: '1.4rem' }}>🛑</span>
-          <span>You can not take Screenshot or Print this page</span>
-        </div>
-      )}
-
-      {/* ====================================================================
-          MODAL: Masterclass Attendee Secret Passcode Redemption
-          Requirement: "During a Masterclass the all attending users enrolled in
-          that masterclass would be provided with a secret code that can be only
-          used by those users only to View the Paid Notes for Free."
-          ==================================================================== */}
-      {activeSecretCodeNote && (
-        <div className="modal-overlay" onClick={() => setActiveSecretCodeNote(null)}>
-          <div className="modal-card" style={{ maxWidth: 520, width: '92%' }} onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: '1.6rem' }}>🔑</span>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '1.18rem', color: '#0E1B3D' }}>Unlock Paid Note</h3>
-                  <span style={{ fontSize: '0.82rem', color: '#64748B' }}>Masterclass Attendee Privilege</span>
-                </div>
-              </div>
-              <button className="modal-close-btn" onClick={() => setActiveSecretCodeNote(null)}>
-                ✕
-              </button>
-            </div>
-
-            <div className="modal-body">
-              <div
-                style={{
-                  background: '#F5F3FF',
-                  border: '1px solid #DDD6FE',
-                  borderRadius: 10,
-                  padding: '14px 16px',
-                  marginBottom: 16,
-                }}
-              >
-                <strong style={{ color: '#5B21B6', fontSize: '0.92rem', display: 'block', marginBottom: 4 }}>
-                  {activeSecretCodeNote.title}
-                </strong>
-                <p style={{ margin: 0, fontSize: '0.84rem', color: '#6D28D9', lineHeight: 1.5 }}>
-                  This is a <strong>Paid Note</strong>. All attending students currently enrolled in the live Masterclass receive a secret attendee passcode from the mentor in Google Meet to unlock this document for free.
-                </p>
-              </div>
-
-              {secretCodeError && (
-                <div
-                  style={{
-                    background: '#FEF2F2',
-                    border: '1px solid #FECACA',
-                    color: '#DC2626',
-                    padding: '10px 14px',
-                    borderRadius: 8,
-                    fontSize: '0.85rem',
-                    marginBottom: 14,
-                  }}
-                >
-                  ⚠️ {secretCodeError}
-                </div>
-              )}
-
-              {secretCodeSuccess && (
-                <div
-                  style={{
-                    background: '#ECFDF5',
-                    border: '1px solid #A7F3D0',
-                    color: '#065F46',
-                    padding: '10px 14px',
-                    borderRadius: 8,
-                    fontSize: '0.85rem',
-                    marginBottom: 14,
-                    fontWeight: 600,
-                  }}
-                >
-                  {secretCodeSuccess}
-                </div>
-              )}
-
-              <form onSubmit={handleRedeemSecretCode}>
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: 6 }}>
-                    Enter Masterclass Secret Code:
-                  </label>
-                  <input
-                    type="text"
-                    className="input-control"
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      fontSize: '1rem',
-                      fontFamily: 'var(--mono, monospace)',
-                      letterSpacing: '1px',
-                      textTransform: 'uppercase',
-                      border: '1.5px solid #CBD5E1',
-                      borderRadius: 8,
-                    }}
-                    placeholder="e.g. STRIVERS2026"
-                    value={inputSecretCode}
-                    onChange={(e) => setInputSecretCode(e.target.value)}
-                    required
-                    autoFocus
-                  />
-                  <span style={{ fontSize: '0.76rem', color: '#94A3B8', marginTop: 4, display: 'block' }}>
-                    * Code is announced during the live Sunday masterclass session.
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', alignItems: 'center' }}>
-                  <button
-                    type="button"
-                    className="sheet-btn"
-                    onClick={() => setActiveSecretCodeNote(null)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="sheet-btn primary"
-                    style={{ padding: '8px 20px', background: '#7C3AED', borderColor: '#7C3AED' }}
-                    disabled={isRedeemingCode}
-                  >
-                    {isRedeemingCode ? 'Verifying...' : 'Verify & Unlock Note'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ====================================================================
-          MODAL: Secure DRM View-Only Document Viewer (PDF & HTML)
-          Requirements:
-          - Cannot take screenshot or print on Android / Mac / Windows / Linux / Chromebook
-          - Screenshots, printing, and screenshot extensions disabled on all paid services
-          - Displays warning "You can not take Screenshot or Print this page"
-          ==================================================================== */}
-      {drmActiveNote && (
-        <div
-          className="modal-overlay"
-          style={{ background: 'rgba(10, 15, 29, 0.92)', zIndex: 99990 }}
-          onClick={() => setDrmActiveNote(null)}
-        >
-          <div
-            className={`drm-protected-viewer ${isDocumentObfuscated ? 'obfuscated' : ''}`}
-            style={{
-              width: 'min(1100px, 95vw)',
-              height: 'min(92vh, 880px)',
-              borderRadius: 14,
-              display: 'flex',
-              flexDirection: 'column',
-              boxShadow: '0 30px 80px rgba(0, 0, 0, 0.7)',
-              border: '1px solid #334155',
-            }}
-            onClick={(e) => e.stopPropagation()}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              setScreenshotWarningNotice(true);
-              setTimeout(() => setScreenshotWarningNotice(false), 3000);
-            }}
-          >
-            {/* Viewer Topbar */}
-            <div className="drm-reader-toolbar" style={{ background: '#0F172A', color: '#F8FAFC', borderBottom: '1px solid #1E293B' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
-                <MenuBookIcon sx={{ color: '#38BDF8', fontSize: 22 }} />
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.96rem', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {drmContent?.title || drmActiveNote.title}
-                    </span>
-                    <span
-                      className="drm-mobile-hide"
-                      style={{
-                        fontSize: '0.68rem',
-                        padding: '2px 8px',
-                        borderRadius: 4,
-                        background: drmActiveNote.type === 'paid' ? '#7C3AED' : '#10B981',
-                        color: '#FFF',
-                        textTransform: 'uppercase',
-                        fontWeight: 700,
-                      }}
-                    >
-                      {drmActiveNote.type === 'paid' ? 'Member Access' : 'Open Resource'}
-                    </span>
-                  </div>
-                  <span className="drm-mobile-hide" style={{ fontSize: '0.76rem', color: '#94A3B8' }}>
-                    In-App Reading Mode
-                  </span>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span
-                  className="drm-mobile-hide"
-                  style={{
-                    fontSize: '0.74rem',
-                    color: '#38BDF8',
-                    fontFamily: 'var(--mono, monospace)',
-                    background: 'rgba(56, 189, 248, 0.1)',
-                    padding: '3px 8px',
-                    borderRadius: 4,
-                  }}
-                >
-                  Student: {userAuthData?.email || userProfile?.email || 'Authenticated'}
-                </span>
-                <IconButton
-                  size="small"
-                  aria-label="Close document viewer"
-                  sx={{ color: '#F8FAFC' }}
-                  onClick={() => setDrmActiveNote(null)}
-                >
-                  <CloseIcon fontSize="small" />
-                </IconButton>
-              </div>
-            </div>
-
-            {/* Viewer Body & Document Canvas */}
-            <div style={{ position: 'relative', flex: '1 1 auto', overflow: 'hidden', background: '#FFFFFF' }}>
-              {/* Default Irremovable Student Watermark Matrix */}
-              <StudentWatermarkOverlay
-                studentLabel={userAuthData?.email || userProfile?.email || 'STUDENT'}
-                theme="light"
-              />
-
-              {/* Obfuscation Shield */}
-              {isDocumentObfuscated && (
-                <div className="drm-blocker-shield">
-                  <ShieldOutlinedIcon sx={{ fontSize: 44, color: '#EF4444', mb: 1 }} />
-                  <h3 style={{ margin: '0 0 8px', fontSize: '1.2rem', color: '#EF4444' }}>
-                    Content Hidden While Window Unfocused
-                  </h3>
-                  <p style={{ maxWidth: 420, fontSize: '0.88rem', color: '#CBD5E1', margin: 0 }}>
-                    Return focus to the reading window to continue viewing your study notes.
-                  </p>
-                </div>
-              )}
-
-              {/* Document Rendering Frame */}
-              <div className="drm-document-frame" style={{ width: '100%', height: '100%', overflowY: 'auto', padding: '20px 24px' }}>
-                {isDrmLoading ? (
-                  <div style={{ textAlign: 'center', padding: '72px 20px', color: '#64748B' }}>
-                    <div>Loading study document...</div>
-                  </div>
-                ) : drmContent?.fileType === 'pdf' ? (
-                  <iframe
-                    title="Study Document Viewer"
-                    src={`data:application/pdf;base64,${drmContent.fileData}#toolbar=0&navpanes=0&scrollbar=0`}
-                    style={{ width: '100%', height: '100%', border: 'none' }}
-                  />
-                ) : (
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: drmContent?.fileData
-                        ? atob(drmContent.fileData)
-                        : `<p style="padding: 24px; color: #64748b;">Loading document preview...</p>`,
-                    }}
-                  />
-                )}
-              </div>
-            </div>
-
-            {/* Viewer Bottom Footer Bar */}
-            <div
-              style={{
-                padding: '8px 18px',
-                background: '#F8FAFC',
-                borderTop: '1px solid #E2E8F0',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexShrink: 0,
-                fontSize: '0.78rem',
-                color: '#64748B',
-              }}
-            >
-              <span>Student Watermark: {userAuthData?.email || userProfile?.email || 'Authenticated'}</span>
-              <button
-                className="sheet-btn drm-mobile-hide"
-                style={{ padding: '4px 14px', fontSize: '0.8rem' }}
-                onClick={() => setDrmActiveNote(null)}
-              >
-                Close Viewer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 3. Global Dashboard Dialogs & Modals */}
+      <DashboardModals
+        isStreakModalOpen={isStreakModalOpen}
+        setIsStreakModalOpen={setIsStreakModalOpen}
+        streakData={streakData}
+        activeNoteProblem={activeNoteProblem}
+        setActiveNoteProblem={setActiveNoteProblem}
+        currentNoteText={currentNoteText}
+        setCurrentNoteText={setCurrentNoteText}
+        saveNote={saveNote}
+        selectedNoteFile={selectedNoteFile}
+        setSelectedNoteFile={setSelectedNoteFile}
+        isPlanModalOpen={isPlanModalOpen}
+        setIsPlanModalOpen={setIsPlanModalOpen}
+        isGroupStudyModalOpen={isGroupStudyModalOpen}
+        setIsGroupStudyModalOpen={setIsGroupStudyModalOpen}
+        activeScenarioModal={activeScenarioModal}
+        setActiveScenarioModal={setActiveScenarioModal}
+        screenshotWarningNotice={screenshotWarningNotice}
+        setScreenshotWarningNotice={setScreenshotWarningNotice}
+        activeSecretCodeNote={activeSecretCodeNote}
+        setActiveSecretCodeNote={setActiveSecretCodeNote}
+        inputSecretCode={inputSecretCode}
+        setInputSecretCode={setInputSecretCode}
+        secretCodeError={secretCodeError}
+        secretCodeSuccess={secretCodeSuccess}
+        isRedeemingCode={isRedeemingCode}
+        handleRedeemSecretCode={handleRedeemSecretCode}
+        drmActiveNote={drmActiveNote}
+        setDrmActiveNote={setDrmActiveNote}
+        isDocumentObfuscated={isDocumentObfuscated}
+        drmContent={drmContent}
+        isDrmLoading={isDrmLoading}
+        userAuthData={userAuthData}
+        userProfile={userProfile}
+      />
     </div>
   );
 }

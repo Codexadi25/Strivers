@@ -41,14 +41,14 @@ export default function Courses() {
 
   const fallbackSessionLabel = useMemo(() => nextSessionLabel(), []);
 
-  const isCourseOwned = (courseId) => {
+  const isCourseOwned = useCallback((courseId) => {
     if (!user) return false;
     if (user.role === 'admin' || user.isAdmin) return true;
     const cid = String(courseId).toLowerCase();
     return Boolean(
       user.enrolledCourses?.some((c) => String(c.courseId).toLowerCase() === cid)
     );
-  };
+  }, [user]);
 
   useEffect(() => {
     let isMounted = true;
@@ -128,7 +128,7 @@ export default function Courses() {
         price: target.price,
       });
     }
-  }, [user, courses, navigate]);
+  }, [user, courses, navigate, isCourseOwned]);
 
   const openCourseDetail = (courseId) => {
     navigate(`/courses/${encodeURIComponent(courseId)}`);
@@ -149,7 +149,7 @@ export default function Courses() {
       return courses.filter((c) => c.category === 'course' || !c.isMasterclass);
     }
     return courses;
-  }, [courses, activeTab, user]);
+  }, [courses, activeTab, isCourseOwned]);
 
   const heroData = catalogMeta?.hero || {
     badge: 'LIVE INDUSTRY PROGRAMS & PLACEMENT TRACKS',

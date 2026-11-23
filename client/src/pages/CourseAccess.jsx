@@ -374,7 +374,7 @@ export default function CourseAccess() {
                           Session Has Concluded
                         </h2>
                         <p className="product-access-ended-msg">
-                          Awww, the masterclass has already ended. If you have missed the class you may request to rearrange it again but, depends upon the request volume size. Although you can read the given study material given below
+                          The Session was already over at {courseData?.timingSlots?.[0]?.endTime || '01:00 PM'} you may Download Notes and Shared Resources below. T&amp;C Applied.
                         </p>
 
                         <div className="product-access-ended-actions">

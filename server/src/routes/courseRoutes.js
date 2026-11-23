@@ -72,6 +72,7 @@ function formatPublicCourse(c) {
       agenda: s.agenda || [],
     })),
     materialsCount: (c.notesAndPdfs || []).length,
+    whatsappGroupLink: c.whatsappGroupLink || '',
     isActive: c.isActive !== false,
   };
 }
