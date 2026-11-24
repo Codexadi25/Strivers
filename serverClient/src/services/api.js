@@ -3,7 +3,13 @@
  * Connects securely via Bearer JWT to /api/v2/adminaccess with local dev, Render & Firebase Hosting support
  */
 
-export const DEFAULT_PRODUCTION_BACKEND = 'https://server-atdteam.vercel.app/api/v2/adminaccess';
+/**
+ * Dynamic Server Connection Endpoint Resolution for serverClient
+ * Strictly derived from the active .env file (VITE_API_BASE_URL / REACT_APP_API_BASE_URL).
+ * Absolutely no server addresses or hostnames are hardcoded in the application code.
+ */
+
+export const DEFAULT_PRODUCTION_BACKEND = '/api/v2/adminaccess';
 
 let cachedWorkingBase = null;
 
@@ -17,20 +23,25 @@ export function normalizeAdminApiBase(rawUrl) {
 }
 
 export function getConfiguredApiBase() {
-  const localStorageOverride =
-    typeof localStorage !== 'undefined'
-      ? localStorage.getItem('strivers_admin_api_url') || ''
-      : '';
-  const runtimeOverride =
-    typeof window !== 'undefined' ? window.__STRIVERS_API_URL__ : '';
+  // 1. Strictly prioritize the .env file configuration first
   const envUrl =
     (typeof process !== 'undefined' && process.env
       ? process.env.VITE_API_BASE_URL || process.env.REACT_APP_API_BASE_URL
       : '') || '';
 
-  const chosen = localStorageOverride || runtimeOverride || envUrl;
-  const normalized = normalizeAdminApiBase(chosen);
-  return normalized || DEFAULT_PRODUCTION_BACKEND;
+  const normalizedEnv = normalizeAdminApiBase(envUrl);
+  if (normalizedEnv) return normalizedEnv;
+
+  // 2. Runtime override via window.__STRIVERS_API_URL__ (if explicitly injected at runtime)
+  const runtimeOverride =
+    typeof window !== 'undefined' ? window.__STRIVERS_API_URL__ : '';
+  if (runtimeOverride) {
+    const normalizedRuntime = normalizeAdminApiBase(runtimeOverride);
+    if (normalizedRuntime) return normalizedRuntime;
+  }
+
+  // 3. Fallback to relative default if no environment variable is provided
+  return DEFAULT_PRODUCTION_BACKEND;
 }
 
 export function getActiveApiBase() {
@@ -54,40 +65,13 @@ export const getCandidateBases = () => {
   const candidates = [];
   const configuredRemote = getConfiguredApiBase();
 
-  if (typeof window !== 'undefined') {
-    const host = window.location.hostname;
-    const isLocalHost = host === 'localhost' || host === '127.0.0.1';
-    const isFirebaseHosting = host.includes('web.app') || host.includes('firebaseapp.com');
-
-    if (isLocalHost) {
-      if (window.location.port === '8080' || window.location.port === '5000') {
-        candidates.push(`${window.location.origin}/api/v2/adminaccess`);
-      }
-      // Prioritize relative /api/v2/adminaccess (handled by webpack devServer proxy on 5173 -> 8080)
-      candidates.push('/api/v2/adminaccess');
-      if (configuredRemote) candidates.push(configuredRemote);
-      candidates.push('http://127.0.0.1:8080/api/v2/adminaccess');
-      candidates.push('http://localhost:8080/api/v2/adminaccess');
-      candidates.push('http://127.0.0.1:5000/api/v2/adminaccess');
-      candidates.push('http://localhost:5000/api/v2/adminaccess');
-    } else {
-      // Production Hosting (e.g. ExternalStrivers.web.app or custom domain)
-      if (configuredRemote) {
-        candidates.push(configuredRemote);
-      }
-      candidates.push(DEFAULT_PRODUCTION_BACKEND);
-
-      // Only attempt relative /api path if NOT hosted on Firebase static CDN domain
-      if (!isFirebaseHosting) {
-        candidates.push('/api/v2/adminaccess');
-      }
-    }
-  } else {
-    if (configuredRemote) candidates.push(configuredRemote);
-    candidates.push('http://127.0.0.1:8080/api/v2/adminaccess');
-    candidates.push('http://localhost:8080/api/v2/adminaccess');
-    candidates.push('http://127.0.0.1:5000/api/v2/adminaccess');
+  // Primary: Strictly use the endpoint configured in .env
+  if (configuredRemote) {
+    candidates.push(configuredRemote);
   }
+
+  // Relative path fallback for reverse proxies or same-origin deployments
+  candidates.push(DEFAULT_PRODUCTION_BACKEND);
 
   return Array.from(new Set(candidates.filter(Boolean)));
 };

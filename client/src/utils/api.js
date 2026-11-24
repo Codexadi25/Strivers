@@ -1,36 +1,25 @@
 import axios from 'axios';
 import { auth } from '../services/firebase';
 
+/**
+ * Dynamic Server Connection Endpoint Resolution
+ * Strictly derived from the active .env file (REACT_APP_API_BASE_URL / VITE_API_BASE_URL).
+ * Absolutely no server addresses or hostnames are hardcoded in the application code.
+ */
 const getApiBase = () => {
-  // 1. In browser running on localhost/127.0.0.1, prioritize local backend server (/api)
-  if (typeof window !== 'undefined') {
-    const host = window.location.hostname;
-    if (host === 'localhost' || host === '127.0.0.1') {
-      let envBase = process.env.REACT_APP_API_BASE_URL || '';
-      if (envBase && (envBase.includes('localhost') || envBase.includes('127.0.0.1'))) {
-        envBase = envBase
-          .replace(/^https:\/\/localhost/i, 'http://localhost')
-          .replace(/^https:\/\/127\.0\.0\.1/i, 'http://127.0.0.1');
-        return envBase.replace(/\/api\/v1$/, '/api').replace(/\/$/, '');
-      }
-      return 'http://localhost:8080/api';
-    }
+  const envBase = (
+    typeof process !== 'undefined' && process.env
+      ? process.env.REACT_APP_API_BASE_URL || process.env.VITE_API_BASE_URL
+      : ''
+  ) || '';
+
+  if (envBase) {
+    const clean = String(envBase).trim().replace(/\/+$/, '');
+    return clean.endsWith('/api') ? clean : `${clean}/api`;
   }
 
-  // 2. Production or custom environment URL (standardized to /api)
-  let base = process.env.REACT_APP_API_BASE_URL;
-  if (base.includes('localhost') || base.includes('127.0.0.1')) {
-    base = base
-      .replace(/^https:\/\/localhost/i, 'http://localhost')
-      .replace(/^https:\/\/127\.0\.0\.1/i, 'http://127.0.0.1');
-  }
-
-  if (base.includes('.onrender.com:8080')) {
-    base = base.replace('.onrender.com:8080', '.onrender.com');
-  }
-
-  const clean = base.replace(/\/api\/v1$/, '/api').replace(/\/$/, '');
-  return clean.endsWith('/api') ? clean : `${clean}/api`;
+  // Fallback to relative /api when running behind same-origin or reverse proxy
+  return '/api';
 };
 
 export const API_BASE = getApiBase();

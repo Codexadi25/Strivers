@@ -283,7 +283,10 @@ export default function LifelinePage() {
             size="small"
             variant="outlined"
             endIcon={<OpenInNewIcon fontSize="small" />}
-            onClick={() => window.open('http://localhost:8080/admin', '_blank', 'noopener,noreferrer')}
+            onClick={() => {
+              const root = getActiveApiBase().replace(/\/api(\/v2(\/adminaccess)?)?$/, '');
+              if (root) window.open(`${root}/admin`, '_blank', 'noopener,noreferrer');
+            }}
             sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}
           >
             Basic Server GUI
@@ -292,7 +295,12 @@ export default function LifelinePage() {
             size="small"
             variant="outlined"
             endIcon={<OpenInNewIcon fontSize="small" />}
-            onClick={() => window.open('http://localhost:3000', '_blank', 'noopener,noreferrer')}
+            onClick={() => {
+              const studentUrl =
+                (typeof process !== 'undefined' && process.env && (process.env.VITE_STUDENT_PORTAL_URL || process.env.REACT_APP_STUDENT_PORTAL_URL)) ||
+                (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.host}` : '/');
+              window.open(studentUrl, '_blank', 'noopener,noreferrer');
+            }}
             sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}
           >
             Student Portal
