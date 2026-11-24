@@ -774,7 +774,16 @@ router.delete('/users/:id', async (req, res) => {
 // ==========================================
 // 7. SYSTEM TELEMETRY & AUDIT LOGS
 // ==========================================
+let cachedTelemetryResult = null;
+let lastTelemetryFetchTime = 0;
+const TELEMETRY_CACHE_TTL = 15000; // 15-second cache prevents repeated DB aggregations & CPU burn
+
 router.get('/telemetry', async (req, res) => {
+  const now = Date.now();
+  if (cachedTelemetryResult && (now - lastTelemetryFetchTime < TELEMETRY_CACHE_TTL)) {
+    return res.json(cachedTelemetryResult);
+  }
+
   const memory = process.memoryUsage();
   let revStats = ActivityOrderStore.computeRevenueStats();
   let activeSubs = UserStore.countActiveSubscribers();
@@ -831,7 +840,7 @@ router.get('/telemetry', async (req, res) => {
     } catch (_) {}
   }
 
-  res.json({
+  const payload = {
     success: true,
     telemetry: {
       serverStatus: 'OPERATIONAL',
@@ -871,7 +880,12 @@ router.get('/telemetry', async (req, res) => {
       },
       activities: logsData.logs,
     },
-  });
+  };
+
+  cachedTelemetryResult = payload;
+  lastTelemetryFetchTime = Date.now();
+
+  res.json(payload);
 });
 
 router.get('/audit-logs', async (req, res) => {

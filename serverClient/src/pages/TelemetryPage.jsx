@@ -63,7 +63,11 @@ export default function TelemetryPage({ onTabChange }) {
 
   useEffect(() => {
     fetchTelemetry();
-    const interval = setInterval(fetchTelemetry, 12000);
+    // Eco-friendly polling: 60s interval that automatically pauses when the browser tab is hidden/inactive
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      fetchTelemetry();
+    }, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -204,11 +208,22 @@ export default function TelemetryPage({ onTabChange }) {
 
   return (
     <div className="telem-page-root">
-      <div className="telem-header">
-        <h2 className="telem-title">System Telemetry &amp; Platform Overview</h2>
-        <p className="telem-desc">
-          Real-time server health, live revenue metrics, captured transactions, and system activity stream.
-        </p>
+      <div className="telem-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h2 className="telem-title">System Telemetry &amp; Platform Overview</h2>
+          <p className="telem-desc">
+            Real-time server health, live revenue metrics, captured transactions, and system activity stream.
+          </p>
+        </div>
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<RefreshIcon />}
+          onClick={fetchTelemetry}
+          sx={{ textTransform: 'none', borderColor: '#cbd5e1', color: '#475569' }}
+        >
+          Refresh Now
+        </Button>
       </div>
 
       {error && (

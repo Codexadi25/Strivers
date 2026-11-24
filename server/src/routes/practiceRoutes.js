@@ -10,6 +10,7 @@ const { verifyFirebaseToken } = require('../middlewares/authMiddleware');
 
 // Get all practice sheets categorized by job requirement (/api/practice/sheets)
 router.get('/sheets', async (req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=15, s-maxage=60, stale-while-revalidate=120');
   try {
     let sheets = PracticeStore.getAll();
     if ((!sheets || sheets.length === 0) && mongoose.connection.readyState === 1) {

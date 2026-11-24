@@ -97,6 +97,8 @@ async function resolveUserEnrollment(uid, email) {
 
 // 1. List active courses/masterclasses along with dynamic catalog meta (/api/courses)
 router.get('/', async (req, res) => {
+  // Edge CDN Caching: Serves repeated visitors directly from Vercel Edge CDN without executing serverless function
+  res.setHeader('Cache-Control', 'public, max-age=10, s-maxage=60, stale-while-revalidate=120');
   try {
     const catalogMeta = CatalogStore.getConfig();
     const storeActive = CourseStore.getActive();
