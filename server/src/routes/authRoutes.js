@@ -9,6 +9,37 @@ const { verifyFirebaseToken } = require('../middlewares/authMiddleware');
 const { signSessionToken, verifySessionToken } = require('../utils/token');
 const { hashPassword, verifyPassword } = require('../utils/password');
 
+// Cookie session helper
+function setSessionCookies(res, token) {
+  if (!res || typeof res.cookie !== 'function' || !token) return;
+  const isProd = process.env.NODE_ENV === 'production';
+  const cookieOptions = {
+    path: '/',
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    httpOnly: false,
+    sameSite: isProd ? 'none' : 'lax',
+    secure: isProd,
+  };
+  try {
+    res.cookie('auth_token', token, cookieOptions);
+    res.cookie('strivers_session', token, cookieOptions);
+  } catch (_) {}
+}
+
+function clearSessionCookies(res) {
+  if (!res || typeof res.clearCookie !== 'function') return;
+  const isProd = process.env.NODE_ENV === 'production';
+  const cookieOptions = {
+    path: '/',
+    sameSite: isProd ? 'none' : 'lax',
+    secure: isProd,
+  };
+  try {
+    res.clearCookie('auth_token', cookieOptions);
+    res.clearCookie('strivers_session', cookieOptions);
+  } catch (_) {}
+}
+
 // Helper: build clean user response object
 function formatAuthUser(userDoc, fallbackReqUser = {}) {
   const email = (userDoc?.email || fallbackReqUser.email || '').trim().toLowerCase();
@@ -127,6 +158,8 @@ router.post('/login', async (req, res) => {
       tag: 'AUTH',
     });
 
+    setSessionCookies(res, token);
+
     return res.json({
       success: true,
       token,
@@ -215,6 +248,7 @@ router.post('/register', async (req, res) => {
     });
 
     const token = signSessionToken({ uid, email: userEmail, role: 'user' });
+    setSessionCookies(res, token);
 
     return res.status(201).json({
       success: true,
@@ -361,6 +395,7 @@ router.post('/refresh', verifyFirebaseToken, (req, res) => {
     return res.status(401).json({ success: false, message: 'No active session to refresh.' });
   }
   const newToken = signSessionToken({ uid: req.user.uid, email: req.user.email, role: req.user.role });
+  setSessionCookies(res, newToken);
   return res.json({ success: true, token: newToken });
 });
 
@@ -375,6 +410,7 @@ router.post('/logout', verifyFirebaseToken, (req, res) => {
       tag: 'AUTH',
     });
   }
+  clearSessionCookies(res);
   res.json({ success: true, message: 'Logged out successfully.' });
 });
 

@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import api, { API_BASE } from '../utils/api';
+import { getAuthUser, getAuthToken } from '../utils/authStorage';
+import { setCredentials, selectCurrentUser } from '../store/slices/authSlice';
 import Header from '../components/common/Header';
 import Footer from '../components/common/Footer';
 import './Auth.css';
@@ -22,20 +25,19 @@ export default function Login() {
       : ''
   );
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const reduxUser = useSelector(selectCurrentUser);
 
-  // If user is already authenticated, check session
+  // If user is already authenticated, check session across Redux and storage
   useEffect(() => {
-    const storedUser = localStorage.getItem('auth_user');
-    const storedToken = localStorage.getItem('auth_token');
-    if (storedUser && storedToken && !isLoggedOut) {
-      try {
-        const u = JSON.parse(storedUser);
-        if (u && u.email) {
-          setNoticeMsg(`Signed in as ${u.name || u.email}. Click "Open Classroom" to continue.`);
-        }
-      } catch (_) {}
+    const user = reduxUser || getAuthUser();
+    const token = getAuthToken();
+    if (user && token && !isLoggedOut) {
+      if (user.email) {
+        setNoticeMsg(`Signed in as ${user.name || user.email}. Click "Open Classroom" to continue.`);
+      }
     }
-  }, [isLoggedOut]);
+  }, [reduxUser, isLoggedOut]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -46,14 +48,8 @@ export default function Login() {
     try {
       const res = await api.post('/auth/login', { ...form, plan });
       if (res.data?.token) {
-        localStorage.setItem('auth_token', res.data.token);
+        dispatch(setCredentials({ token: res.data.token, user: res.data.user }));
       }
-      if (res.data?.user) {
-        localStorage.setItem('auth_user', JSON.stringify(res.data.user));
-      }
-
-      // Notify entire app of authentication change
-      window.dispatchEvent(new Event('auth_state_change'));
 
       // Check if user already owns access to the opted course
       if (res.data?.alreadyPaid) {

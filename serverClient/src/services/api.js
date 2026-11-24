@@ -77,32 +77,91 @@ export const getCandidateBases = () => {
 };
 
 export function getAdminToken() {
-  if (typeof localStorage === 'undefined') return '';
-  return (
-    localStorage.getItem('strivers_admin_token') ||
-    localStorage.getItem('admin_token') ||
-    ''
-  );
+  let token = '';
+  if (typeof sessionStorage !== 'undefined') {
+    try {
+      token = sessionStorage.getItem('strivers_admin_token') || sessionStorage.getItem('admin_token') || '';
+    } catch (_) {}
+  }
+  if (!token && typeof localStorage !== 'undefined') {
+    try {
+      token =
+        localStorage.getItem('strivers_admin_token') ||
+        localStorage.getItem('admin_token') ||
+        '';
+    } catch (_) {}
+  }
+  if (!token && typeof document !== 'undefined') {
+    try {
+      const match = document.cookie.match(/(?:^|;\s*)strivers_admin_token=([^;]+)/);
+      if (match) token = decodeURIComponent(match[1]);
+    } catch (_) {}
+  }
+  return token;
 }
 
 export function setAdminSession(token, user) {
-  if (typeof localStorage === 'undefined') return;
   if (token) {
-    localStorage.setItem('strivers_admin_token', token);
-    localStorage.setItem('admin_token', token);
+    if (typeof sessionStorage !== 'undefined') {
+      try {
+        sessionStorage.setItem('strivers_admin_token', token);
+        sessionStorage.setItem('admin_token', token);
+        sessionStorage.setItem('strivers_admin_session_key', `sess_${Date.now()}`);
+      } catch (_) {}
+    }
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem('strivers_admin_token', token);
+        localStorage.setItem('admin_token', token);
+      } catch (_) {}
+    }
+    if (typeof document !== 'undefined') {
+      try {
+        const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+        document.cookie = `strivers_admin_token=${encodeURIComponent(token)}; path=/; max-age=2592000; SameSite=Lax${isHttps ? '; Secure' : ''}`;
+      } catch (_) {}
+    }
   }
   if (user) {
-    localStorage.setItem('strivers_admin_user', JSON.stringify(user));
-    localStorage.setItem('strivers_admin_email', user.email || '');
+    const serialized = JSON.stringify(user);
+    if (typeof sessionStorage !== 'undefined') {
+      try {
+        sessionStorage.setItem('strivers_admin_user', serialized);
+        sessionStorage.setItem('strivers_admin_email', user.email || '');
+      } catch (_) {}
+    }
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem('strivers_admin_user', serialized);
+        localStorage.setItem('strivers_admin_email', user.email || '');
+      } catch (_) {}
+    }
   }
 }
 
 export function clearAdminSession() {
-  if (typeof localStorage === 'undefined') return;
-  localStorage.removeItem('strivers_admin_token');
-  localStorage.removeItem('strivers_admin_user');
-  localStorage.removeItem('strivers_admin_email');
-  localStorage.removeItem('admin_token');
+  if (typeof sessionStorage !== 'undefined') {
+    try {
+      sessionStorage.removeItem('strivers_admin_token');
+      sessionStorage.removeItem('admin_token');
+      sessionStorage.removeItem('strivers_admin_user');
+      sessionStorage.removeItem('strivers_admin_email');
+      sessionStorage.removeItem('strivers_admin_session_key');
+    } catch (_) {}
+  }
+  if (typeof localStorage !== 'undefined') {
+    try {
+      localStorage.removeItem('strivers_admin_token');
+      localStorage.removeItem('strivers_admin_user');
+      localStorage.removeItem('strivers_admin_email');
+      localStorage.removeItem('admin_token');
+    } catch (_) {}
+  }
+  if (typeof document !== 'undefined') {
+    try {
+      document.cookie = 'strivers_admin_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+    } catch (_) {}
+  }
 }
 
 /**

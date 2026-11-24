@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
@@ -9,9 +10,11 @@ import CircularProgress from '@mui/material/CircularProgress';
 import LoginIcon from '@mui/icons-material/Login';
 import appLogo from '../assets/favicon.ico';
 import { apiCall, setAdminSession } from '../services/api';
+import { setAdminCredentials } from '../store/slices/adminAuthSlice';
 import './LoginPage.css';
 
 export default function LoginPage({ onLoginSuccess, isDark = false }) {
+  const dispatch = useDispatch();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -29,8 +32,9 @@ export default function LoginPage({ onLoginSuccess, isDark = false }) {
       });
 
       if (res && res.success && res.token && res.user) {
+        dispatch(setAdminCredentials({ token: res.token, user: res.user }));
         setAdminSession(res.token, res.user);
-        onLoginSuccess(res.user);
+        if (onLoginSuccess) onLoginSuccess(res.user);
       } else {
         setError(res?.message || 'Invalid authentication response from backend server.');
       }

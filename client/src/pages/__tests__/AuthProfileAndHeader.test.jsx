@@ -1,6 +1,8 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { store } from '../../store';
 import Header from '../../components/common/Header';
 import PracticeDashboard from '../PracticeDashboard';
 import Login from '../Login';
@@ -26,7 +28,9 @@ window.scrollTo = jest.fn();
 describe('Auth Session, Sign Out, Profile Loading & Notes Access', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    store.dispatch({ type: 'auth/logout' });
     localStorage.clear();
+    sessionStorage.clear();
     api.get.mockResolvedValue({ data: {} });
     api.post.mockResolvedValue({ data: { success: true } });
     api.put.mockResolvedValue({ data: { success: true } });
@@ -52,9 +56,11 @@ describe('Auth Session, Sign Out, Profile Loading & Notes Access', () => {
     });
 
     render(
-      <MemoryRouter>
-        <Header />
-      </MemoryRouter>
+      <Provider store={store}>
+        <MemoryRouter>
+          <Header />
+        </MemoryRouter>
+      </Provider>
     );
 
     await waitFor(() => {
@@ -155,9 +161,11 @@ describe('Auth Session, Sign Out, Profile Loading & Notes Access', () => {
     });
 
     render(
-      <MemoryRouter>
-        <PracticeDashboard />
-      </MemoryRouter>
+      <Provider store={store}>
+        <MemoryRouter>
+          <PracticeDashboard />
+        </MemoryRouter>
+      </Provider>
     );
 
     // Wait for authenticated user data
@@ -197,9 +205,11 @@ describe('Auth Session, Sign Out, Profile Loading & Notes Access', () => {
     });
 
     render(
-      <MemoryRouter>
-        <PracticeDashboard />
-      </MemoryRouter>
+      <Provider store={store}>
+        <MemoryRouter>
+          <PracticeDashboard />
+        </MemoryRouter>
+      </Provider>
     );
 
     await waitFor(() => {
@@ -218,9 +228,11 @@ describe('Auth Session, Sign Out, Profile Loading & Notes Access', () => {
     });
 
     const { container } = render(
-      <MemoryRouter>
-        <Login />
-      </MemoryRouter>
+      <Provider store={store}>
+        <MemoryRouter>
+          <Login />
+        </MemoryRouter>
+      </Provider>
     );
 
     const emailInput = container.querySelector('input[type="email"]');

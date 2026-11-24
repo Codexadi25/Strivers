@@ -4,8 +4,28 @@ const UserAccess = require('../models/UserAccess');
 const UserStore = require('../utils/userStore');
 const { verifySessionToken } = require('../utils/token');
 
+// Zero-dependency cookie parser for cross-browser session continuity
+function parseCookies(cookieHeader) {
+  const cookies = {};
+  if (!cookieHeader || typeof cookieHeader !== 'string') return cookies;
+  const pairs = cookieHeader.split(';');
+  for (let i = 0; i < pairs.length; i++) {
+    const pair = pairs[i].trim();
+    if (!pair) continue;
+    const eqIdx = pair.indexOf('=');
+    if (eqIdx !== -1) {
+      try {
+        const key = decodeURIComponent(pair.substring(0, eqIdx).trim());
+        const val = decodeURIComponent(pair.substring(eqIdx + 1).trim());
+        cookies[key] = val;
+      } catch (_) {}
+    }
+  }
+  return cookies;
+}
+
 /**
- * Extracts and verifies Bearer session or Firebase ID tokens.
+ * Extracts and verifies Bearer session, Cookie session, or Firebase ID tokens.
  * Never auto-authenticates unauthenticated browser traffic on localhost so Login & Sign Out stay accurate.
  */
 const verifyFirebaseToken = async (req, res, next) => {
@@ -25,6 +45,16 @@ const verifyFirebaseToken = async (req, res, next) => {
 
     if (authHeader && typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
       token = authHeader.split('Bearer ')[1].trim();
+    }
+
+    // Fall back to cookies (req.cookies or parsed req.headers.cookie) if Authorization header is missing
+    if (!token || token === 'null' || token === 'undefined') {
+      if (req.cookies && (req.cookies.auth_token || req.cookies.strivers_session)) {
+        token = req.cookies.auth_token || req.cookies.strivers_session;
+      } else if (req.headers.cookie) {
+        const parsed = parseCookies(req.headers.cookie);
+        token = parsed.auth_token || parsed.strivers_session || '';
+      }
     }
 
     if (!token || token === 'null' || token === 'undefined') {

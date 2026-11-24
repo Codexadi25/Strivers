@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import api, { API_BASE } from '../utils/api';
+import { setCredentials } from '../store/slices/authSlice';
 import Header from '../components/common/Header';
 import Footer from '../components/common/Footer';
 import './Auth.css';
@@ -19,6 +21,7 @@ export default function Register() {
   const [doneMsg, setDoneMsg] = useState('');
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -29,12 +32,8 @@ export default function Register() {
     try {
       const res = await api.post('/auth/register', { ...form, plan });
       if (res.data?.token) {
-        localStorage.setItem('auth_token', res.data.token);
+        dispatch(setCredentials({ token: res.data.token, user: res.data.user }));
       }
-      if (res.data?.user) {
-        localStorage.setItem('auth_user', JSON.stringify(res.data.user));
-      }
-      window.dispatchEvent(new Event('auth_state_change'));
 
       setDoneMsg('✓ Account created successfully! Setting up your course...');
 

@@ -26,6 +26,7 @@ import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import SentimentDissatisfiedIcon from '@mui/icons-material/SentimentDissatisfied';
 import RefreshOutlinedIcon from '@mui/icons-material/RefreshOutlined';
 import api from '../utils/api';
+import { getAuthUser, syncAuthUser } from '../utils/authStorage';
 import Header from '../components/common/Header';
 import Footer from '../components/common/Footer';
 import { ProtectedDocumentModal } from '../components/secureViewer/ProtectedDocumentModal';
@@ -40,7 +41,7 @@ export default function CourseAccess() {
   const [courseData, setCourseData] = useState(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [enrollmentDetails, setEnrollmentDetails] = useState(null);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => getAuthUser());
   const [error, setError] = useState('');
   const [copiedCode, setCopiedCode] = useState(false);
 
@@ -62,12 +63,22 @@ export default function CourseAccess() {
     setLoading(true);
     setError('');
 
+    const cachedUser = getAuthUser();
+    if (cachedUser) {
+      setUser(cachedUser);
+    }
+
     api
       .get('/auth/me')
       .then((res) => {
-        setUser(res.data.user);
+        if (res.data?.user) {
+          setUser(res.data.user);
+          syncAuthUser(res.data.user);
+        }
       })
-      .catch(() => setUser(null));
+      .catch(() => {
+        if (!getAuthUser()) setUser(null);
+      });
 
     api
       .get(`/courses/${courseId}/access`)

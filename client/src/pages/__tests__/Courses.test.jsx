@@ -1,6 +1,8 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { store } from '../../store';
 import Courses from '../Courses';
 import api from '../../utils/api';
 
@@ -112,9 +114,11 @@ describe('Strivers Client - Courses (/courses) Page Dynamic Unit Tests', () => {
 
   test('renders page hero header and course cards with dynamic pricing', async () => {
     render(
-      <MemoryRouter>
-        <Courses />
-      </MemoryRouter>
+      <Provider store={store}>
+        <MemoryRouter>
+          <Courses />
+        </MemoryRouter>
+      </Provider>
     );
 
     // Hero title
@@ -133,9 +137,11 @@ describe('Strivers Client - Courses (/courses) Page Dynamic Unit Tests', () => {
 
   test('filters courses by category tabs dynamically', async () => {
     render(
-      <MemoryRouter>
-        <Courses />
-      </MemoryRouter>
+      <Provider store={store}>
+        <MemoryRouter>
+          <Courses />
+        </MemoryRouter>
+      </Provider>
     );
 
     await waitFor(() => {
@@ -158,9 +164,11 @@ describe('Strivers Client - Courses (/courses) Page Dynamic Unit Tests', () => {
 
   test('renders mentors and features lists for each course', async () => {
     render(
-      <MemoryRouter>
-        <Courses />
-      </MemoryRouter>
+      <Provider store={store}>
+        <MemoryRouter>
+          <Courses />
+        </MemoryRouter>
+      </Provider>
     );
 
     await waitFor(() => {
@@ -172,9 +180,11 @@ describe('Strivers Client - Courses (/courses) Page Dynamic Unit Tests', () => {
 
   test('displays action buttons for enrollment', async () => {
     render(
-      <MemoryRouter>
-        <Courses />
-      </MemoryRouter>
+      <Provider store={store}>
+        <MemoryRouter>
+          <Courses />
+        </MemoryRouter>
+      </Provider>
     );
 
     await waitFor(() => {
@@ -192,9 +202,11 @@ describe('Strivers Client - Courses (/courses) Page Dynamic Unit Tests', () => {
     });
 
     render(
-      <MemoryRouter>
-        <Courses />
-      </MemoryRouter>
+      <Provider store={store}>
+        <MemoryRouter>
+          <Courses />
+        </MemoryRouter>
+      </Provider>
     );
 
     await waitFor(() => {
@@ -205,9 +217,11 @@ describe('Strivers Client - Courses (/courses) Page Dynamic Unit Tests', () => {
 
   test('renders dynamic catalogMeta hero, stats and FAQs from backend response', async () => {
     render(
-      <MemoryRouter>
-        <Courses />
-      </MemoryRouter>
+      <Provider store={store}>
+        <MemoryRouter>
+          <Courses />
+        </MemoryRouter>
+      </Provider>
     );
 
     await waitFor(() => {

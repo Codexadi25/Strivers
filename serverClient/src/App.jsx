@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
+import { Provider, useSelector, useDispatch } from 'react-redux';
+import { store } from './store';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -17,47 +19,59 @@ import RefundsPage from './pages/RefundsPage';
 import AuditLogsPage from './pages/AuditLogsPage';
 import { buildServerClientTheme } from './theme/muiTheme';
 import { apiCall, getAdminToken, clearAdminSession } from './services/api';
+import {
+  selectAdminUser,
+  selectAdminAuthChecking,
+  setAdminCredentials,
+  adminLogout,
+  setAuthChecking,
+} from './store/slices/adminAuthSlice';
+import {
+  selectActiveTab,
+  selectIsDark,
+  selectRefreshKey,
+  selectLiveStatus,
+  setActiveTab,
+  toggleDarkMode,
+  triggerRefresh,
+  setLiveStatus,
+} from './store/slices/adminUiSlice';
 import './App.css';
 
-export default function App() {
-  const [authChecking, setAuthChecking] = useState(true);
-  const [adminUser, setAdminUser] = useState(null);
-  const [activeTab, setActiveTab] = useState('pricing');
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [isDark, setIsDark] = useState(false);
-  const [liveStatus, setLiveStatus] = useState(null);
+function AppContent() {
+  const dispatch = useDispatch();
+  const adminUser = useSelector(selectAdminUser);
+  const authChecking = useSelector(selectAdminAuthChecking);
+  const activeTab = useSelector(selectActiveTab);
+  const isDark = useSelector(selectIsDark);
+  const refreshKey = useSelector(selectRefreshKey);
+  const liveStatus = useSelector(selectLiveStatus);
 
   const muiTheme = useMemo(() => buildServerClientTheme(isDark), [isDark]);
 
   const checkSession = async () => {
     const token = getAdminToken();
     if (!token) {
-      setAdminUser(null);
-      setAuthChecking(false);
+      dispatch(adminLogout());
       return;
     }
 
     try {
       const res = await apiCall('/auth/me');
       if (res && res.success && res.user) {
-        setAdminUser(res.user);
+        dispatch(setAdminCredentials({ token, user: res.user }));
       } else {
-        clearAdminSession();
-        setAdminUser(null);
+        dispatch(adminLogout());
       }
     } catch {
-      clearAdminSession();
-      setAdminUser(null);
-    } finally {
-      setAuthChecking(false);
+      dispatch(adminLogout());
     }
   };
 
   useEffect(() => {
     checkSession();
     const handleExpired = () => {
-      clearAdminSession();
-      setAdminUser(null);
+      dispatch(adminLogout());
     };
     window.addEventListener('admin_auth_expired', handleExpired);
     return () => window.removeEventListener('admin_auth_expired', handleExpired);
@@ -68,7 +82,7 @@ export default function App() {
     apiCall('/telemetry')
       .then((res) => {
         if (res && res.telemetry) {
-          setLiveStatus(res.telemetry);
+          dispatch(setLiveStatus(res.telemetry));
         }
       })
       .catch(() => {});
@@ -78,16 +92,19 @@ export default function App() {
     try {
       await apiCall('/auth/logout', { method: 'POST' });
     } catch (_) {}
-    clearAdminSession();
-    setAdminUser(null);
+    dispatch(adminLogout());
   };
 
   const handleSync = () => {
-    setRefreshKey((prev) => prev + 1);
+    dispatch(triggerRefresh());
   };
 
   const handleToggleDark = () => {
-    setIsDark((prev) => !prev);
+    dispatch(toggleDarkMode());
+  };
+
+  const handleTabChange = (tab) => {
+    dispatch(setActiveTab(tab));
   };
 
   const renderActiveView = () => {
@@ -97,7 +114,7 @@ export default function App() {
       case 'masterclasses':
         return <MasterclassesPage key={refreshKey} />;
       case 'telemetry':
-        return <TelemetryPage key={refreshKey} onTabChange={setActiveTab} />;
+        return <TelemetryPage key={refreshKey} onTabChange={handleTabChange} />;
       case 'orders':
         return <OrdersPage key={refreshKey} />;
       case 'lifeline':
@@ -129,15 +146,14 @@ export default function App() {
         <LoginPage
           isDark={isDark}
           onLoginSuccess={(u) => {
-            setAdminUser(u);
-            setRefreshKey((k) => k + 1);
+            dispatch(triggerRefresh());
           }}
         />
       ) : (
         <div className={`sc-layout ${isDark ? 'sc-dark-theme' : ''}`}>
           <Sidebar
             activeTab={activeTab}
-            onTabChange={setActiveTab}
+            onTabChange={handleTabChange}
             user={adminUser}
             onLogout={handleLogout}
           />
@@ -157,5 +173,13 @@ export default function App() {
         </div>
       )}
     </ThemeProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <Provider store={store}>
+      <AppContent />
+    </Provider>
   );
 }

@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { store } from './store';
 import Landing from './pages/Landing';
 import Courses from './pages/Courses';
 import CourseDetail from './pages/CourseDetail';
@@ -32,7 +34,7 @@ function App() {
   }, []);
 
   return (
-    <>
+    <Provider store={store}>
       <AnalyticsRouteTracker />
       <Routes>
         {/* Strivers Landing page */}
@@ -59,7 +61,7 @@ function App() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </>
+    </Provider>
   );
 }
 

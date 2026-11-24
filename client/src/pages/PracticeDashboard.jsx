@@ -22,14 +22,24 @@ import { TOPICS } from '../data/practiceSheetData';
 import { DOWNLOADABLE_NOTES } from '../data/downloadableNotesData';
 import { auth } from '../services/firebase';
 import api from '../utils/api';
+import { getAuthUser, getAuthToken } from '../utils/authStorage';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectCurrentUser, updateUser } from '../store/slices/authSlice';
 import '../assets/styles/practiceDashboard.css';
 
 export default function PracticeDashboard() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const reduxUser = useSelector(selectCurrentUser);
+
+  const initialCachedUser = useMemo(() => reduxUser || getAuthUser(), [reduxUser]);
 
   // Navigation & View Mode
   const [activeTab, setActiveTab] = useState('dsa'); // 'dsa' | 'mentorship' | 'notes' | 'analytics'
-  const [practiceViewMode, setPracticeViewMode] = useState('all'); // 'my' | 'all'
+  const [practiceViewMode, setPracticeViewMode] = useState(() => {
+    const enrolled = initialCachedUser?.enrolledPracticeSheets;
+    return Array.isArray(enrolled) && enrolled.length > 0 ? 'my' : 'all';
+  });
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,9 +50,9 @@ export default function PracticeDashboard() {
   // User Profile & Authentication loaded from backend
   const [authChecked, setAuthChecked] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
-  const [userAuthData, setUserAuthData] = useState(null);
-  const [userEnrolledSheets, setUserEnrolledSheets] = useState([]);
-  const [userEnrolledCourses, setUserEnrolledCourses] = useState([]);
+  const [userAuthData, setUserAuthData] = useState(() => initialCachedUser);
+  const [userEnrolledSheets, setUserEnrolledSheets] = useState(() => initialCachedUser?.enrolledPracticeSheets || []);
+  const [userEnrolledCourses, setUserEnrolledCourses] = useState(() => initialCachedUser?.enrolledCourses || []);
   const [liveProducts, setLiveProducts] = useState([]);
 
   // Live dynamic Practice Sheets from Backend
@@ -98,17 +108,20 @@ export default function PracticeDashboard() {
     };
 
     const syncAuthAndProfile = (fbUserOverride) => {
-      const storedToken = localStorage.getItem('auth_token');
-      const storedUserRaw = localStorage.getItem('auth_user');
+      const storedToken = getAuthToken();
+      const cachedUser = getAuthUser();
       const firebaseUser = fbUserOverride !== undefined ? fbUserOverride : auth?.currentUser;
 
-      if (storedUserRaw && (storedToken || firebaseUser)) {
-        try {
-          const parsedUser = JSON.parse(storedUserRaw);
-          if (parsedUser && isMounted) {
-            setUserAuthData((prev) => prev || parsedUser);
+      if (cachedUser && (storedToken || firebaseUser)) {
+        if (isMounted) {
+          setUserAuthData((prev) => prev || cachedUser);
+          if (Array.isArray(cachedUser.enrolledPracticeSheets)) {
+            setUserEnrolledSheets((prev) => (prev && prev.length > 0 ? prev : cachedUser.enrolledPracticeSheets));
           }
-        } catch (_) {}
+          if (Array.isArray(cachedUser.enrolledCourses)) {
+            setUserEnrolledCourses((prev) => (prev && prev.length > 0 ? prev : cachedUser.enrolledCourses));
+          }
+        }
       }
 
       const fetchProfileAndNotes = () => {
@@ -168,9 +181,7 @@ export default function PracticeDashboard() {
               setPracticeViewMode('my');
             }
             setUserEnrolledCourses(res.data.user.enrolledCourses || []);
-            try {
-              localStorage.setItem('auth_user', JSON.stringify(res.data.user));
-            } catch {}
+            dispatch(updateUser(res.data.user));
             fetchProfileAndNotes();
           } else {
             clearAuthenticatedState();
@@ -202,7 +213,7 @@ export default function PracticeDashboard() {
     try {
       if (auth && typeof onAuthStateChanged === 'function') {
         unsubscribeFirebase = onAuthStateChanged(auth, (fbUser) => {
-          if (fbUser || localStorage.getItem('auth_token')) {
+          if (fbUser || getAuthToken()) {
             syncAuthAndProfile(fbUser);
           }
         });

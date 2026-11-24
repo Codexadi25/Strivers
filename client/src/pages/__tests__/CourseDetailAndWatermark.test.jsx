@@ -1,6 +1,8 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { store } from '../../store';
 import Courses from '../Courses';
 import CourseDetail from '../CourseDetail';
 import Footer from '../../components/common/Footer';
@@ -71,12 +73,14 @@ describe('CourseDetail Curriculum UX, Default Irremovable Student Watermark & Ze
 
   test('clicking a course card on /courses opens CourseDetail with syllabus, photo & 2 enrollment buttons', async () => {
     render(
-      <MemoryRouter initialEntries={['/courses']}>
-        <Routes>
-          <Route path="/courses" element={<Courses />} />
-          <Route path="/courses/:id" element={<CourseDetail />} />
-        </Routes>
-      </MemoryRouter>
+      <Provider store={store}>
+        <MemoryRouter initialEntries={['/courses']}>
+          <Routes>
+            <Route path="/courses" element={<Courses />} />
+            <Route path="/courses/:id" element={<CourseDetail />} />
+          </Routes>
+        </MemoryRouter>
+      </Provider>
     );
 
     const card = await screen.findByTestId('course-card-course_fullstack');
@@ -137,11 +141,13 @@ describe('CourseDetail Curriculum UX, Default Irremovable Student Watermark & Ze
 
   test('Footer and CourseDetail disclose zero internal stack/DRM/Razorpay/MongoDB copy', async () => {
     const { container } = render(
-      <MemoryRouter initialEntries={['/courses/course_fullstack']}>
-        <Routes>
-          <Route path="/courses/:id" element={<CourseDetail />} />
-        </Routes>
-      </MemoryRouter>
+      <Provider store={store}>
+        <MemoryRouter initialEntries={['/courses/course_fullstack']}>
+          <Routes>
+            <Route path="/courses/:id" element={<CourseDetail />} />
+          </Routes>
+        </MemoryRouter>
+      </Provider>
     );
 
     await waitFor(() => {

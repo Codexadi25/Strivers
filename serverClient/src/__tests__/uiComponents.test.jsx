@@ -1,5 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { Provider } from 'react-redux';
+import { store } from '../store';
 import App from '../App';
 import LoginPage from '../pages/LoginPage';
 import PricingPage from '../pages/PricingPage';
@@ -30,7 +32,11 @@ describe('serverClient Material UI Pages - Dynamic & Modular Component Tests', (
 
     apiModule.apiCall.mockRejectedValueOnce(new Error('Invalid admin passkey'));
 
-    render(<LoginPage onLoginSuccess={onLoginSuccess} />);
+    render(
+      <Provider store={store}>
+        <LoginPage onLoginSuccess={onLoginSuccess} />
+      </Provider>
+    );
 
     fireEvent.change(screen.getByPlaceholderText(/Enter admin password/i), {
       target: { value: 'wrong_key' },

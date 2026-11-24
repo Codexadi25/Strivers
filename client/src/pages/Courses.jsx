@@ -17,6 +17,10 @@ import StarIcon from '@mui/icons-material/Star';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
 import api from '../utils/api';
+import { getAuthUser, getAuthToken } from '../utils/authStorage';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectCurrentUser, updateUser } from '../store/slices/authSlice';
+import { setCourses, setCatalogMeta, selectCourses, selectCatalogMeta } from '../store/slices/coursesSlice';
 import Header from '../components/common/Header';
 import Footer from '../components/common/Footer';
 import CheckoutModal from '../components/checkout/CheckoutModal';
@@ -32,23 +36,29 @@ import './Courses.css';
 
 export default function Courses() {
   const navigate = useNavigate();
-  const [courses, setCourses] = useState(BASELINE_COURSES);
-  const [catalogMeta, setCatalogMeta] = useState(null);
+  const dispatch = useDispatch();
+  const reduxUser = useSelector(selectCurrentUser);
+  const reduxCourses = useSelector(selectCourses);
+  const reduxCatalogMeta = useSelector(selectCatalogMeta);
+
+  const [courses, setLocalCourses] = useState(() => reduxCourses || BASELINE_COURSES);
+  const [catalogMeta, setLocalCatalogMeta] = useState(() => reduxCatalogMeta);
   const [activeTab, setActiveTab] = useState('all');
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => reduxUser || getAuthUser());
+  const activeUser = reduxUser || user;
   const [checkout, setCheckout] = useState(null);
   const [brokenImages, setBrokenImages] = useState({});
 
   const fallbackSessionLabel = useMemo(() => nextSessionLabel(), []);
 
   const isCourseOwned = useCallback((courseId) => {
-    if (!user) return false;
-    if (user.role === 'admin' || user.isAdmin) return true;
+    if (!activeUser) return false;
+    if (activeUser.role === 'admin' || activeUser.isAdmin) return true;
     const cid = String(courseId).toLowerCase();
     return Boolean(
-      user.enrolledCourses?.some((c) => String(c.courseId).toLowerCase() === cid)
+      activeUser.enrolledCourses?.some((c) => String(c.courseId).toLowerCase() === cid)
     );
-  }, [user]);
+  }, [activeUser]);
 
   useEffect(() => {
     let isMounted = true;
@@ -62,26 +72,35 @@ export default function Courses() {
           if (Array.isArray(rawCourses) && rawCourses.length > 0) {
             const activeCourses = rawCourses.filter((c) => c.isActive !== false);
             if (activeCourses.length > 0) {
-              setCourses(activeCourses);
+              setLocalCourses(activeCourses);
+              dispatch(setCourses(activeCourses));
             }
           }
           if (res.data?.catalogMeta) {
-            setCatalogMeta(res.data.catalogMeta);
+            setLocalCatalogMeta(res.data.catalogMeta);
+            dispatch(setCatalogMeta(res.data.catalogMeta));
           }
         })
         .catch(() => {});
 
-      const token = localStorage.getItem('auth_token');
+      const token = getAuthToken();
       if (!token) {
         if (isMounted) setUser(null);
       } else {
+        const cachedUser = getAuthUser();
+        if (cachedUser && isMounted) {
+          setUser(cachedUser);
+        }
         api
           .get('/auth/me')
           .then((res) => {
-            if (isMounted) setUser(res.data.user);
+            if (isMounted && res.data?.user) {
+              setUser(res.data.user);
+              dispatch(updateUser(res.data.user));
+            }
           })
           .catch(() => {
-            if (isMounted) setUser(null);
+            if (isMounted && !getAuthToken()) setUser(null);
           });
       }
     };

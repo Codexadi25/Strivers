@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { auth } from '../services/firebase';
+import { getAuthToken, clearAuthSession } from './authStorage';
 
 /**
  * Dynamic Server Connection Endpoint Resolution
@@ -36,8 +37,8 @@ const api = axios.create({
 const NO_REFRESH = ['/auth/me', '/auth/refresh', '/auth/login', '/auth/register', '/auth/setup-account', '/ping', '/health'];
 
 api.interceptors.request.use(async (config) => {
-  // 1. Prioritize explicit local session token from Strivers login/register
-  const storedToken = typeof localStorage !== 'undefined' ? localStorage.getItem('auth_token') : null;
+  // 1. Prioritize multi-tier session token (memory -> sessionStorage -> localStorage -> cookies)
+  const storedToken = getAuthToken();
   if (storedToken) {
     config.headers.Authorization = `Bearer ${storedToken}`;
     return config;
@@ -91,12 +92,8 @@ api.interceptors.response.use(
         await api.post('/auth/refresh');
         return api(original);
       } catch {
-        // If refresh fails, clean up local tokens so UI stays consistent
-        if (typeof localStorage !== 'undefined') {
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('auth_user');
-          window.dispatchEvent(new Event('auth_state_change'));
-        }
+        // If refresh fails, clean up tokens and cookies across all storage layers so UI stays consistent
+        clearAuthSession();
       }
     }
     return Promise.reject(error);

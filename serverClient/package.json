@@ -14,9 +14,11 @@
     "deploy": "npm run build && firebase deploy --only hosting"
   },
   "dependencies": {
+    "@reduxjs/toolkit": "^2.15.0",
     "firebase": "^13.2.0",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "react-redux": "^9.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 import IconButton from '@mui/material/IconButton';
 import Drawer from '@mui/material/Drawer';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -12,25 +13,22 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import LoginIcon from '@mui/icons-material/Login';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutlined';
 import api from '../../utils/api';
+import { getAuthToken, getAuthUser, clearAuthSession } from '../../utils/authStorage';
+import { selectCurrentUser, updateUser, logout } from '../../store/slices/authSlice';
 import { auth } from '../../services/firebase';
 import { BRAND } from '../../config/strivers';
 import './Header.css';
 
 const getInitialUser = (initialUser) => {
   if (initialUser !== undefined) return initialUser;
-  if (typeof window === 'undefined') return null;
-  try {
-    const token = localStorage.getItem('auth_token');
-    if (!token) return null;
-    const raw = localStorage.getItem('auth_user');
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
+  return getAuthUser();
 };
 
 export function Header({ user: initialUser }) {
+  const dispatch = useDispatch();
+  const reduxUser = useSelector(selectCurrentUser);
   const [currentUser, setCurrentUser] = useState(() => getInitialUser(initialUser));
+  const activeUser = initialUser !== undefined ? initialUser : (reduxUser !== undefined && reduxUser !== null ? reduxUser : currentUser);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -45,7 +43,7 @@ export function Header({ user: initialUser }) {
     let isMounted = true;
 
     const syncUser = () => {
-      const token = localStorage.getItem('auth_token');
+      const token = getAuthToken();
       if (!token) {
         if (isMounted) setCurrentUser(null);
         return;
@@ -56,13 +54,12 @@ export function Header({ user: initialUser }) {
         .then((res) => {
           if (isMounted && res.data?.success && res.data?.user) {
             setCurrentUser(res.data.user);
-            localStorage.setItem('auth_user', JSON.stringify(res.data.user));
+            dispatch(updateUser(res.data.user));
           }
         })
         .catch((err) => {
           if (err.response?.status === 401) {
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('auth_user');
+            dispatch(logout());
             if (isMounted) setCurrentUser(null);
           }
         });
@@ -72,15 +69,8 @@ export function Header({ user: initialUser }) {
 
     // Listen to login/logout events across all components and browser tabs
     const handleAuthEvent = () => {
-      const raw = localStorage.getItem('auth_user');
-      if (raw) {
-        try {
-          setCurrentUser(JSON.parse(raw));
-        } catch (_) {}
-      } else {
-        setCurrentUser(null);
-      }
-      syncUser();
+      const user = getAuthUser();
+      setCurrentUser(user);
     };
 
     window.addEventListener('auth_state_change', handleAuthEvent);
@@ -91,7 +81,7 @@ export function Header({ user: initialUser }) {
       window.removeEventListener('auth_state_change', handleAuthEvent);
       window.removeEventListener('storage', handleAuthEvent);
     };
-  }, [initialUser]);
+  }, [initialUser, dispatch]);
 
   const handleDrawerToggle = () => {
     setMobileOpen((prev) => !prev);
@@ -107,20 +97,14 @@ export function Header({ user: initialUser }) {
       await api.post('/auth/logout').catch(() => {});
     } catch (_) {}
 
-    // 3. Clear all stored auth keys
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_user');
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('strivers_token');
-    localStorage.removeItem('strivers_user');
-    sessionStorage.clear();
+    // 3. Clear all stored auth keys across Redux, memory, session storage, local storage, and cookies
+    dispatch(logout());
+    clearAuthSession();
 
     setCurrentUser(null);
     setMobileOpen(false);
 
-    // 4. Notify app listeners & route cleanly to login
-    window.dispatchEvent(new Event('auth_state_change'));
+    // 4. Route cleanly to login with notice
     navigate('/login?logged_out=1');
   };
 
@@ -177,7 +161,7 @@ export function Header({ user: initialUser }) {
             <span className="header-badge-live">LIVE</span>
           </Link>
 
-          {currentUser && (
+          {activeUser && (
             <Link
               to="/courses?tab=my-access"
               className={`header-nav-link ${isCurrent('/courses') ? 'active' : ''}`}
@@ -189,12 +173,12 @@ export function Header({ user: initialUser }) {
 
         {/* DESKTOP AUTH / ACTIONS */}
         <div className="header-desktop-actions">
-          {currentUser ? (
+          {activeUser ? (
             <div className="header-auth-controls">
               <div className="header-user-pill">
                 <PersonOutlineIcon style={{ fontSize: '1rem', color: '#2563EB' }} />
                 <span className="header-user-name">
-                  {currentUser.name || currentUser.email}
+                  {activeUser.name || activeUser.email}
                 </span>
               </div>
 
@@ -275,15 +259,15 @@ export function Header({ user: initialUser }) {
           </div>
 
           {/* User Status Strip in Mobile Drawer */}
-          {currentUser && (
+          {activeUser && (
             <div className="drawer-user-strip">
               <AccountCircleIcon sx={{ color: '#2563EB', fontSize: 24 }} />
               <div className="drawer-user-text-wrap">
                 <div className="drawer-user-name">
-                  {currentUser.name || 'Member'}
+                  {activeUser.name || 'Member'}
                 </div>
                 <div className="drawer-user-email">
-                  {currentUser.email}
+                  {activeUser.email}
                 </div>
               </div>
             </div>
@@ -321,7 +305,7 @@ export function Header({ user: initialUser }) {
               <span className="header-badge-live">LIVE</span>
             </Link>
 
-            {currentUser && (
+            {activeUser && (
               <Link
                 to="/courses?tab=my-access"
                 onClick={() => setMobileOpen(false)}
@@ -336,7 +320,7 @@ export function Header({ user: initialUser }) {
 
         {/* Mobile Drawer Bottom Actions */}
         <div className="drawer-footer-actions">
-          {currentUser ? (
+          {activeUser ? (
             <button onClick={handleSignOut} className="drawer-btn-signout">
               <LogoutIcon sx={{ fontSize: 18 }} />
               <span>Sign Out</span>

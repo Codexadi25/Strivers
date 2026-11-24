@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../utils/api';
+import { getAuthUser, getAuthToken, syncAuthUser } from '../utils/authStorage';
 import Header from '../components/common/Header';
 import Footer from '../components/common/Footer';
 import CheckoutModal from '../components/checkout/CheckoutModal';
@@ -43,7 +44,7 @@ export default function Landing() {
   const left = useCountdown(EARLY_BIRD_ENDS_AT);
   const early = left > 0;
   const session = useMemo(() => nextSessionLabel(), []);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => getAuthUser());
   const [checkout, setCheckout] = useState(null); // { plan, price }
 
   const isCourseOwned = (courseId) => {
@@ -87,14 +88,23 @@ export default function Landing() {
         })
         .catch(() => {});
 
-      const token = localStorage.getItem('auth_token');
+      const token = getAuthToken();
       if (!token) {
         setUser(null);
       } else {
+        const cached = getAuthUser();
+        if (cached) setUser(cached);
         api
           .get('/auth/me')
-          .then((r) => setUser(r.data.user))
-          .catch(() => setUser(null));
+          .then((r) => {
+            if (r.data?.user) {
+              setUser(r.data.user);
+              syncAuthUser(r.data.user);
+            }
+          })
+          .catch(() => {
+            if (!getAuthToken()) setUser(null);
+          });
       }
     };
 

@@ -20,6 +20,7 @@ import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutlined';
 import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
 import api from '../utils/api';
+import { getAuthUser, getAuthToken, syncAuthUser } from '../utils/authStorage';
 import Header from '../components/common/Header';
 import Footer from '../components/common/Footer';
 import CheckoutModal from '../components/checkout/CheckoutModal';
@@ -58,7 +59,7 @@ export default function CourseDetail() {
 
   const [course, setCourse] = useState(() => normalizeCourse(null, courseId));
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => getAuthUser());
   const [checkout, setCheckout] = useState(null);
   const [imgError, setImgError] = useState(false);
 
@@ -69,14 +70,24 @@ export default function CourseDetail() {
     setLoading(true);
     setImgError(false);
 
-    const token = localStorage.getItem('auth_token');
+    const cachedUser = getAuthUser();
+    if (cachedUser) {
+      setUser(cachedUser);
+    }
+
+    const token = getAuthToken();
     if (token) {
       api
         .get('/auth/me')
         .then((res) => {
-          if (res.data?.user) setUser(res.data.user);
+          if (res.data?.user) {
+            setUser(res.data.user);
+            syncAuthUser(res.data.user);
+          }
         })
-        .catch(() => setUser(null));
+        .catch(() => {
+          if (!getAuthToken()) setUser(null);
+        });
     }
 
     api
