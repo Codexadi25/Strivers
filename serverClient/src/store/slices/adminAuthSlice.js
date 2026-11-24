@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { getAdminToken, setAdminSession, clearAdminSession } from '../../services/api';
+import { getAdminToken, setAdminSession, clearAdminSession } from '../../services/api.js';
 
 const getInitialAdminUser = () => {
   if (typeof localStorage === 'undefined') return null;

@@ -1,5 +1,19 @@
 [
   {
+    "ticketId": "tkt_1795532328832",
+    "createdAt": "2026-11-24T14:58:48.832Z",
+    "studentContact": "dispute.student@example.com (+91 9999999999)",
+    "customerEmail": "dispute.student@example.com",
+    "userEmail": "dispute.student@example.com",
+    "orderId": "order_test_dispute_12345",
+    "bankRrn": "UTR987654321",
+    "amount": 174,
+    "issueCategory": "BANK_TIMEOUT",
+    "status": "RESOLVED",
+    "slaDeadline": "7 Business Days",
+    "action": "Verify Bank Reversal"
+  },
+  {
     "ticketId": "tkt_1795529707794",
     "createdAt": "2026-11-24T14:15:07.794Z",
     "studentContact": "dispute.student@example.com (+91 9999999999)",

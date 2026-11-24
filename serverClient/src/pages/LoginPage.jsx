@@ -10,7 +10,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import LoginIcon from '@mui/icons-material/Login';
 import appLogo from '../assets/favicon.ico';
 import { apiCall, setAdminSession } from '../services/api';
-import { setAdminCredentials } from '../store/slices/adminAuthSlice';
+import { setAdminCredentials } from '../store/slices/adminAuthSlice.js';
 import './LoginPage.css';
 
 export default function LoginPage({ onLoginSuccess, isDark = false }) {

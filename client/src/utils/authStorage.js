@@ -223,10 +223,6 @@ export function syncAuthUser(user) {
   }
 
   setCookie('auth_user', serializedUser, 30);
-
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new Event('auth_state_change'));
-  }
 }
 
 /**

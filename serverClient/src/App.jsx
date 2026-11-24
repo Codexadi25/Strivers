@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { Provider, useSelector, useDispatch } from 'react-redux';
-import { store } from './store';
+import { store } from './store/index.js';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -25,7 +25,7 @@ import {
   setAdminCredentials,
   adminLogout,
   setAuthChecking,
-} from './store/slices/adminAuthSlice';
+} from './store/slices/adminAuthSlice.js';
 import {
   selectActiveTab,
   selectIsDark,
@@ -35,7 +35,7 @@ import {
   toggleDarkMode,
   triggerRefresh,
   setLiveStatus,
-} from './store/slices/adminUiSlice';
+} from './store/slices/adminUiSlice.js';
 import './App.css';
 
 function AppContent() {
