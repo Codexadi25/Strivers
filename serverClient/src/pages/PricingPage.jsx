@@ -10,6 +10,10 @@ import { apiCall } from '../services/api';
 import CoursePlanCard from '../components/pricing/CoursePlanCard';
 import { EditCourseDialog, AddCourseDialog } from '../components/pricing/CourseFormDialogs';
 import CatalogMetaDialog from '../components/pricing/CatalogMetaDialog';
+import {
+  ManageSlotsDialog,
+  ManageMaterialsDialog,
+} from '../components/masterclasses/MasterclassDialogs';
 import './PricingPage.css';
 
 export default function PricingPage() {
@@ -18,6 +22,8 @@ export default function PricingPage() {
   const [editingCourse, setEditingCourse] = useState(null);
   const [addingCourse, setAddingCourse] = useState(false);
   const [editingCatalogMeta, setEditingCatalogMeta] = useState(false);
+  const [materialsTarget, setMaterialsTarget] = useState(null);
+  const [slotsTarget, setSlotsTarget] = useState(null);
   const [statusMsg, setStatusMsg] = useState({ text: '', type: '' });
 
   const loadCourses = async () => {
@@ -26,6 +32,14 @@ export default function PricingPage() {
       const res = await apiCall('/courses');
       if (res.courses && Array.isArray(res.courses)) {
         setCourses(res.courses);
+        if (materialsTarget) {
+          const fresh = res.courses.find((x) => (x.productId || x._id) === (materialsTarget.productId || materialsTarget._id));
+          if (fresh) setMaterialsTarget(fresh);
+        }
+        if (slotsTarget) {
+          const fresh = res.courses.find((x) => (x.productId || x._id) === (slotsTarget.productId || slotsTarget._id));
+          if (fresh) setSlotsTarget(fresh);
+        }
       }
     } catch (err) {
       setStatusMsg({ text: `Failed to load courses: ${err.message}`, type: 'error' });
@@ -95,12 +109,18 @@ export default function PricingPage() {
           price: Number(editingCourse.price),
           originalPrice: editingCourse.originalPrice ? Number(editingCourse.originalPrice) : null,
           title: editingCourse.title,
-          badge: editingCourse.badge,
+          badge: editingCourse.badge || '',
           imageUrl: editingCourse.imageUrl || '',
           duration: editingCourse.duration || '',
           level: editingCourse.level || '',
           description: editingCourse.description,
-          sessionDate: editingCourse.sessionDate,
+          sessionDate: editingCourse.sessionDate || '',
+          sessionStatus: editingCourse.sessionStatus || 'upcoming',
+          activeMeetingLink: editingCourse.activeMeetingLink || '',
+          meetingCode: editingCourse.meetingCode || '',
+          meetingPlatform: editingCourse.meetingPlatform || 'Google Meet',
+          whatsappGroupLink: editingCourse.whatsappGroupLink || '',
+          secretPasscode: editingCourse.secretPasscode || 'STRIVERS2026',
           category: editingCourse.category,
           isActive: editingCourse.isActive !== false,
           features: parseLines(editingCourse.featuresText),
@@ -128,12 +148,16 @@ export default function PricingPage() {
           price: Number(form.price),
           originalPrice: form.originalPrice ? Number(form.originalPrice) : null,
           category: form.category,
-          badge: form.badge,
+          badge: form.badge || '',
           imageUrl: form.imageUrl || '',
           duration: form.duration || 'Self-Paced / Live',
           level: form.level || 'All Levels',
           description: form.description,
           sessionDate: form.sessionDate || 'Upcoming Live Session',
+          activeMeetingLink: form.activeMeetingLink || '',
+          meetingCode: form.meetingCode || '',
+          whatsappGroupLink: form.whatsappGroupLink || '',
+          secretPasscode: form.secretPasscode || 'STRIVERS2026',
           features: parseLines(form.featuresText || form.features),
           whatYouWillLearn: parseLines(form.whatYouWillLearnText),
           curriculum: normalizeCurriculum(form.curriculum),
@@ -150,13 +174,89 @@ export default function PricingPage() {
     }
   };
 
+  const handleAddMaterial = async (pid, payload) => {
+    try {
+      await apiCall(`/courses/${encodeURIComponent(pid)}/materials`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      showTempStatus('✓ Study material attached.');
+      loadCourses();
+    } catch (err) {
+      showTempStatus(err.message, 'error');
+    }
+  };
+
+  const handleUpdateMaterial = async (pid, materialId, payload) => {
+    try {
+      await apiCall(`/courses/${encodeURIComponent(pid)}/materials/${encodeURIComponent(materialId)}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+      showTempStatus('✓ Study material updated successfully.');
+      loadCourses();
+    } catch (err) {
+      showTempStatus(err.message, 'error');
+    }
+  };
+
+  const handleDeleteMaterial = async (pid, materialId) => {
+    try {
+      await apiCall(`/courses/${encodeURIComponent(pid)}/materials/${encodeURIComponent(materialId)}`, {
+        method: 'DELETE',
+      });
+      showTempStatus('✓ Study material removed.');
+      loadCourses();
+    } catch (err) {
+      showTempStatus(err.message, 'error');
+    }
+  };
+
+  const handleAddSlot = async (pid, payload) => {
+    try {
+      await apiCall(`/courses/${encodeURIComponent(pid)}/slots`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      showTempStatus('✓ Live timing slot added.');
+      loadCourses();
+    } catch (err) {
+      showTempStatus(err.message, 'error');
+    }
+  };
+
+  const handleUpdateSlot = async (pid, slotId, payload) => {
+    try {
+      await apiCall(`/courses/${encodeURIComponent(pid)}/slots/${encodeURIComponent(slotId)}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+      showTempStatus('✓ Live timing slot updated.');
+      loadCourses();
+    } catch (err) {
+      showTempStatus(err.message, 'error');
+    }
+  };
+
+  const handleDeleteSlot = async (pid, slotId) => {
+    try {
+      await apiCall(`/courses/${encodeURIComponent(pid)}/slots/${encodeURIComponent(slotId)}`, {
+        method: 'DELETE',
+      });
+      showTempStatus('✓ Timing slot removed.');
+      loadCourses();
+    } catch (err) {
+      showTempStatus(err.message, 'error');
+    }
+  };
+
   return (
     <div className="pricing-page-root">
       <div className="pricing-page-header">
         <div>
           <h2 className="pricing-page-title">Course Pricing &amp; Plans Engine</h2>
           <p className="pricing-page-desc">
-            Directly modify course &amp; subscription prices in database. Changes immediately reflect in checkout, APIs, and student /courses catalog.
+            Directly modify course &amp; subscription prices, study materials, notes, and curriculum in database. Changes immediately reflect in checkout, APIs, and student catalog.
           </p>
         </div>
 
@@ -193,7 +293,13 @@ export default function PricingPage() {
       ) : (
         <div className="pricing-grid">
           {courses.map((c) => (
-            <CoursePlanCard key={c.productId || c._id} course={c} onEdit={handleOpenEdit} />
+            <CoursePlanCard
+              key={c.productId || c._id}
+              course={c}
+              onEdit={handleOpenEdit}
+              onManageMaterials={(course) => setMaterialsTarget(course)}
+              onManageSlots={(course) => setSlotsTarget(course)}
+            />
           ))}
         </div>
       )}
@@ -224,6 +330,22 @@ export default function PricingPage() {
         open={editingCatalogMeta}
         onClose={() => setEditingCatalogMeta(false)}
         onSaved={(msg) => showTempStatus(msg)}
+      />
+
+      <ManageMaterialsDialog
+        masterclass={materialsTarget}
+        onClose={() => setMaterialsTarget(null)}
+        onAddMaterial={handleAddMaterial}
+        onUpdateMaterial={handleUpdateMaterial}
+        onDeleteMaterial={handleDeleteMaterial}
+      />
+
+      <ManageSlotsDialog
+        masterclass={slotsTarget}
+        onClose={() => setSlotsTarget(null)}
+        onAddSlot={handleAddSlot}
+        onUpdateSlot={handleUpdateSlot}
+        onDeleteSlot={handleDeleteSlot}
       />
     </div>
   );

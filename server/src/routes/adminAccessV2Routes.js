@@ -24,6 +24,40 @@ router.use((req, res, next) => {
   next();
 });
 
+// Helper to strictly detect and exclude test, fake, and simulation records
+function isFakeRecord(email, orderId, name) {
+  const e = String(email || '').toLowerCase().trim();
+  const o = String(orderId || '').toLowerCase().trim();
+  const n = String(name || '').toLowerCase().trim();
+  if (
+    !e ||
+    e.includes('example.com') ||
+    e.includes('yourdomain.com') ||
+    e.includes('student.test') ||
+    e.includes('dispute.student') ||
+    e.includes('delete_probe') ||
+    e.includes('qa.student')
+  ) {
+    return true;
+  }
+  if (
+    o.startsWith('order_sim_') ||
+    o.startsWith('test_') ||
+    o.startsWith('order_test_') ||
+    o.includes('dispute_12345')
+  ) {
+    return true;
+  }
+  if (
+    n.includes('admin operator') ||
+    n.includes('student.test') ||
+    n.includes('qa dynamic student')
+  ) {
+    return true;
+  }
+  return false;
+}
+
 // ==========================================
 // 0. ADMIN AUTHENTICATION (/api/v2/adminaccess/auth/...)
 // ==========================================
@@ -446,15 +480,24 @@ router.put('/masterclasses/:id/meeting', (req, res) => {
   }
 });
 
-router.put('/masterclasses/:id/materials/:materialId', (req, res) => {
+router.get(['/masterclasses/:id/materials', '/courses/:id/materials'], (req, res) => {
+  try {
+    const current = CourseStore.getById(req.params.id) || {};
+    res.json({ success: true, count: (current.notesAndPdfs || []).length, materials: current.notesAndPdfs || [] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.put(['/masterclasses/:id/materials/:materialId', '/courses/:id/materials/:materialId'], (req, res) => {
   try {
     const { id, materialId } = req.params;
     const result = CourseStore.updateMaterial(id, materialId, req.body);
     if (!result) {
-      return res.status(404).json({ success: false, message: 'Study material or masterclass not found.' });
+      return res.status(404).json({ success: false, message: 'Study material or course not found.' });
     }
     ActivityOrderStore.addLog({
-      event: 'MASTERCLASS_MATERIAL_UPDATED',
+      event: 'COURSE_MATERIAL_UPDATED',
       userEmail: req.user?.email,
       ip: req.ip || '127.0.0.1',
       metadata: { productId: id, materialId, title: result.material?.title },
@@ -472,7 +515,7 @@ router.put('/masterclasses/:id/materials/:materialId', (req, res) => {
   }
 });
 
-router.post('/masterclasses/:id/materials', (req, res) => {
+router.post(['/masterclasses/:id/materials', '/courses/:id/materials'], (req, res) => {
   try {
     const { id } = req.params;
     const current = CourseStore.getById(id) || {};
@@ -497,7 +540,7 @@ router.post('/masterclasses/:id/materials', (req, res) => {
 
     const newDoc = {
       materialId: `mat_${Date.now()}`,
-      title: req.body.title || 'Masterclass Study Material',
+      title: req.body.title || 'Study Material & Notes',
       description: req.body.description || (fileType === 'html' ? 'Rich HTML Study Guide' : 'DRM Protected Study Resource'),
       fileType,
       mimeType,
@@ -512,7 +555,7 @@ router.post('/masterclasses/:id/materials', (req, res) => {
     });
     res.json({
       success: true,
-      message: 'Study material securely attached to masterclass.',
+      message: 'Study material securely attached to course.',
       material: newDoc,
       materialsCount: (updated?.notesAndPdfs || []).length,
     });
@@ -521,7 +564,7 @@ router.post('/masterclasses/:id/materials', (req, res) => {
   }
 });
 
-router.delete('/masterclasses/:id/materials/:materialId', (req, res) => {
+router.delete(['/masterclasses/:id/materials/:materialId', '/courses/:id/materials/:materialId'], (req, res) => {
   try {
     const { id, materialId } = req.params;
     const current = CourseStore.getById(id) || {};
@@ -534,15 +577,24 @@ router.delete('/masterclasses/:id/materials/:materialId', (req, res) => {
   }
 });
 
-router.put('/masterclasses/:id/slots/:slotId', (req, res) => {
+router.get(['/masterclasses/:id/slots', '/courses/:id/slots'], (req, res) => {
+  try {
+    const current = CourseStore.getById(req.params.id) || {};
+    res.json({ success: true, count: (current.timingSlots || []).length, slots: current.timingSlots || [] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.put(['/masterclasses/:id/slots/:slotId', '/courses/:id/slots/:slotId'], (req, res) => {
   try {
     const { id, slotId } = req.params;
     const result = CourseStore.updateSlot(id, slotId, req.body);
     if (!result) {
-      return res.status(404).json({ success: false, message: 'Timing slot or masterclass not found.' });
+      return res.status(404).json({ success: false, message: 'Timing slot or course not found.' });
     }
     ActivityOrderStore.addLog({
-      event: 'MASTERCLASS_SLOT_UPDATED',
+      event: 'COURSE_SLOT_UPDATED',
       userEmail: req.user?.email,
       ip: req.ip || '127.0.0.1',
       metadata: { productId: id, slotId, title: result.slot?.title },
@@ -560,7 +612,7 @@ router.put('/masterclasses/:id/slots/:slotId', (req, res) => {
   }
 });
 
-router.post('/masterclasses/:id/slots', (req, res) => {
+router.post(['/masterclasses/:id/slots', '/courses/:id/slots'], (req, res) => {
   try {
     const { id } = req.params;
     const current = CourseStore.getById(id) || {};
@@ -592,7 +644,7 @@ router.post('/masterclasses/:id/slots', (req, res) => {
   }
 });
 
-router.delete('/masterclasses/:id/slots/:slotId', (req, res) => {
+router.delete(['/masterclasses/:id/slots/:slotId', '/courses/:id/slots/:slotId'], (req, res) => {
   try {
     const { id, slotId } = req.params;
     const current = CourseStore.getById(id) || {};
@@ -611,7 +663,9 @@ router.delete('/masterclasses/:id/slots/:slotId', (req, res) => {
 router.get('/orders', async (req, res) => {
   try {
     const q = (req.query.q || '').trim();
-    let allOrders = ActivityOrderStore.getOrders(q);
+    let allOrders = ActivityOrderStore.getOrders(q).filter(
+      (o) => !isFakeRecord(o.customerEmail || o.userEmail, o.orderId, o.customerName)
+    );
 
     if (mongoose.connection.readyState === 1) {
       try {
@@ -626,20 +680,22 @@ router.get('/orders', async (req, res) => {
           : {};
         const dbOrders = await Payment.find(filter).sort({ createdAt: -1 }).limit(100).maxTimeMS(1500);
         if (dbOrders) {
-          allOrders = dbOrders.map((p) => ({
-            orderId: p.razorpayOrderId || p.orderId,
-            txnId: p.razorpayPaymentId || p.paymentId || 'N/A',
-            refId: p.receipt || `rcpt_${p._id}`,
-            date: new Date(p.createdAt || Date.now()).toLocaleString('en-IN'),
-            createdAt: p.createdAt || new Date(),
-            customerEmail: p.userEmail || p.customerEmail || 'N/A',
-            customerName: p.customerName || 'Student',
-            planId: (p.planId || 'masterclass').toUpperCase(),
-            courseTitle: CourseStore.getById(p.planId)?.title || (p.planId === 'channel' ? 'Paid Job Channel' : 'Strivers Masterclass'),
-            amount: p.amount ? (Number(p.amount) > 1000 ? Math.round(Number(p.amount) / 100) : Number(p.amount)) : 0,
-            status: p.status === 'success' || p.status === 'captured' ? 'CAPTURED' : p.status === 'refunded' ? 'REFUNDED' : p.status === 'canceled' ? 'PAYMENT CANCELED' : 'FAILED',
-            remark: p.errorDescription || (p.status === 'captured' ? 'Payment Captured' : 'User Canceled Midway'),
-          }));
+          allOrders = dbOrders
+            .filter((p) => !isFakeRecord(p.userEmail || p.customerEmail, p.razorpayOrderId || p.orderId, p.customerName))
+            .map((p) => ({
+              orderId: p.razorpayOrderId || p.orderId,
+              txnId: p.razorpayPaymentId || p.paymentId || 'N/A',
+              refId: p.receipt || `rcpt_${p._id}`,
+              date: new Date(p.createdAt || Date.now()).toLocaleString('en-IN'),
+              createdAt: p.createdAt || new Date(),
+              customerEmail: p.userEmail || p.customerEmail || 'N/A',
+              customerName: p.customerName || 'Student',
+              planId: (p.planId || 'masterclass').toUpperCase(),
+              courseTitle: CourseStore.getById(p.planId)?.title || (p.planId === 'channel' ? 'Paid Job Channel' : 'Strivers Masterclass'),
+              amount: p.amount ? (Number(p.amount) > 1000 ? Math.round(Number(p.amount) / 100) : Number(p.amount)) : 0,
+              status: p.status === 'success' || p.status === 'captured' ? 'CAPTURED' : p.status === 'refunded' ? 'REFUNDED' : p.status === 'canceled' ? 'PAYMENT CANCELED' : 'FAILED',
+              remark: p.errorDescription || (p.status === 'captured' ? 'Payment Captured' : 'User Canceled Midway'),
+            }));
         }
       } catch (_) {}
     }
@@ -692,13 +748,16 @@ router.get('/tickets', async (req, res) => {
         if (dbTickets && dbTickets.length > 0) {
           dbTickets.forEach((t) => {
             const orderNum = t.razorpayOrderId || t.orderId || 'N/A';
+            const email = t.userEmail || '';
+            const name = t.customerName || '';
+            if (isFakeRecord(email, orderNum, name)) return;
             if (orderNum !== 'N/A') seenOrderIds.add(orderNum);
             liveTickets.push({
               ticketId: t.ticketId,
               createdAt: t.createdAt,
-              studentContact: `${t.userEmail || 'Student'} (${t.userPhone || 'N/A'})`,
-              userEmail: t.userEmail,
-              customerName: t.customerName || (t.userEmail ? t.userEmail.split('@')[0] : 'Student'),
+              studentContact: `${email} (${t.userPhone || 'N/A'})`,
+              userEmail: email,
+              customerName: name || (email ? email.split('@')[0] : 'Student'),
               orderId: orderNum,
               bankRrn: t.bankRrn || 'N/A',
               amount: t.amount,
@@ -725,9 +784,12 @@ router.get('/tickets', async (req, res) => {
 
         failedPayments.forEach((p) => {
           const orderNum = p.razorpayOrderId || p.orderId;
+          const email = p.userEmail || p.customerEmail || '';
+          const name = p.customerName || '';
+          if (isFakeRecord(email, orderNum, name)) return;
+
           if (orderNum && !seenOrderIds.has(orderNum)) {
             seenOrderIds.add(orderNum);
-            const email = p.userEmail || p.customerEmail || 'student@example.com';
             const phone = p.customerPhone || 'N/A';
             const isCanceled = (p.status || '').toLowerCase().includes('cancel');
             const isRefunded = (p.status || '').toLowerCase().includes('refund');
@@ -743,7 +805,7 @@ router.get('/tickets', async (req, res) => {
               createdAt: p.createdAt || p.failedAt || new Date().toISOString(),
               studentContact: `${email} (${phone})`,
               userEmail: email,
-              customerName: p.customerName || email.split('@')[0],
+              customerName: name || email.split('@')[0],
               orderId: orderNum,
               bankRrn: p.bankRrn || 'N/A',
               amount: inrAmt,
@@ -760,7 +822,7 @@ router.get('/tickets', async (req, res) => {
 
     // 3. Fallback to live JSON stores (only real student records, filtering out mock dummy data)
     const fileTickets = ActivityOrderStore.getTickets().filter(
-      (t) => !t.userEmail?.includes('dispute.student@example.com') && !t.studentContact?.includes('dispute.student@example.com')
+      (t) => !isFakeRecord(t.userEmail || t.customerEmail || t.studentContact, t.orderId, t.customerName)
     );
     fileTickets.forEach((t) => {
       if (!seenOrderIds.has(t.orderId)) {
@@ -771,12 +833,15 @@ router.get('/tickets', async (req, res) => {
 
     const fileOrders = ActivityOrderStore.getOrders();
     fileOrders
-      .filter((o) => o.status && (o.status.toLowerCase().includes('fail') || o.status.toLowerCase().includes('cancel') || o.status.toLowerCase().includes('refund')))
+      .filter((o) => !isFakeRecord(o.customerEmail || o.userEmail, o.orderId, o.customerName) && o.status && (o.status.toLowerCase().includes('fail') || o.status.toLowerCase().includes('cancel') || o.status.toLowerCase().includes('refund')))
       .forEach((p) => {
         const orderNum = p.orderId || p.razorpayOrderId;
+        const email = p.customerEmail || p.userEmail || '';
+        const name = p.customerName || '';
+        if (isFakeRecord(email, orderNum, name)) return;
+
         if (orderNum && !seenOrderIds.has(orderNum)) {
           seenOrderIds.add(orderNum);
-          const email = p.customerEmail || p.userEmail || 'student@example.com';
           const isCanceled = (p.status || '').toLowerCase().includes('cancel');
           const isRefunded = (p.status || '').toLowerCase().includes('refund');
           const issueCategory = isCanceled ? 'User Cancelled / Modal Dismissed' : 'amount_debited_payment_failed';
@@ -789,7 +854,7 @@ router.get('/tickets', async (req, res) => {
             createdAt: p.createdAt || p.date || new Date().toISOString(),
             studentContact: `${email} (${p.customerPhone || 'N/A'})`,
             userEmail: email,
-            customerName: p.customerName || email.split('@')[0],
+            customerName: name || email.split('@')[0],
             orderId: orderNum,
             bankRrn: p.bankRrn || 'N/A',
             amount: inrAmt,

@@ -3,9 +3,11 @@ import Card from '@mui/material/Card';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import EditIcon from '@mui/icons-material/Edit';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import './CoursePlanCard.css';
 
-export default function CoursePlanCard({ course, onEdit }) {
+export default function CoursePlanCard({ course, onEdit, onManageMaterials, onManageSlots }) {
   const c = course;
   const rawPaise = c.priceInPaise || Math.round(Number(c.price || 0) * 100);
   const discountPct =
@@ -77,15 +79,40 @@ export default function CoursePlanCard({ course, onEdit }) {
         </ul>
       </div>
 
-      <Button
-        variant="contained"
-        fullWidth
-        startIcon={<EditIcon />}
-        onClick={() => onEdit(c)}
-        className="sc-product-btn-edit"
-      >
-        Change Price &amp; Details
-      </Button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<MenuBookIcon fontSize="small" />}
+            onClick={() => onManageMaterials && onManageMaterials(c)}
+            sx={{ flex: 1, textTransform: 'none', fontWeight: 600, fontSize: '0.78rem' }}
+          >
+            Study Materials &amp; Notes ({(c.notesAndPdfs || []).length})
+          </Button>
+          {(isMasterclass || (c.timingSlots && c.timingSlots.length > 0)) && (
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<CalendarMonthIcon fontSize="small" />}
+              onClick={() => onManageSlots && onManageSlots(c)}
+              sx={{ flex: 1, textTransform: 'none', fontWeight: 600, fontSize: '0.78rem' }}
+            >
+              Slots ({(c.timingSlots || []).length})
+            </Button>
+          )}
+        </div>
+
+        <Button
+          variant="contained"
+          fullWidth
+          startIcon={<EditIcon />}
+          onClick={() => onEdit(c)}
+          className="sc-product-btn-edit"
+        >
+          Edit Course Details &amp; Curriculum
+        </Button>
+      </div>
     </Card>
   );
 }

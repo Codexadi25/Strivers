@@ -163,13 +163,61 @@ function CourseFormFields({ state, onChange, isCreate = false }) {
         />
       </div>
 
-      <TextField
-        label="Schedule / Session Date Label"
-        size="small"
-        fullWidth
-        value={state.sessionDate || ''}
-        onChange={(e) => onChange({ ...state, sessionDate: e.target.value })}
-      />
+      <div className="sc-dialog-two-col">
+        <TextField
+          label="Schedule / Session Date Label"
+          size="small"
+          placeholder="e.g. Instant Self-Paced Access or Sunday 11:00 AM"
+          value={state.sessionDate || ''}
+          onChange={(e) => onChange({ ...state, sessionDate: e.target.value })}
+        />
+        <TextField
+          select
+          label="Broadcast Status"
+          size="small"
+          value={state.sessionStatus || 'upcoming'}
+          onChange={(e) => onChange({ ...state, sessionStatus: e.target.value })}
+        >
+          <MenuItem value="upcoming">Upcoming</MenuItem>
+          <MenuItem value="live">Live Now</MenuItem>
+          <MenuItem value="ended">Ended</MenuItem>
+          <MenuItem value="completed">Completed</MenuItem>
+        </TextField>
+      </div>
+
+      <div className="sc-dialog-two-col">
+        <TextField
+          label="Google Meet / Room Link"
+          size="small"
+          placeholder="https://meet.google.com/..."
+          value={state.activeMeetingLink || ''}
+          onChange={(e) => onChange({ ...state, activeMeetingLink: e.target.value })}
+        />
+        <TextField
+          label="Meeting Code / Passcode"
+          size="small"
+          placeholder="e.g. strivers-live"
+          value={state.meetingCode || ''}
+          onChange={(e) => onChange({ ...state, meetingCode: e.target.value })}
+        />
+      </div>
+
+      <div className="sc-dialog-two-col">
+        <TextField
+          label="Official WhatsApp Group Link"
+          size="small"
+          placeholder="https://chat.whatsapp.com/..."
+          value={state.whatsappGroupLink || ''}
+          onChange={(e) => onChange({ ...state, whatsappGroupLink: e.target.value })}
+        />
+        <TextField
+          label="DRM Secret Passcode"
+          size="small"
+          placeholder="STRIVERS2026"
+          value={state.secretPasscode || ''}
+          onChange={(e) => onChange({ ...state, secretPasscode: e.target.value })}
+        />
+      </div>
 
       {/* Cover Image Link or Upload to DB */}
       <div className="sc-course-photo-panel">

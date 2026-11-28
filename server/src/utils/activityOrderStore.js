@@ -8,42 +8,6 @@ const LOGS_FILE = 'audit_logs.json';
 
 const SEED_ORDERS = [
   {
-    orderId: 'order_TyAgCeDPvmTPOX',
-    txnId: 'pay_TyAgCeDPvmTPOX_1',
-    refId: 'rcpt_al_dev_1794247929950',
-    date: '9/11/2026, 11:42:10 pm',
-    createdAt: '2026-11-09T23:42:10.000Z',
-    customerEmail: 'admin@yourdomain.com',
-    customerName: 'Admin Operator',
-    customerPhone: '+91 9000000001',
-    userId: 'usr_admin_001',
-    planId: 'CHANNEL',
-    courseTitle: 'Paid Job Channel',
-    amount: 174,
-    currency: 'INR',
-    paidVia: 'UPI',
-    status: 'PAYMENT CANCELED',
-    remark: 'User Canceled Midway at Gateway',
-  },
-  {
-    orderId: 'order_TyAg2Ra7PZJtZv',
-    txnId: 'pay_TyAg2Ra7PZJtZv_1',
-    refId: 'rcpt_al_dev_1794247920408',
-    date: '9/11/2026, 11:42:00 pm',
-    createdAt: '2026-11-09T23:42:00.000Z',
-    customerEmail: 'admin@yourdomain.com',
-    customerName: 'Admin Operator',
-    customerPhone: '+91 9000000001',
-    userId: 'usr_admin_001',
-    planId: 'MASTERCLASS',
-    courseTitle: 'Strivers Placement Masterclass',
-    amount: 74,
-    currency: 'INR',
-    paidVia: 'CARD',
-    status: 'PAYMENT CANCELED',
-    remark: 'User Canceled Midway at Gateway',
-  },
-  {
     orderId: 'order_TyAg7891238910',
     txnId: 'pay_TyAg7891238910_1',
     refId: 'rcpt_al_dev_1794247812999',
@@ -202,6 +166,40 @@ const SEED_LOGS = [
   },
 ];
 
+function isFakeOrder(o) {
+  if (!o) return true;
+  const e = String(o.customerEmail || o.userEmail || o.email || '').toLowerCase().trim();
+  const oid = String(o.orderId || o.razorpayOrderId || '').toLowerCase().trim();
+  const name = String(o.customerName || o.studentContact || '').toLowerCase().trim();
+  if (
+    !e ||
+    e.includes('example.com') ||
+    e.includes('yourdomain.com') ||
+    e.includes('student.test') ||
+    e.includes('dispute.student') ||
+    e.includes('delete_probe') ||
+    e.includes('qa.student')
+  ) {
+    return true;
+  }
+  if (
+    oid.startsWith('order_sim_') ||
+    oid.startsWith('test_') ||
+    oid.startsWith('order_test_') ||
+    oid.includes('dispute_12345')
+  ) {
+    return true;
+  }
+  if (
+    name.includes('admin operator') ||
+    name.includes('student.test') ||
+    name.includes('qa dynamic student')
+  ) {
+    return true;
+  }
+  return false;
+}
+
 let ordersCache = loadJsonFile(ORDERS_FILE, SEED_ORDERS);
 let ticketsCache = loadJsonFile(TICKETS_FILE, SEED_TICKETS);
 let refundsCache = loadJsonFile(REFUNDS_FILE, SEED_REFUNDS);
@@ -209,7 +207,7 @@ let logsCache = loadJsonFile(LOGS_FILE, SEED_LOGS);
 
 const ActivityOrderStore = {
   getOrders(q = '') {
-    let list = [...ordersCache];
+    let list = ordersCache.filter((o) => !isFakeOrder(o));
     if (q) {
       const term = q.trim().toLowerCase();
       list = list.filter(
@@ -226,6 +224,7 @@ const ActivityOrderStore = {
   },
 
   recordOrder(order) {
+    if (isFakeOrder(order)) return order;
     const idx = ordersCache.findIndex((o) => o.orderId === order.orderId);
     if (idx !== -1) {
       ordersCache[idx] = { ...ordersCache[idx], ...order };
@@ -237,7 +236,7 @@ const ActivityOrderStore = {
   },
 
   computeRevenueStats() {
-    const captured = ordersCache.filter((o) => String(o.status).toUpperCase() === 'CAPTURED');
+    const captured = ordersCache.filter((o) => !isFakeOrder(o) && String(o.status).toUpperCase() === 'CAPTURED');
     const totalRevenueNum = captured.reduce((sum, o) => sum + (Number(o.amount) || 0), 0);
     return {
       totalRevenueNum,
@@ -247,7 +246,7 @@ const ActivityOrderStore = {
   },
 
   getTickets() {
-    return [...ticketsCache];
+    return ticketsCache.filter((t) => !isFakeOrder(t));
   },
 
   addTicket(ticket) {
