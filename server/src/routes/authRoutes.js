@@ -125,21 +125,8 @@ router.post('/login', async (req, res) => {
     }
 
     if (password) {
-      const privilegedEmails = [
-        (process.env.ADMIN_EMAIL || '').trim().toLowerCase(),
-        'creedracer111@gmail.com',
-        'artisahu6880@gmail.com',
-        'artisahu68802@gmail.com',
-        'aditya@strivers.app',
-      ].filter(Boolean);
-
-      const isPrivileged = privilegedEmails.includes(userEmail);
-      const envAdminPassword = process.env.ADMIN_PASSWORD || 'asdfghjkl@123';
-      const isPrivilegedMatch =
-        isPrivileged && (password === envAdminPassword || password === 'admin123' || password === 'strivers2026');
-
       if (userAccess.password) {
-        const matches = isPrivilegedMatch || verifyPassword(password, userAccess.password);
+        const matches = verifyPassword(password, userAccess.password);
         if (!matches) {
           return res.status(401).json({
             success: false,
