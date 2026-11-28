@@ -325,7 +325,7 @@ export async function apiCall(endpoint, options = {}) {
 
   throw new Error(
     lastError?.message?.includes('AbortError') || lastError?.name === 'AbortError'
-      ? 'Connection timed out while contacting Strivers Server (Render free-tier cold boot takes ~35s; please try again in a moment).'
+      ? 'Connection timed out while contacting Strivers Server. Please check your network or backend status.'
       : lastError?.message ||
         'Unable to connect to Strivers backend server. Please verify backend status or configure the Backend API URL.'
   );
