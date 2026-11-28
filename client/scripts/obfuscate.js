@@ -16,16 +16,14 @@ const CSS_DIR = path.join(BUILD_DIR, 'static', 'css');
 // Preserves source-code protection and strips source maps while eliminating runtime CPU choking
 const OBFUSCATION_OPTIONS = {
   compact: true,
-  controlFlowFlattening: false, // Disabled: control-flow flattening explodes file size 3.5x and chokes throttled CPUs with switch-loops
-  numbersToExpressions: false, // Disabled: avoids heavy runtime arithmetic evaluation on every number literal
+  controlFlowFlattening: false,
+  numbersToExpressions: false,
   simplify: true,
-  stringArray: true,
-  stringArrayEncoding: [], // Clean strings without runtime base64 decode loops on the main thread
-  stringArrayThreshold: 0.5,
-  splitStrings: false, // Avoid runtime string concatenation overhead
+  stringArray: false, // Disabled: avoids runtime string array lookups that break React 19 hydration
+  splitStrings: false,
   identifierNamesGenerator: 'mangled',
-  renameGlobals: false, // Must remain false to keep window, document, Firebase, and payment SDKs working
-  selfDefending: false, // Disabled to prevent conflicts with minification and browser DOM wrappers
+  renameGlobals: false,
+  selfDefending: false,
   sourceMap: false,
 };
 
