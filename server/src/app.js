@@ -19,6 +19,7 @@ const profileRoutes = require('./routes/profileRoutes');
 const practiceRoutes = require('./routes/practiceRoutes');
 const noteRoutes = require('./routes/noteRoutes');
 const adminAccessV2Routes = require('./routes/adminAccessV2Routes');
+const integrationRoutes = require('./routes/integrationRoutes');
 const errorHandler = require('./middlewares/errorMiddleware');
 const app = express();
 
@@ -147,6 +148,7 @@ app.use('/api/v1', paymentRoutes);
 // 2. ADMIN ACCESS & SERVERCLIENT MANAGEMENT APIS (/api/v2/...)
 // =========================================================================
 app.use('/api/v2/adminaccess', adminAccessV2Routes);
+app.use('/api/v2/integration', integrationRoutes);
 app.use('/api/v2', adminAccessV2Routes);
 
 // Sample route to verify Server-Side JSX rendering with express-react-views

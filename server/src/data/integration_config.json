@@ -1,0 +1,15 @@
+{
+  "apiKey": "ubos_strivers_live_key_9x9",
+  "secretToken": "sec_strivers_mat9x9_token_2026",
+  "adityaServerUrl": "http://localhost:5000",
+  "configuredBy": "GUI Initial Seed",
+  "configuredAt": "2026-11-28T06:58:13.338Z",
+  "lastHandshakeAt": null,
+  "status": "ACTIVE",
+  "allowedFeatures": [
+    "orders_sync",
+    "revenue_metrics",
+    "user_telemetry",
+    "course_catalog"
+  ]
+}

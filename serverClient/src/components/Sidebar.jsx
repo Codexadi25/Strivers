@@ -12,6 +12,7 @@ import PeopleOutlineIcon from '@mui/icons-material/PeopleOutlined';
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import RestoreOutlinedIcon from '@mui/icons-material/RestoreOutlined';
 import TimelineIcon from '@mui/icons-material/Timeline';
+import HubIcon from '@mui/icons-material/Hub';
 import LogoutIcon from '@mui/icons-material/Logout';
 import appLogo from '../assets/favicon.ico';
 import './Sidebar.css';
@@ -27,6 +28,7 @@ const NAV_ITEMS = [
   { id: 'practice', label: 'Practice Sheets & Roles', icon: MenuBookOutlinedIcon, badge: 'NEW', badgeType: 'badge-new' },
   { id: 'refunds', label: 'Refunds Console', icon: RestoreOutlinedIcon },
   { id: 'audit', label: 'Audit & Security Logs', icon: TimelineIcon },
+  { id: 'aditya-integration', label: 'Aditya OS Link', icon: HubIcon, badge: 'API LINK', badgeType: 'badge-live' },
 ];
 
 export default function Sidebar({ activeTab, onTabChange, user, onLogout }) {

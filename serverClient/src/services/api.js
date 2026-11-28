@@ -48,6 +48,11 @@ export function getActiveApiBase() {
   return cachedWorkingBase || getConfiguredApiBase();
 }
 
+export function getBackendBase() {
+  const base = getActiveApiBase();
+  return base.replace(/\/api\/v2\/adminaccess\/?$/, '');
+}
+
 export function setCustomApiBase(customUrl) {
   const norm = normalizeAdminApiBase(customUrl);
   if (typeof localStorage !== 'undefined') {

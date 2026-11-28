@@ -17,6 +17,7 @@ import UsersPage from './pages/UsersPage';
 import PracticePage from './pages/PracticePage';
 import RefundsPage from './pages/RefundsPage';
 import AuditLogsPage from './pages/AuditLogsPage';
+import AdityaIntegrationPage from './pages/AdityaIntegrationPage';
 import { buildServerClientTheme } from './theme/muiTheme';
 import { apiCall, getAdminToken, clearAdminSession } from './services/api';
 import {
@@ -129,6 +130,8 @@ function AppContent() {
         return <RefundsPage key={refreshKey} />;
       case 'audit':
         return <AuditLogsPage key={refreshKey} />;
+      case 'aditya-integration':
+        return <AdityaIntegrationPage key={refreshKey} />;
       default:
         return <PricingPage key={refreshKey} />;
     }
