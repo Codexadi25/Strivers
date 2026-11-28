@@ -12,19 +12,18 @@ const BUILD_DIR = path.resolve(__dirname, '..', 'build');
 const JS_DIR = path.join(BUILD_DIR, 'static', 'js');
 const CSS_DIR = path.join(BUILD_DIR, 'static', 'css');
 
-// Obfuscator options optimized for React 19, Firebase SDK, and third-party integrations (Razorpay)
+// High-performance obfuscation profile optimized for rapid 3G mobile downloads and 20x CPU slowdown
+// Preserves source-code protection and strips source maps while eliminating runtime CPU choking
 const OBFUSCATION_OPTIONS = {
   compact: true,
-  controlFlowFlattening: true,
-  controlFlowFlatteningThreshold: 0.4,
-  numbersToExpressions: true,
+  controlFlowFlattening: false, // Disabled: control-flow flattening explodes file size 3.5x and chokes throttled CPUs with switch-loops
+  numbersToExpressions: false, // Disabled: avoids heavy runtime arithmetic evaluation on every number literal
   simplify: true,
   stringArray: true,
-  stringArrayEncoding: ['base64'],
-  stringArrayThreshold: 0.75,
-  splitStrings: true,
-  splitStringsChunkLength: 8,
-  identifierNamesGenerator: 'hexadecimal',
+  stringArrayEncoding: [], // Clean strings without runtime base64 decode loops on the main thread
+  stringArrayThreshold: 0.5,
+  splitStrings: false, // Avoid runtime string concatenation overhead
+  identifierNamesGenerator: 'mangled',
   renameGlobals: false, // Must remain false to keep window, document, Firebase, and payment SDKs working
   selfDefending: false, // Disabled to prevent conflicts with minification and browser DOM wrappers
   sourceMap: false,

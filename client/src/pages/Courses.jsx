@@ -112,6 +112,7 @@ export default function Courses() {
       isMounted = false;
       window.removeEventListener('auth_state_change', loadCatalogAndAuth);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Listen to tab / filter query params (e.g. /courses?tab=my-access)

@@ -283,6 +283,7 @@ export default function PracticeDashboard() {
       window.removeEventListener('auth_state_change', syncAuthAndProfile);
       unsubscribeFirebase();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // On-demand progress saving: only called when user takes an explicit action
