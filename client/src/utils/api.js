@@ -8,6 +8,7 @@ import { getAuthToken, clearAuthSession } from './authStorage';
  * Absolutely no server addresses or hostnames are hardcoded in the application code.
  */
 const getApiBase = () => {
+  // 1. Strictly derive from active .env file (REACT_APP_API_BASE_URL / VITE_API_BASE_URL)
   const envBase = (
     typeof process !== 'undefined' && process.env
       ? process.env.REACT_APP_API_BASE_URL || process.env.VITE_API_BASE_URL
@@ -19,7 +20,7 @@ const getApiBase = () => {
     return clean.endsWith('/api') ? clean : `${clean}/api`;
   }
 
-  // Fallback to relative /api when running behind same-origin or reverse proxy
+  // 2. Fallback to relative /api when running behind reverse proxy or same origin
   return '/api';
 };
 

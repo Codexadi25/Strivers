@@ -23,7 +23,7 @@ export function normalizeAdminApiBase(rawUrl) {
 }
 
 export function getConfiguredApiBase() {
-  // 1. Strictly prioritize the .env file configuration first
+  // 1. Strictly prioritize the .env file configuration (VITE_API_BASE_URL / REACT_APP_API_BASE_URL)
   const envUrl =
     (typeof process !== 'undefined' && process.env
       ? process.env.VITE_API_BASE_URL || process.env.REACT_APP_API_BASE_URL
@@ -40,7 +40,15 @@ export function getConfiguredApiBase() {
     if (normalizedRuntime) return normalizedRuntime;
   }
 
-  // 3. Fallback to relative default if no environment variable is provided
+  // 3. Local storage override (if user configured custom backend in GUI)
+  const localOverride =
+    typeof localStorage !== 'undefined' ? localStorage.getItem('strivers_admin_api_url') : '';
+  if (localOverride) {
+    const normalizedLocal = normalizeAdminApiBase(localOverride);
+    if (normalizedLocal) return normalizedLocal;
+  }
+
+  // 4. Relative fallback for reverse proxies or same-origin deployments
   return DEFAULT_PRODUCTION_BACKEND;
 }
 
