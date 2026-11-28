@@ -626,10 +626,13 @@ router.post(['/masterclasses/:id/slots', '/courses/:id/slots'], (req, res) => {
       dateTime: req.body.dateTime || req.body.date || 'Upcoming Sunday 11:00 AM IST',
       startTime: req.body.startTime || '11:00 AM',
       endTime: req.body.endTime || '01:00 PM',
-      timezone: 'IST',
+      timezone: req.body.timezone || 'IST',
       mentorName: req.body.mentorName || 'Unicorn Mentors',
+      mentorRole: req.body.mentorRole || '',
+      agenda: Array.isArray(req.body.agenda) ? req.body.agenda : [],
       capacity: Number(req.body.capacity) || 100,
-      active: true,
+      active: req.body.isActive !== false && req.body.active !== false,
+      isActive: req.body.isActive !== false && req.body.active !== false,
       addedAt: new Date().toISOString(),
     };
     const updated = CourseStore.update(id, {

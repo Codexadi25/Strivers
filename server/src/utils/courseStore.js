@@ -205,6 +205,7 @@ const CourseStore = {
       timezone: slotUpdates.timezone !== undefined ? String(slotUpdates.timezone).trim() : (existing.timezone || 'IST'),
       mentorName: slotUpdates.mentorName !== undefined ? String(slotUpdates.mentorName).trim() : (existing.mentorName || 'Unicorn Mentors'),
       mentorRole: slotUpdates.mentorRole !== undefined ? String(slotUpdates.mentorRole).trim() : (existing.mentorRole || ''),
+      agenda: Array.isArray(slotUpdates.agenda) ? slotUpdates.agenda : (existing.agenda || []),
       capacity: slotUpdates.capacity !== undefined ? Number(slotUpdates.capacity) : (existing.capacity || 150),
       isActive: slotUpdates.isActive !== undefined ? Boolean(slotUpdates.isActive) : (existing.isActive !== false),
       active: slotUpdates.isActive !== undefined ? Boolean(slotUpdates.isActive) : (existing.active !== false),

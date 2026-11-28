@@ -263,6 +263,7 @@ router.get('/:id/access', verifyFirebaseToken, async (req, res) => {
         meetingPlatform: activeData.meetingPlatform || 'Google Meet',
         sessionStatus: activeData.sessionStatus || 'upcoming',
         sessionDate: activeData.sessionDate || 'Sunday, 11:00 AM IST',
+        targetCountdown: activeData.targetCountdown || null,
         whatsappGroupLink: activeData.whatsappGroupLink || 'https://chat.whatsapp.com/strivers-placement-masterclass',
         mentors: activeData.mentors || [],
         timingSlots: activeData.timingSlots || [],

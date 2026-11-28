@@ -285,6 +285,44 @@
   min-width: 180px;
 }
 
+/* TWO-HALVES SPLIT SECTION */
+.product-access-split-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+  margin-top: 24px;
+  margin-bottom: 32px;
+}
+
+.product-access-half-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.product-access-half-col .product-access-section-block,
+.product-access-half-col .product-access-materials-section {
+  margin-bottom: 0;
+  background: #FAFAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.materials-split-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 960px) {
+  .product-access-split-row {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
 /* SECTION HEADINGS */
 .product-access-section-block {
   margin-bottom: 28px;

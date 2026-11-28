@@ -116,19 +116,52 @@ export default function CourseAccess() {
       });
   }, [courseId]);
 
-  // Target countdown calculation: parse date or target next Sunday 11:00 AM IST
+  // Target countdown calculation: parse future date or target next scheduled slot / upcoming Sunday 11:00 AM IST
   const targetDate = useMemo(() => {
+    const now = new Date();
+
+    // 1. If targetCountdown exists and is in the future, use it
     if (courseData?.targetCountdown) {
       const parsed = new Date(courseData.targetCountdown);
-      if (!isNaN(parsed.getTime())) return parsed;
+      if (!isNaN(parsed.getTime()) && parsed.getTime() > now.getTime()) {
+        return parsed;
+      }
     }
-    // Default to upcoming Sunday 11:00 AM IST
-    const now = new Date();
+
+    // 2. Try parsing future dates from active timingSlots
+    if (courseData?.timingSlots && Array.isArray(courseData.timingSlots)) {
+      const futureSlotDates = [];
+      for (const slot of courseData.timingSlots) {
+        if (slot.isActive === false || slot.active === false) continue;
+        const dateStr = slot.dateTime || slot.date;
+        if (!dateStr) continue;
+        let d = new Date(dateStr);
+        if (isNaN(d.getTime())) {
+          const cleanStr = dateStr
+            .replace(/^[A-Za-z]+,\s*/, '')
+            .replace(/\s*\(.*\)/, '')
+            .replace(/\s*IST/i, ' GMT+0530');
+          d = new Date(cleanStr);
+        }
+        if (!isNaN(d.getTime()) && d.getTime() > now.getTime()) {
+          futureSlotDates.push(d);
+        }
+      }
+      if (futureSlotDates.length > 0) {
+        futureSlotDates.sort((a, b) => a.getTime() - b.getTime());
+        return futureSlotDates[0];
+      }
+    }
+
+    // 3. Fallback: Next Sunday 11:00 AM IST
     const day = now.getDay();
-    const diffDays = (7 - day) % 7 || 7;
-    const target = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffDays, 11, 0, 0);
-    return target;
-  }, [courseData?.targetCountdown]);
+    let daysUntilSunday = (7 - day) % 7;
+    const nextSunday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilSunday, 11, 0, 0);
+    if (nextSunday.getTime() <= now.getTime()) {
+      nextSunday.setDate(nextSunday.getDate() + 7);
+    }
+    return nextSunday;
+  }, [courseData?.targetCountdown, courseData?.timingSlots]);
 
   // Countdown ticker
   useEffect(() => {
@@ -556,117 +589,128 @@ export default function CourseAccess() {
               </div>
             )}
 
-            {/* TIMING SLOTS & AGENDA */}
-            {timingSlots.length > 0 && (
-              <div className="product-access-section-block">
-                <div className="product-access-section-head">
-                  <h3 className="product-access-section-title">
-                    <ScheduleOutlinedIcon sx={{ color: '#2563EB' }} />
-                    <span>Session Schedule &amp; Agenda</span>
-                  </h3>
-                  <span className="product-access-section-sub">
-                    {timingSlots.length} slot{timingSlots.length === 1 ? '' : 's'} scheduled
-                  </span>
-                </div>
+            {/* TWO-HALVES SECTION: SESSION SCHEDULE & AGENDA (LEFT) & STUDY MATERIALS, NOTES & CHEATSHEETS (RIGHT) */}
+            <div className="product-access-split-row">
+              {/* LEFT HALF: SESSION SCHEDULE & AGENDA */}
+              <div className="product-access-half-col schedule-half">
+                <div className="product-access-section-block">
+                  <div className="product-access-section-head">
+                    <h3 className="product-access-section-title">
+                      <ScheduleOutlinedIcon sx={{ color: '#2563EB' }} />
+                      <span>Session Schedule &amp; Agenda</span>
+                    </h3>
+                    <span className="product-access-section-sub">
+                      {timingSlots.length} slot{timingSlots.length === 1 ? '' : 's'} scheduled
+                    </span>
+                  </div>
 
-                <div className="product-access-slots-grid">
-                  {timingSlots.map((slot, idx) => (
-                    <div key={slot.slotId || idx} className="product-access-slot-card">
-                      <div className="product-access-slot-top">
-                        <h4 style={{ margin: 0, fontSize: '1.05rem', color: '#0F172A' }}>
-                          {slot.title}
-                        </h4>
-                        <span className="product-access-slot-pill">
-                          <CalendarTodayOutlinedIcon sx={{ fontSize: 14 }} />
-                          <span>{slot.date} · {slot.startTime} {slot.timezone || 'IST'}</span>
-                        </span>
-                      </div>
-
-                      {slot.mentorName && (
-                        <p style={{ margin: '0 0 10px', fontSize: '0.88rem', color: '#475569' }}>
-                          <strong>Mentor:</strong> {slot.mentorName}{' '}
-                          {slot.mentorRole ? `(${slot.mentorRole})` : ''}
-                        </p>
-                      )}
-
-                      {slot.agenda && slot.agenda.length > 0 && (
-                        <div className="product-access-slot-agenda">
-                          <ul style={{ margin: 0, paddingLeft: '18px', color: '#334155', fontSize: '0.88rem' }}>
-                            {slot.agenda.map((item, i) => (
-                              <li key={i}>
-                                {typeof item === 'object' ? `${item.time}: ${item.topic}` : item}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                  {timingSlots.length === 0 ? (
+                    <div className="product-access-empty-card">
+                      No upcoming session slots scheduled yet.
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* STUDY MATERIALS & CHEATSHEETS */}
-            <div className="product-access-materials-section">
-              <div className="product-access-section-head">
-                <div>
-                  <h3 className="product-access-section-title">
-                    <FolderOutlinedIcon sx={{ color: '#2563EB' }} />
-                    <span>Study Materials, Notes &amp; Cheatsheets</span>
-                  </h3>
-                  <span className="product-access-section-sub product-access-mobile-hide">
-                    Interactive reading workspace with candidate watermark &amp; DRM protection
-                  </span>
-                </div>
-              </div>
-
-              {materials.length === 0 ? (
-                <div className="product-access-empty-card">
-                  No study materials attached to this course yet.
-                </div>
-              ) : (
-                <div className="materials-grid-container">
-                  {materials.map((mat) => {
-                    const sizeKB = mat.fileSize ? Math.round(mat.fileSize / 1024) : 0;
-                    const sizeFormatted = sizeKB > 1024 ? `${(sizeKB / 1024).toFixed(1)} MB` : `${sizeKB} KB`;
-
-                    return (
-                      <div key={mat.materialId || mat._id} className="material-card-item">
-                        <div>
-                          <div className="material-card-top">
-                            {renderMaterialIcon(mat.fileType)}
-                            <span className="material-card-type-pill">
-                              {(mat.fileType || 'notes').toUpperCase()} · {sizeFormatted}
+                  ) : (
+                    <div className="product-access-slots-grid">
+                      {timingSlots.map((slot, idx) => (
+                        <div key={slot.slotId || idx} className="product-access-slot-card">
+                          <div className="product-access-slot-top">
+                            <h4 style={{ margin: 0, fontSize: '1.02rem', color: '#0F172A', fontWeight: 700 }}>
+                              {slot.title}
+                            </h4>
+                            <span className="product-access-slot-pill">
+                              <CalendarTodayOutlinedIcon sx={{ fontSize: 13 }} />
+                              <span>{slot.date} · {slot.startTime} {slot.timezone || 'IST'}</span>
                             </span>
                           </div>
 
-                          <h4 className="material-card-title">{mat.title}</h4>
+                          {slot.mentorName && (
+                            <p style={{ margin: '0 0 10px', fontSize: '0.86rem', color: '#475569' }}>
+                              <strong>Mentor:</strong> {slot.mentorName}{' '}
+                              {slot.mentorRole ? `(${slot.mentorRole})` : ''}
+                            </p>
+                          )}
 
-                          <p className="material-card-desc">
-                            {mat.description || 'Study guide prepared for program learners.'}
-                          </p>
+                          {slot.agenda && slot.agenda.length > 0 && (
+                            <div className="product-access-slot-agenda">
+                              <ul style={{ margin: 0, paddingLeft: '18px', color: '#334155', fontSize: '0.85rem' }}>
+                                {slot.agenda.map((item, i) => (
+                                  <li key={i}>
+                                    {typeof item === 'object' ? `${item.time}: ${item.topic}` : item}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
                         </div>
-
-                        <div>
-                          <Button
-                            variant="contained"
-                            fullWidth
-                            onClick={() => handleOpenMaterial(mat)}
-                            disabled={loadingMaterial}
-                            startIcon={<MenuBookOutlinedIcon />}
-                            className="material-read-btn"
-                          >
-                            {loadingMaterial ? 'Opening...' : 'Open Reader'}
-                          </Button>
-                          <span className="material-view-only-caption product-access-mobile-hide">
-                            In-App Reading Access
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
+
+              {/* RIGHT HALF: STUDY MATERIALS, NOTES & CHEATSHEETS */}
+              <div className="product-access-half-col materials-half">
+                <div className="product-access-materials-section">
+                  <div className="product-access-section-head">
+                    <div>
+                      <h3 className="product-access-section-title">
+                        <FolderOutlinedIcon sx={{ color: '#2563EB' }} />
+                        <span>Study Materials, Notes &amp; Cheatsheets</span>
+                      </h3>
+                      <span className="product-access-section-sub">
+                        {materials.length} document{materials.length === 1 ? '' : 's'} · Anti-Download DRM Protection
+                      </span>
+                    </div>
+                  </div>
+
+                  {materials.length === 0 ? (
+                    <div className="product-access-empty-card">
+                      No study materials attached to this course yet.
+                    </div>
+                  ) : (
+                    <div className="materials-grid-container materials-split-grid">
+                      {materials.map((mat) => {
+                        const sizeKB = mat.fileSize ? Math.round(mat.fileSize / 1024) : 0;
+                        const sizeFormatted = sizeKB > 1024 ? `${(sizeKB / 1024).toFixed(1)} MB` : `${sizeKB} KB`;
+
+                        return (
+                          <div key={mat.materialId || mat._id} className="material-card-item">
+                            <div>
+                              <div className="material-card-top">
+                                {renderMaterialIcon(mat.fileType)}
+                                <span className="material-card-type-pill">
+                                  {(mat.fileType || 'notes').toUpperCase()} · {sizeFormatted}
+                                </span>
+                              </div>
+
+                              <h4 className="material-card-title">{mat.title}</h4>
+
+                              <p className="material-card-desc">
+                                {mat.description || 'Study guide prepared for program learners.'}
+                              </p>
+                            </div>
+
+                            <div>
+                              <Button
+                                variant="contained"
+                                fullWidth
+                                onClick={() => handleOpenMaterial(mat)}
+                                disabled={loadingMaterial}
+                                startIcon={<MenuBookOutlinedIcon />}
+                                className="material-read-btn"
+                              >
+                                {loadingMaterial ? 'Opening...' : 'Open Reader'}
+                              </Button>
+                              <span className="material-view-only-caption">
+                                In-App Reading Access
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* DRM WATERMARKED DOCUMENT MODAL */}
