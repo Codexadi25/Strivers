@@ -402,6 +402,28 @@ router.get('/masterclasses', (req, res) => {
   }
 });
 
+router.put('/masterclasses/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const updated = CourseStore.update(id, req.body);
+    ActivityOrderStore.addLog({
+      event: 'MASTERCLASS_UPDATED',
+      userEmail: req.user?.email,
+      ip: req.ip || '127.0.0.1',
+      metadata: { productId: id, title: updated?.title, price: updated?.price },
+      tag: 'CATALOG',
+    });
+    res.json({
+      success: true,
+      message: `Masterclass "${updated?.title || id}" updated successfully.`,
+      masterclass: updated,
+      course: updated,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.put('/masterclasses/:id/meeting', (req, res) => {
   try {
     const { id } = req.params;
@@ -410,10 +432,41 @@ router.put('/masterclasses/:id/meeting', (req, res) => {
       event: 'MASTERCLASS_MEETING_UPDATED',
       userEmail: req.user?.email,
       ip: req.ip || '127.0.0.1',
-      metadata: { productId: id, activeMeetingLink: updated?.activeMeetingLink },
+      metadata: {
+        productId: id,
+        activeMeetingLink: updated?.activeMeetingLink,
+        sessionStatus: updated?.sessionStatus,
+        whatsappGroupLink: updated?.whatsappGroupLink,
+      },
       tag: 'LIVE',
     });
-    res.json({ success: true, message: 'Live meeting details updated.', course: updated });
+    res.json({ success: true, message: 'Live meeting details updated.', course: updated, masterclass: updated });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.put('/masterclasses/:id/materials/:materialId', (req, res) => {
+  try {
+    const { id, materialId } = req.params;
+    const result = CourseStore.updateMaterial(id, materialId, req.body);
+    if (!result) {
+      return res.status(404).json({ success: false, message: 'Study material or masterclass not found.' });
+    }
+    ActivityOrderStore.addLog({
+      event: 'MASTERCLASS_MATERIAL_UPDATED',
+      userEmail: req.user?.email,
+      ip: req.ip || '127.0.0.1',
+      metadata: { productId: id, materialId, title: result.material?.title },
+      tag: 'CONTENT',
+    });
+    res.json({
+      success: true,
+      message: 'Study material updated successfully.',
+      material: result.material,
+      materialsCount: (result.course?.notesAndPdfs || []).length,
+      course: result.course,
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -476,6 +529,32 @@ router.delete('/masterclasses/:id/materials/:materialId', (req, res) => {
     const filtered = existing.filter((m) => String(m.materialId) !== String(materialId));
     const updated = CourseStore.update(id, { notesAndPdfs: filtered });
     res.json({ success: true, message: 'Material removed.', materialsCount: (updated?.notesAndPdfs || []).length });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+router.put('/masterclasses/:id/slots/:slotId', (req, res) => {
+  try {
+    const { id, slotId } = req.params;
+    const result = CourseStore.updateSlot(id, slotId, req.body);
+    if (!result) {
+      return res.status(404).json({ success: false, message: 'Timing slot or masterclass not found.' });
+    }
+    ActivityOrderStore.addLog({
+      event: 'MASTERCLASS_SLOT_UPDATED',
+      userEmail: req.user?.email,
+      ip: req.ip || '127.0.0.1',
+      metadata: { productId: id, slotId, title: result.slot?.title },
+      tag: 'LIVE',
+    });
+    res.json({
+      success: true,
+      message: 'Live timing slot updated successfully.',
+      slot: result.slot,
+      slotsCount: (result.course?.timingSlots || []).length,
+      course: result.course,
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

@@ -149,6 +149,18 @@ const CourseStore = {
           ? String(updates.activeMeetingLink).trim()
           : course.meetingLink || course.activeMeetingLink,
       meetingCode: updates.meetingCode !== undefined ? String(updates.meetingCode).trim() : course.meetingCode,
+      meetingPlatform:
+        updates.meetingPlatform !== undefined
+          ? String(updates.meetingPlatform).trim()
+          : course.meetingPlatform || 'Google Meet',
+      sessionStatus:
+        updates.sessionStatus !== undefined
+          ? String(updates.sessionStatus).trim()
+          : course.sessionStatus || 'upcoming',
+      whatsappGroupLink:
+        updates.whatsappGroupLink !== undefined
+          ? String(updates.whatsappGroupLink).trim()
+          : course.whatsappGroupLink || '',
       secretPasscode: updates.secretPasscode !== undefined ? String(updates.secretPasscode).trim() : course.secretPasscode || 'STRIVERS2026',
       timingSlots: Array.isArray(updates.timingSlots) ? updates.timingSlots : course.timingSlots || [],
       notesAndPdfs: Array.isArray(updates.notesAndPdfs) ? updates.notesAndPdfs : course.notesAndPdfs || [],
@@ -168,6 +180,93 @@ const CourseStore = {
     syncToMongo(updated);
 
     return updated;
+  },
+
+  updateSlot(courseId, slotId, slotUpdates = {}) {
+    const cleanCourseId = String(courseId || '').trim().toLowerCase();
+    const cleanSlotId = String(slotId || '').trim();
+    const course = this.getById(cleanCourseId);
+    if (!course) return null;
+
+    const slots = Array.isArray(course.timingSlots) ? [...course.timingSlots] : [];
+    const idx = slots.findIndex((s) => String(s.slotId) === cleanSlotId);
+    if (idx === -1) return null;
+
+    const existing = slots[idx];
+    const updatedSlot = {
+      ...existing,
+      ...slotUpdates,
+      slotId: existing.slotId,
+      title: slotUpdates.title !== undefined ? String(slotUpdates.title).trim() : existing.title,
+      date: slotUpdates.date !== undefined ? String(slotUpdates.date).trim() : (existing.date || existing.dateTime || ''),
+      dateTime: slotUpdates.dateTime !== undefined ? String(slotUpdates.dateTime).trim() : (existing.dateTime || existing.date || ''),
+      startTime: slotUpdates.startTime !== undefined ? String(slotUpdates.startTime).trim() : (existing.startTime || '11:00 AM'),
+      endTime: slotUpdates.endTime !== undefined ? String(slotUpdates.endTime).trim() : (existing.endTime || '01:30 PM'),
+      timezone: slotUpdates.timezone !== undefined ? String(slotUpdates.timezone).trim() : (existing.timezone || 'IST'),
+      mentorName: slotUpdates.mentorName !== undefined ? String(slotUpdates.mentorName).trim() : (existing.mentorName || 'Unicorn Mentors'),
+      mentorRole: slotUpdates.mentorRole !== undefined ? String(slotUpdates.mentorRole).trim() : (existing.mentorRole || ''),
+      capacity: slotUpdates.capacity !== undefined ? Number(slotUpdates.capacity) : (existing.capacity || 150),
+      isActive: slotUpdates.isActive !== undefined ? Boolean(slotUpdates.isActive) : (existing.isActive !== false),
+      active: slotUpdates.isActive !== undefined ? Boolean(slotUpdates.isActive) : (existing.active !== false),
+      updatedAt: new Date().toISOString(),
+    };
+
+    slots[idx] = updatedSlot;
+    const updatedCourse = this.update(cleanCourseId, { timingSlots: slots });
+    return { course: updatedCourse, slot: updatedSlot };
+  },
+
+  updateMaterial(courseId, materialId, materialUpdates = {}) {
+    const cleanCourseId = String(courseId || '').trim().toLowerCase();
+    const cleanMatId = String(materialId || '').trim();
+    const course = this.getById(cleanCourseId);
+    if (!course) return null;
+
+    const materials = Array.isArray(course.notesAndPdfs) ? [...course.notesAndPdfs] : [];
+    const idx = materials.findIndex((m) => String(m.materialId) === cleanMatId);
+    if (idx === -1) return null;
+
+    const existing = materials[idx];
+    const fileType = (materialUpdates.fileType || existing.fileType || 'notes').toLowerCase();
+    const mimeType =
+      materialUpdates.mimeType ||
+      (fileType === 'pdf'
+        ? 'application/pdf'
+        : fileType === 'html'
+        ? 'text/html'
+        : 'text/markdown');
+
+    let fileData = materialUpdates.fileData || existing.fileData;
+    if (!materialUpdates.fileData && materialUpdates.htmlContent) {
+      try {
+        fileData = Buffer.from(materialUpdates.htmlContent, 'utf-8').toString('base64');
+      } catch (_) {}
+    } else if (!materialUpdates.fileData && materialUpdates.content && fileType !== 'pdf') {
+      try {
+        fileData = Buffer.from(materialUpdates.content, 'utf-8').toString('base64');
+      } catch (_) {}
+    }
+
+    const updatedMaterial = {
+      ...existing,
+      ...materialUpdates,
+      materialId: existing.materialId,
+      title: materialUpdates.title !== undefined ? String(materialUpdates.title).trim() : existing.title,
+      description: materialUpdates.description !== undefined ? String(materialUpdates.description).trim() : existing.description,
+      fileType,
+      mimeType,
+      fileData,
+      fileSize: fileData ? fileData.length : existing.fileSize,
+      content: materialUpdates.content !== undefined ? materialUpdates.content : existing.content,
+      htmlContent: materialUpdates.htmlContent !== undefined ? materialUpdates.htmlContent : existing.htmlContent,
+      viewOnly: materialUpdates.viewOnly !== undefined ? Boolean(materialUpdates.viewOnly) : true,
+      drmLevel: materialUpdates.drmLevel || existing.drmLevel || 'DRM_ENFORCED',
+      updatedAt: new Date().toISOString(),
+    };
+
+    materials[idx] = updatedMaterial;
+    const updatedCourse = this.update(cleanCourseId, { notesAndPdfs: materials });
+    return { course: updatedCourse, material: updatedMaterial };
   },
 
   create(data = {}) {

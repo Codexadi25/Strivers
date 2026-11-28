@@ -93,8 +93,10 @@ export default function MasterclassesPage() {
         body: JSON.stringify({
           activeMeetingLink: editingMeeting.activeMeetingLink,
           meetingCode: editingMeeting.meetingCode,
+          meetingPlatform: editingMeeting.meetingPlatform || 'Google Meet',
           sessionStatus: editingMeeting.sessionStatus,
           sessionDate: editingMeeting.sessionDate,
+          whatsappGroupLink: editingMeeting.whatsappGroupLink || '',
         }),
       });
       showStatus(`✓ Meeting link synced for ${editingMeeting.title}!`);
@@ -115,10 +117,26 @@ export default function MasterclassesPage() {
           title: editingDetails.title,
           description: editingDetails.description,
           price: Number(editingDetails.price),
-          secretPasscode: editingDetails.secretPasscode,
+          originalPrice: editingDetails.originalPrice ? Number(editingDetails.originalPrice) : null,
+          badge: editingDetails.badge || '',
+          category: editingDetails.category || 'masterclass',
+          isActive: editingDetails.isActive !== false,
+          sessionDate: editingDetails.sessionDate || '',
+          sessionStatus: editingDetails.sessionStatus || 'upcoming',
+          activeMeetingLink: editingDetails.activeMeetingLink || '',
+          meetingCode: editingDetails.meetingCode || '',
+          meetingPlatform: editingDetails.meetingPlatform || 'Google Meet',
+          whatsappGroupLink: editingDetails.whatsappGroupLink || '',
+          secretPasscode: editingDetails.secretPasscode || 'STRIVERS2026',
+          mentors: Array.isArray(editingDetails.mentors) ? editingDetails.mentors : [],
+          features: Array.isArray(editingDetails.features) ? editingDetails.features : [],
+          whatYouWillLearn: Array.isArray(editingDetails.whatYouWillLearn) ? editingDetails.whatYouWillLearn : [],
+          duration: editingDetails.duration || '',
+          level: editingDetails.level || '',
+          imageUrl: editingDetails.imageUrl || '',
         }),
       });
-      showStatus(`✓ Details updated for ${editingDetails.title}`);
+      showStatus(`✓ All properties updated for ${editingDetails.title}`);
       setEditingDetails(null);
       loadData();
     } catch (err) {
@@ -150,6 +168,19 @@ export default function MasterclassesPage() {
     }
   };
 
+  const handleUpdateSlot = async (pid, slotId, payload) => {
+    try {
+      await apiCall(`/masterclasses/${encodeURIComponent(pid)}/slots/${encodeURIComponent(slotId)}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+      showStatus('✓ Live timing slot updated.');
+      loadData();
+    } catch (err) {
+      showStatus(err.message, 'error');
+    }
+  };
+
   const handleDeleteSlot = async (pid, slotId) => {
     try {
       await apiCall(`/masterclasses/${encodeURIComponent(pid)}/slots/${encodeURIComponent(slotId)}`, {
@@ -169,6 +200,19 @@ export default function MasterclassesPage() {
         body: JSON.stringify(payload),
       });
       showStatus('✓ DRM study material attached.');
+      loadData();
+    } catch (err) {
+      showStatus(err.message, 'error');
+    }
+  };
+
+  const handleUpdateMaterial = async (pid, materialId, payload) => {
+    try {
+      await apiCall(`/masterclasses/${encodeURIComponent(pid)}/materials/${encodeURIComponent(materialId)}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+      showStatus('✓ Study material updated successfully.');
       loadData();
     } catch (err) {
       showStatus(err.message, 'error');
@@ -240,10 +284,10 @@ export default function MasterclassesPage() {
             <MasterclassCard
               key={m.productId}
               masterclass={m}
-              onEditMeeting={(item) => setEditingMeeting({ ...item })}
+              onEditMeeting={(item) => setEditingMeeting(JSON.parse(JSON.stringify(item)))}
               onManageSlots={(item) => setSlotsTarget(item)}
               onManageMaterials={(item) => setMaterialsTarget(item)}
-              onEditDetails={(item) => setEditingDetails({ ...item })}
+              onEditDetails={(item) => setEditingDetails(JSON.parse(JSON.stringify(item)))}
               onDelete={handleDelete}
             />
           ))}
@@ -253,8 +297,20 @@ export default function MasterclassesPage() {
       <CreateMasterclassDialog open={creatingOpen} onClose={() => setCreatingOpen(false)} onCreate={handleCreate} />
       <EditMeetingDialog editingMeeting={editingMeeting} setEditingMeeting={setEditingMeeting} onSave={handleSaveMeeting} />
       <EditDetailsDialog editingDetails={editingDetails} setEditingDetails={setEditingDetails} onSave={handleSaveDetails} />
-      <ManageSlotsDialog masterclass={slotsTarget} onClose={() => setSlotsTarget(null)} onAddSlot={handleAddSlot} onDeleteSlot={handleDeleteSlot} />
-      <ManageMaterialsDialog masterclass={materialsTarget} onClose={() => setMaterialsTarget(null)} onAddMaterial={handleAddMaterial} onDeleteMaterial={handleDeleteMaterial} />
+      <ManageSlotsDialog
+        masterclass={slotsTarget}
+        onClose={() => setSlotsTarget(null)}
+        onAddSlot={handleAddSlot}
+        onUpdateSlot={handleUpdateSlot}
+        onDeleteSlot={handleDeleteSlot}
+      />
+      <ManageMaterialsDialog
+        masterclass={materialsTarget}
+        onClose={() => setMaterialsTarget(null)}
+        onAddMaterial={handleAddMaterial}
+        onUpdateMaterial={handleUpdateMaterial}
+        onDeleteMaterial={handleDeleteMaterial}
+      />
     </div>
   );
 }

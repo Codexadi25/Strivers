@@ -38,7 +38,7 @@ export default function MasterclassCard({
               size="small"
               color="primary"
               variant="outlined"
-              label="MASTERCLASS (SCHEMA: MASTERCLASS)"
+              label={m.badge || "MASTERCLASS"}
               sx={{ fontWeight: 700, fontSize: '0.68rem' }}
             />
             <Chip
@@ -47,6 +47,13 @@ export default function MasterclassCard({
               label={(m.sessionStatus || 'UPCOMING').toUpperCase()}
               sx={{ fontWeight: 800, fontSize: '0.68rem' }}
             />
+            {m.isActive === false && (
+              <Chip
+                size="small"
+                label="INACTIVE"
+                sx={{ fontWeight: 800, fontSize: '0.68rem', backgroundColor: '#fee2e2', color: '#b91c1c' }}
+              />
+            )}
           </div>
           <span className="sc-mc-slug">ID: {m.productId}</span>
         </div>
