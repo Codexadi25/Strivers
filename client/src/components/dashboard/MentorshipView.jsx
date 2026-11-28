@@ -2,18 +2,46 @@ import React from 'react';
 import UpcomingMasterclassBanner from './UpcomingMasterclassBanner';
 import CompanyMarquee from '../common/CompanyMarquee';
 import PlacementDisclaimer from '../common/PlacementDisclaimer';
+import PlayCircleOutlinedIcon from '@mui/icons-material/PlayCircleOutlined';
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import { LIVE_MENTORSHIP } from '../../data/mentorshipData';
 
 export default function MentorshipView({
   activeMentorshipClass,
   isUserEnrolledInClass,
   userAuthData,
+  liveMentorshipData,
   onNavigateToNotes,
   onUnlock,
 }) {
+  const currentMentorship = liveMentorshipData || LIVE_MENTORSHIP;
+  const agendaItems =
+    activeMentorshipClass?.timingSlots?.[0]?.agenda?.length > 0
+      ? activeMentorshipClass.timingSlots[0].agenda
+      : currentMentorship.nextSession?.agenda?.length > 0
+      ? currentMentorship.nextSession.agenda
+      : LIVE_MENTORSHIP.nextSession.agenda;
+
+  const weeklyScheduleItems =
+    activeMentorshipClass?.timingSlots?.length > 0
+      ? activeMentorshipClass.timingSlots.map((slot) => ({
+          day: slot.date || slot.dateTime || 'Live Session',
+          time: slot.startTime ? `${slot.startTime} - ${slot.endTime || ''}` : 'IST',
+          title: slot.title || activeMentorshipClass.title,
+          mentor: slot.mentorName || 'Unicorn Mentors',
+        }))
+      : currentMentorship.weeklySchedule?.length > 0
+      ? currentMentorship.weeklySchedule
+      : LIVE_MENTORSHIP.weeklySchedule;
+
+  const recordedSessions =
+    currentMentorship.recordedSessions?.length > 0
+      ? currentMentorship.recordedSessions
+      : LIVE_MENTORSHIP.recordedSessions;
+
   return (
     <div className="mentorship-container">
-      {/* 1. Dynamic Masterclass Hero Banner - MUI Everywhere & Real Time Sync */}
+      {/* 1. Dynamic Masterclass Hero Banner */}
       <UpcomingMasterclassBanner
         masterclass={activeMentorshipClass}
         isEnrolled={isUserEnrolledInClass}
@@ -38,10 +66,7 @@ export default function MentorshipView({
           </p>
 
           <div className="timeline-list">
-            {(activeMentorshipClass?.timingSlots?.[0]?.agenda?.length > 0
-              ? activeMentorshipClass.timingSlots[0].agenda
-              : LIVE_MENTORSHIP.nextSession.agenda
-            ).map((item, idx) => (
+            {agendaItems.map((item, idx) => (
               <div key={idx} className="timeline-item">
                 <div className="timeline-time-badge">{item.time}</div>
                 <div style={{ fontSize: '0.92rem', color: '#334155', lineHeight: 1.5 }}>
@@ -57,15 +82,7 @@ export default function MentorshipView({
           <div className="agenda-card">
             <h3 style={{ margin: '0 0 14px', fontSize: '1.15rem' }}>Weekly Live Timetable</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {(activeMentorshipClass?.timingSlots?.length > 0
-                ? activeMentorshipClass.timingSlots.map((slot) => ({
-                    day: slot.date || slot.dateTime || 'Live Session',
-                    time: slot.startTime ? `${slot.startTime} - ${slot.endTime || ''}` : 'IST',
-                    title: slot.title || activeMentorshipClass.title,
-                    mentor: slot.mentorName || 'Unicorn Mentors',
-                  }))
-                : LIVE_MENTORSHIP.weeklySchedule
-              ).map((s, i) => (
+              {weeklyScheduleItems.map((s, i) => (
                 <div
                   key={i}
                   style={{
@@ -115,8 +132,7 @@ export default function MentorshipView({
                 lineHeight: 1.5,
               }}
             >
-              Book an exclusive 30-minute resume roast and mock interview with a unicorn team
-              lead.
+              Book an exclusive 30-minute resume roast and mock interview with a unicorn team lead.
             </p>
             <button
               className="sheet-btn primary"
@@ -137,6 +153,106 @@ export default function MentorshipView({
           </div>
         </div>
       </div>
+
+      {/* 5. Recorded Sessions & Masterclass Archives */}
+      {recordedSessions && recordedSessions.length > 0 && (
+        <div style={{ marginTop: 32 }}>
+          <div style={{ marginBottom: 16 }}>
+            <h3 style={{ margin: '0 0 4px', fontSize: '1.35rem', color: '#0F172A' }}>
+              Recorded Mentorship Cohorts &amp; Masterclass Archives
+            </h3>
+            <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
+              Replay past high-yield sessions with unicorn engineers and dark store operators.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: 16,
+            }}
+          >
+            {recordedSessions.map((rec) => (
+              <div
+                key={rec.id}
+                style={{
+                  background: '#FFFFFF',
+                  border: '1px solid #E2E8F0',
+                  borderRadius: 12,
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+                }}
+              >
+                <div>
+                  <div style={{ position: 'relative', height: 140, background: '#1E293B' }}>
+                    <img
+                      src={rec.thumbnail}
+                      alt={rec.title}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }}
+                    />
+                    <span
+                      style={{
+                        position: 'absolute',
+                        bottom: 8,
+                        right: 8,
+                        background: 'rgba(0,0,0,0.75)',
+                        color: '#FFF',
+                        padding: '2px 8px',
+                        borderRadius: 4,
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                      }}
+                    >
+                      {rec.duration}
+                    </span>
+                  </div>
+
+                  <div style={{ padding: 14 }}>
+                    <div style={{ fontSize: '0.78rem', color: '#64748B', marginBottom: 4 }}>
+                      {rec.recordedDate} • {rec.mentor}
+                    </div>
+                    <strong style={{ fontSize: '0.94rem', color: '#0F172A', lineHeight: 1.35, display: 'block' }}>
+                      {rec.title}
+                    </strong>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    padding: '10px 14px 14px',
+                    display: 'flex',
+                    gap: 8,
+                    borderTop: '1px solid #F1F5F9',
+                  }}
+                >
+                  <a
+                    href={rec.recordingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="sheet-btn primary"
+                    style={{ flex: 1, justifyContent: 'center', fontSize: '0.82rem', padding: '6px 10px', textDecoration: 'none' }}
+                  >
+                    <PlayCircleOutlinedIcon sx={{ fontSize: 16 }} />
+                    <span>Watch Session</span>
+                  </a>
+                  <button
+                    className="sheet-btn"
+                    style={{ fontSize: '0.82rem', padding: '6px 10px' }}
+                    onClick={onNavigateToNotes}
+                  >
+                    <DescriptionOutlinedIcon sx={{ fontSize: 16 }} />
+                    <span>Notes</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

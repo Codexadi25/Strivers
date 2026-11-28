@@ -6,7 +6,15 @@ const UserProfile = require('../models/UserProfile');
 const PracticeStore = require('../utils/practiceStore');
 const UserStore = require('../utils/userStore');
 const ActivityOrderStore = require('../utils/activityOrderStore');
+const MentorshipStore = require('../utils/mentorshipStore');
 const { verifyFirebaseToken } = require('../middlewares/authMiddleware');
+
+// Get live mentorship timetable and curriculum (/api/practice/mentorship)
+router.get('/mentorship', (req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=15, s-maxage=60, stale-while-revalidate=120');
+  const mentorship = MentorshipStore.getMentorship();
+  return res.json({ success: true, mentorship });
+});
 
 // Get all practice sheets categorized by job requirement (/api/practice/sheets)
 router.get('/sheets', async (req, res) => {

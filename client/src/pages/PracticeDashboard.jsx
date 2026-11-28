@@ -57,10 +57,13 @@ export default function PracticeDashboard() {
 
   // Live dynamic Practice Sheets from Backend
   const [practiceSheets, setPracticeSheets] = useState([]);
-  const [selectedTrackCategory, setSelectedTrackCategory] = useState('non-tech'); // 'non-tech' | 'tech'
+  const [selectedTrackCategory, setSelectedTrackCategory] = useState('all'); // 'all' | 'non-tech' | 'tech'
   const [activeSheetId, setActiveSheetId] = useState('non-tech-ops-zomato-blinkit');
   const [activeScenarioModal, setActiveScenarioModal] = useState(null);
   const [enrollmentNotice, setEnrollmentNotice] = useState(null);
+
+  // Live Mentorship Data
+  const [liveMentorship, setLiveMentorship] = useState(null);
 
   // Downloadable Notes & Strict In-App Viewer Engine
   const [dbNotes, setDbNotes] = useState([]);
@@ -227,15 +230,41 @@ export default function PracticeDashboard() {
         if (!isMounted) return;
         if (res.data?.success && Array.isArray(res.data.sheets)) {
           setPracticeSheets(res.data.sheets);
-          const nonTech = res.data.sheets.filter((s) => s.roleType === 'non-tech');
-          if (nonTech.length > 0) {
-            setActiveSheetId(nonTech[0].sheetId);
+          if (res.data.sheets.length > 0) {
+            setActiveSheetId((prev) => {
+              const exists = res.data.sheets.some((s) => s.sheetId === prev);
+              return exists ? prev : res.data.sheets[0].sheetId;
+            });
           }
         }
       })
       .catch((err) => {
         console.warn('Practice sheets fetch fallback:', err?.message || err);
       });
+
+    // Fetch Live Downloadable Notes (Public Catalog)
+    api
+      .get('/notes')
+      .then((res) => {
+        if (!isMounted) return;
+        if (res.data?.success && Array.isArray(res.data.notes)) {
+          setDbNotes(res.data.notes);
+        }
+      })
+      .catch((err) => {
+        console.warn('Notes fetch fallback:', err?.message || err);
+      });
+
+    // Fetch Live Mentorship Timetable & Curriculum
+    api
+      .get('/practice/mentorship')
+      .then((res) => {
+        if (!isMounted) return;
+        if (res.data?.success && res.data.mentorship) {
+          setLiveMentorship(res.data.mentorship);
+        }
+      })
+      .catch(() => {});
 
     // Fetch Live Courses & Masterclasses for Live Mentorship Room
     api
@@ -313,42 +342,54 @@ export default function PracticeDashboard() {
   };
 
   // Categorized practice sheets
-  const nonTechSheets = useMemo(() => {
-    return practiceSheets.filter((s) => s.roleType === 'non-tech');
-  }, [practiceSheets]);
+  const availableSheets = useMemo(() => {
+    if (selectedTrackCategory === 'all') return practiceSheets;
+    if (selectedTrackCategory === 'tech') return practiceSheets.filter((s) => s.roleType === 'tech');
+    if (selectedTrackCategory === 'non-tech') return practiceSheets.filter((s) => s.roleType === 'non-tech');
+    if (selectedTrackCategory === 'analytics')
+      return practiceSheets.filter((s) => s.roleType === 'analytics' || s.category === 'Analytics');
+    return practiceSheets;
+  }, [selectedTrackCategory, practiceSheets]);
 
-  const activeNonTechSheet = useMemo(() => {
-    return nonTechSheets.find((s) => s.sheetId === activeSheetId) || nonTechSheets[0] || null;
-  }, [nonTechSheets, activeSheetId]);
+  const activeSheet = useMemo(() => {
+    const found = practiceSheets.find((s) => s.sheetId === activeSheetId);
+    if (found) return found;
+    if (availableSheets.length > 0) return availableSheets[0];
+    return practiceSheets[0] || null;
+  }, [practiceSheets, activeSheetId, availableSheets]);
 
   const isUserEnrolledInActiveSheet = useMemo(() => {
-    if (selectedTrackCategory === 'tech') return true;
-    return userEnrolledSheets.some(
-      (s) => s.sheetId === (activeNonTechSheet?.sheetId || activeSheetId)
-    );
-  }, [selectedTrackCategory, userEnrolledSheets, activeNonTechSheet, activeSheetId]);
+    if (!activeSheet) return false;
+    return userEnrolledSheets.some((s) => s.sheetId === activeSheet.sheetId);
+  }, [activeSheet, userEnrolledSheets]);
 
-  // Operational Problems for active Non-Tech Sheet
-  const activeNonTechProblems = useMemo(() => {
-    if (!activeNonTechSheet || !Array.isArray(activeNonTechSheet.topics)) return [];
-    return activeNonTechSheet.topics.flatMap((t) => t.problems || []);
-  }, [activeNonTechSheet]);
+  // Operational & Algorithm Problems for active Sheet
+  const activeSheetProblems = useMemo(() => {
+    if (!activeSheet || !Array.isArray(activeSheet.topics)) return [];
+    return activeSheet.topics.flatMap((t) => t.problems || []);
+  }, [activeSheet]);
 
-  const filteredNonTechTopics = useMemo(() => {
-    if (!activeNonTechSheet || !Array.isArray(activeNonTechSheet.topics)) return [];
-    return activeNonTechSheet.topics
+  const filteredTopics = useMemo(() => {
+    if (!activeSheet || !Array.isArray(activeSheet.topics)) return [];
+    return activeSheet.topics
       .map((top) => {
         const filtered = (top.problems || []).filter((p) => {
+          const pCompanies = Array.isArray(p.companies)
+            ? p.companies
+            : p.company
+            ? [p.company]
+            : [];
           const matchesSearch =
             !searchQuery ||
             p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            pCompanies.some((c) => c.toLowerCase().includes(searchQuery.toLowerCase())) ||
             (p.company && p.company.toLowerCase().includes(searchQuery.toLowerCase())) ||
             (p.type && p.type.toLowerCase().includes(searchQuery.toLowerCase())) ||
             (p.scenario && p.scenario.toLowerCase().includes(searchQuery.toLowerCase()));
 
           const matchesDiff =
             difficultyFilter === 'all' ||
-            p.difficulty.toLowerCase() === difficultyFilter.toLowerCase();
+            (p.difficulty || '').toLowerCase() === difficultyFilter.toLowerCase();
 
           const matchesSaved = !onlySaved || revisionMap[p.id];
           const matchesRev = !onlyRevision || revisionMap[p.id];
@@ -358,7 +399,7 @@ export default function PracticeDashboard() {
         return { ...top, problems: filtered };
       })
       .filter((t) => t.problems.length > 0);
-  }, [activeNonTechSheet, searchQuery, difficultyFilter, onlySaved, onlyRevision, revisionMap]);
+  }, [activeSheet, searchQuery, difficultyFilter, onlySaved, onlyRevision, revisionMap]);
 
   const handleEnrollPracticeSheet = async (sheet) => {
     if (!sheet) return;
@@ -441,11 +482,9 @@ export default function PracticeDashboard() {
 
   // Metrics calculation
   const allProblems = useMemo(() => {
-    if (selectedTrackCategory === 'non-tech') {
-      return activeNonTechProblems;
-    }
+    if (activeSheetProblems.length > 0) return activeSheetProblems;
     return techTopicsSource.flatMap((t) => t.problems);
-  }, [selectedTrackCategory, activeNonTechProblems, techTopicsSource]);
+  }, [activeSheetProblems, techTopicsSource]);
 
   const totalProblemsCount = allProblems.length;
   const totalSolvedCount = useMemo(() => {
@@ -461,31 +500,6 @@ export default function PracticeDashboard() {
   const easySolved = easyProblems.filter((p) => solvedMap[p.id]).length;
   const mediumSolved = mediumProblems.filter((p) => solvedMap[p.id]).length;
   const hardSolved = hardProblems.filter((p) => solvedMap[p.id]).length;
-
-  // Filtered Topics
-  const filteredTopics = useMemo(() => {
-    return techTopicsSource
-      .map((day) => {
-        const filtered = day.problems.filter((p) => {
-          const matchesSearch =
-            !searchQuery ||
-            p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            p.companies.some((c) => c.toLowerCase().includes(searchQuery.toLowerCase()));
-
-          const matchesDiff =
-            difficultyFilter === 'all' ||
-            p.difficulty.toLowerCase() === difficultyFilter.toLowerCase();
-
-          const matchesSaved = !onlySaved || revisionMap[p.id];
-          const matchesRev = !onlyRevision || revisionMap[p.id];
-
-          return matchesSearch && matchesDiff && matchesSaved && matchesRev;
-        });
-
-        return { ...day, problems: filtered };
-      })
-      .filter((day) => day.problems.length > 0);
-  }, [techTopicsSource, searchQuery, difficultyFilter, onlySaved, onlyRevision, revisionMap]);
 
   // Downloadable notes (Dynamic from MongoDB with Free & Paid classification)
   const combinedNotesList = useMemo(() => {
@@ -607,11 +621,11 @@ export default function PracticeDashboard() {
 
   // Analytics preparation
   const analyticsData = useMemo(() => {
-    const topicBreakdown = (
-      selectedTrackCategory === 'non-tech' && activeNonTechSheet?.topics
-        ? activeNonTechSheet.topics
-        : techTopicsSource
-    ).map((t) => {
+    const topicsList = activeSheet?.topics && activeSheet.topics.length > 0
+      ? activeSheet.topics
+      : techTopicsSource;
+
+    const topicBreakdown = topicsList.map((t) => {
       const title = t.topicTitle || t.title;
       const tProblems = t.problems || [];
       const solved = tProblems.filter((p) => solvedMap[p.id]).length;
@@ -630,8 +644,7 @@ export default function PracticeDashboard() {
       hardTotal: hardProblems.length,
     };
   }, [
-    selectedTrackCategory,
-    activeNonTechSheet,
+    activeSheet,
     techTopicsSource,
     solvedMap,
     easySolved,
@@ -1014,13 +1027,13 @@ export default function PracticeDashboard() {
               userAuthData={userAuthData}
               practiceViewMode={practiceViewMode}
               setPracticeViewMode={setPracticeViewMode}
-              nonTechSheets={nonTechSheets}
+              availableSheets={availableSheets}
               activeSheetId={activeSheetId}
               setActiveSheetId={setActiveSheetId}
-              activeNonTechSheet={activeNonTechSheet}
+              activeSheet={activeSheet}
               isUserEnrolledInActiveSheet={isUserEnrolledInActiveSheet}
               handleEnrollPracticeSheet={handleEnrollPracticeSheet}
-              filteredNonTechTopics={filteredNonTechTopics}
+              filteredTopics={filteredTopics}
               openDays={openDays}
               toggleDayAccordion={toggleDayAccordion}
               solvedMap={solvedMap}
@@ -1036,7 +1049,6 @@ export default function PracticeDashboard() {
               setOnlyRevision={setOnlyRevision}
               difficultyFilter={difficultyFilter}
               setDifficultyFilter={setDifficultyFilter}
-              filteredTopics={filteredTopics}
               setIsGroupStudyModalOpen={setIsGroupStudyModalOpen}
               progressPercent={progressPercent}
               totalProblemsCount={totalProblemsCount}
@@ -1059,6 +1071,7 @@ export default function PracticeDashboard() {
               activeMentorshipClass={activeMentorshipClass}
               isUserEnrolledInClass={isUserEnrolledInClass}
               userAuthData={userAuthData}
+              liveMentorshipData={liveMentorship}
               onNavigateToNotes={() => setActiveTab('notes')}
               onUnlock={() =>
                 navigate(

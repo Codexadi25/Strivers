@@ -203,11 +203,36 @@ const PracticeStore = {
     return this.update(sheetId, { topics });
   },
 
+  updateTopic(sheetId, topicId, topicData) {
+    const sheet = this.getById(sheetId);
+    if (!sheet) return null;
+    const cleanTid = String(topicId || '').trim();
+    const topics = (sheet.topics || []).map((t) => {
+      if (String(t.topicId) !== cleanTid) return t;
+      return {
+        ...t,
+        ...topicData,
+        topicId: t.topicId,
+        problems: Array.isArray(topicData.problems) ? topicData.problems : t.problems,
+      };
+    });
+    return this.update(sheetId, { topics });
+  },
+
+  deleteTopic(sheetId, topicId) {
+    const sheet = this.getById(sheetId);
+    if (!sheet) return null;
+    const cleanTid = String(topicId || '').trim();
+    const topics = (sheet.topics || []).filter((t) => String(t.topicId) !== cleanTid);
+    return this.update(sheetId, { topics });
+  },
+
   addProblem(sheetId, topicId, problemData) {
     const sheet = this.getById(sheetId);
     if (!sheet) return null;
+    const cleanTid = String(topicId || '').trim();
     const topics = (sheet.topics || []).map((t) => {
-      if (t.topicId !== topicId) return t;
+      if (String(t.topicId) !== cleanTid) return t;
       const problems = [...(t.problems || [])];
       problems.push({
         id: problemData.id || `prob_${Date.now()}`,
@@ -219,8 +244,42 @@ const PracticeStore = {
         solutionGuidance: problemData.solutionGuidance || '',
         keyTakeaway: problemData.keyTakeaway || '',
         resourceLink: problemData.resourceLink || '',
+        videoUrl: problemData.videoUrl || '',
         acceptanceRate: problemData.acceptanceRate || '88%',
       });
+      return { ...t, problems };
+    });
+    return this.update(sheetId, { topics });
+  },
+
+  updateProblem(sheetId, topicId, problemId, problemData) {
+    const sheet = this.getById(sheetId);
+    if (!sheet) return null;
+    const cleanTid = String(topicId || '').trim();
+    const cleanPid = String(problemId || '').trim();
+    const topics = (sheet.topics || []).map((t) => {
+      if (String(t.topicId) !== cleanTid) return t;
+      const problems = (t.problems || []).map((p) => {
+        if (String(p.id) !== cleanPid) return p;
+        return {
+          ...p,
+          ...problemData,
+          id: p.id,
+        };
+      });
+      return { ...t, problems };
+    });
+    return this.update(sheetId, { topics });
+  },
+
+  deleteProblem(sheetId, topicId, problemId) {
+    const sheet = this.getById(sheetId);
+    if (!sheet) return null;
+    const cleanTid = String(topicId || '').trim();
+    const cleanPid = String(problemId || '').trim();
+    const topics = (sheet.topics || []).map((t) => {
+      if (String(t.topicId) !== cleanTid) return t;
+      const problems = (t.problems || []).filter((p) => String(p.id) !== cleanPid);
       return { ...t, problems };
     });
     return this.update(sheetId, { topics });

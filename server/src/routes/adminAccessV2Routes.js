@@ -11,6 +11,8 @@ const CourseStore = require('../utils/courseStore');
 const UserStore = require('../utils/userStore');
 const CatalogStore = require('../utils/catalogStore');
 const PracticeStore = require('../utils/practiceStore');
+const NoteStore = require('../utils/noteStore');
+const MentorshipStore = require('../utils/mentorshipStore');
 const ActivityOrderStore = require('../utils/activityOrderStore');
 const { verifyFirebaseToken, verifyAdmin } = require('../middlewares/authMiddleware');
 const { signSessionToken } = require('../utils/token');
@@ -1234,6 +1236,94 @@ router.post('/practice/:id/topics/:topicId/problems', (req, res) => {
     return res.json({ success: true, message: 'Problem added to module.', sheet: updated });
   }
   return res.status(404).json({ success: false, message: 'Sheet or topic not found.' });
+});
+
+router.put('/practice/:id/topics/:topicId', (req, res) => {
+  const updated = PracticeStore.updateTopic(req.params.id, req.params.topicId, req.body);
+  if (updated) {
+    return res.json({ success: true, message: 'Topic updated.', sheet: updated });
+  }
+  return res.status(404).json({ success: false, message: 'Sheet or topic not found.' });
+});
+
+router.delete('/practice/:id/topics/:topicId', (req, res) => {
+  const updated = PracticeStore.deleteTopic(req.params.id, req.params.topicId);
+  if (updated) {
+    return res.json({ success: true, message: 'Topic deleted.', sheet: updated });
+  }
+  return res.status(404).json({ success: false, message: 'Sheet or topic not found.' });
+});
+
+router.put('/practice/:id/topics/:topicId/problems/:problemId', (req, res) => {
+  const updated = PracticeStore.updateProblem(req.params.id, req.params.topicId, req.params.problemId, req.body);
+  if (updated) {
+    return res.json({ success: true, message: 'Problem updated.', sheet: updated });
+  }
+  return res.status(404).json({ success: false, message: 'Problem not found.' });
+});
+
+router.delete('/practice/:id/topics/:topicId/problems/:problemId', (req, res) => {
+  const updated = PracticeStore.deleteProblem(req.params.id, req.params.topicId, req.params.problemId);
+  if (updated) {
+    return res.json({ success: true, message: 'Problem removed.', sheet: updated });
+  }
+  return res.status(404).json({ success: false, message: 'Problem not found.' });
+});
+
+// ==========================================
+// 8.1 DOWNLOADABLE NOTES VAULT (Admin Control)
+// ==========================================
+router.get('/notes', (req, res) => {
+  const notes = NoteStore.getAll(true);
+  res.json({ success: true, count: notes.length, notes });
+});
+
+router.post('/notes', (req, res) => {
+  const created = NoteStore.create(req.body);
+  ActivityOrderStore.addLog({
+    event: 'NOTE_CREATED',
+    userEmail: req.user?.email,
+    ip: req.ip || '127.0.0.1',
+    metadata: { noteId: created.noteId, title: created.title },
+    tag: 'NOTES',
+  });
+  res.status(201).json({ success: true, message: 'Downloadable Note saved to vault.', note: created });
+});
+
+router.put('/notes/:id', (req, res) => {
+  const updated = NoteStore.update(req.params.id, req.body);
+  if (updated) {
+    return res.json({ success: true, message: 'Note updated.', note: updated });
+  }
+  return res.status(404).json({ success: false, message: 'Note not found.' });
+});
+
+router.delete('/notes/:id', (req, res) => {
+  const ok = NoteStore.delete(req.params.id);
+  if (ok) {
+    return res.json({ success: true, message: 'Note deleted from database.' });
+  }
+  return res.status(404).json({ success: false, message: 'Note not found.' });
+});
+
+// ==========================================
+// 8.2 LIVE MENTORSHIP SCHEDULE (Admin Control)
+// ==========================================
+router.get('/mentorship', (req, res) => {
+  const mentorship = MentorshipStore.getMentorship();
+  res.json({ success: true, mentorship });
+});
+
+router.put('/mentorship', (req, res) => {
+  const updated = MentorshipStore.updateMentorship(req.body);
+  ActivityOrderStore.addLog({
+    event: 'MENTORSHIP_UPDATED',
+    userEmail: req.user?.email,
+    ip: req.ip || '127.0.0.1',
+    metadata: { nextSessionTitle: updated?.nextSession?.title },
+    tag: 'MENTORSHIP',
+  });
+  res.json({ success: true, message: 'Live Mentorship Schedule updated and synced.', mentorship: updated });
 });
 
 // ==========================================
