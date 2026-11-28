@@ -15,7 +15,7 @@ let cachedWorkingBase = null;
 
 export function normalizeAdminApiBase(rawUrl) {
   const clean = String(rawUrl || '').trim().replace(/\/+$/, '');
-  if (!clean || clean.includes('your-strivers-backend.onrender.com')) return '';
+  if (!clean || clean.includes('onrender.com')) return '';
   if (clean.endsWith('/api/v2/adminaccess')) return clean;
   if (clean.endsWith('/api/v2')) return `${clean}/adminaccess`;
   if (clean.endsWith('/api')) return `${clean}/v2/adminaccess`;
@@ -24,10 +24,7 @@ export function normalizeAdminApiBase(rawUrl) {
 
 export function getConfiguredApiBase() {
   // 1. Strictly prioritize the .env file configuration (VITE_API_BASE_URL / REACT_APP_API_BASE_URL)
-  const envUrl =
-    (typeof process !== 'undefined' && process.env
-      ? process.env.VITE_API_BASE_URL || process.env.REACT_APP_API_BASE_URL
-      : '') || '';
+  const envUrl = process.env.VITE_API_BASE_URL || process.env.REACT_APP_API_BASE_URL || '';
 
   const normalizedEnv = normalizeAdminApiBase(envUrl);
   if (normalizedEnv) return normalizedEnv;

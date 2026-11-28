@@ -9,13 +9,9 @@ import { getAuthToken, clearAuthSession } from './authStorage';
  */
 const getApiBase = () => {
   // 1. Strictly derive from active .env file (REACT_APP_API_BASE_URL / VITE_API_BASE_URL)
-  const envBase = (
-    typeof process !== 'undefined' && process.env
-      ? process.env.REACT_APP_API_BASE_URL || process.env.VITE_API_BASE_URL
-      : ''
-  ) || '';
+  const envBase = process.env.REACT_APP_API_BASE_URL || process.env.VITE_API_BASE_URL || '';
 
-  if (envBase) {
+  if (envBase && !envBase.includes('onrender.com')) {
     const clean = String(envBase).trim().replace(/\/+$/, '');
     return clean.endsWith('/api') ? clean : `${clean}/api`;
   }
