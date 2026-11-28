@@ -599,40 +599,131 @@ router.get('/orders', async (req, res) => {
 });
 
 // ==========================================
-// 5. DISPUTES & TICKETS
+// 5. DISPUTES & TICKETS (LIVE DATABASE & PAYMENT GATEWAY FAILURES)
 // ==========================================
 router.get('/tickets', async (req, res) => {
   try {
+    const liveTickets = [];
+    const seenOrderIds = new Set();
+
+    // 1. Fetch live Support Tickets from MongoDB
     if (mongoose.connection.readyState === 1) {
       try {
-        const tickets = await SupportTicket.find().sort({ createdAt: -1 }).limit(50).maxTimeMS(1500);
-        if (tickets.length > 0) {
-          return res.json({
-            success: true,
-            count: tickets.length,
-            tickets: tickets.map((t) => ({
+        const dbTickets = await SupportTicket.find().sort({ createdAt: -1 }).limit(100).maxTimeMS(2000);
+        if (dbTickets && dbTickets.length > 0) {
+          dbTickets.forEach((t) => {
+            const orderNum = t.razorpayOrderId || t.orderId || 'N/A';
+            if (orderNum !== 'N/A') seenOrderIds.add(orderNum);
+            liveTickets.push({
               ticketId: t.ticketId,
               createdAt: t.createdAt,
-              studentContact: `${t.userEmail} (${t.userPhone || 'N/A'})`,
+              studentContact: `${t.userEmail || 'Student'} (${t.userPhone || 'N/A'})`,
               userEmail: t.userEmail,
-              customerName: t.customerName,
-              orderId: t.razorpayOrderId,
+              customerName: t.customerName || (t.userEmail ? t.userEmail.split('@')[0] : 'Student'),
+              orderId: orderNum,
               bankRrn: t.bankRrn || 'N/A',
               amount: t.amount,
-              issueCategory: t.issueType,
-              status: t.status,
-              slaDeadline: t.slaDeadline ? new Date(t.slaDeadline).toLocaleDateString() : '7 Business Days',
-            })),
+              issueCategory: t.issueType || 'amount_debited_payment_failed',
+              status: t.status || 'open',
+              slaDeadline: t.slaDeadline ? new Date(t.slaDeadline).toLocaleDateString('en-IN') : '7 Business Days',
+            });
           });
         }
-      } catch (_) {}
+      } catch (err) {
+        console.warn('[Admin Tickets DB Notice]:', err.message);
+      }
     }
 
-    const list = ActivityOrderStore.getTickets();
-    return res.json({ success: true, count: list.length, tickets: list });
+    // 2. Fetch live failed / canceled / refunded payment transactions from MongoDB
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const failedPayments = await Payment.find({
+          status: { $in: ['failed', 'canceled', 'refunded', 'PAYMENT CANCELED', 'FAILED', 'REFUNDED'] },
+        })
+          .sort({ createdAt: -1 })
+          .limit(50)
+          .maxTimeMS(2000);
+
+        failedPayments.forEach((p) => {
+          const orderNum = p.razorpayOrderId || p.orderId;
+          if (orderNum && !seenOrderIds.has(orderNum)) {
+            seenOrderIds.add(orderNum);
+            const email = p.userEmail || p.customerEmail || 'student@example.com';
+            const phone = p.customerPhone || 'N/A';
+            const isCanceled = (p.status || '').toLowerCase().includes('cancel');
+            const isRefunded = (p.status || '').toLowerCase().includes('refund');
+            const issueCategory = isCanceled
+              ? 'User Cancelled / Modal Dismissed'
+              : p.failureReason || p.errorCode || 'amount_debited_payment_failed';
+            const inrAmt = p.amount ? (Number(p.amount) > 500 ? Number(p.amount) / 100 : Number(p.amount)) : 74;
+            const slaDate = new Date(p.createdAt || Date.now());
+            slaDate.setDate(slaDate.getDate() + 7);
+
+            liveTickets.push({
+              ticketId: `tkt_pg_${(orderNum || '').replace(/\D/g, '').slice(-6) || Math.floor(100000 + Math.random() * 900000)}`,
+              createdAt: p.createdAt || p.failedAt || new Date().toISOString(),
+              studentContact: `${email} (${phone})`,
+              userEmail: email,
+              customerName: p.customerName || email.split('@')[0],
+              orderId: orderNum,
+              bankRrn: p.bankRrn || 'N/A',
+              amount: inrAmt,
+              issueCategory,
+              status: isRefunded ? 'resolved' : 'under_investigation',
+              slaDeadline: slaDate.toLocaleDateString('en-IN'),
+            });
+          }
+        });
+      } catch (pErr) {
+        console.warn('[Admin Failed Payments Notice]:', pErr.message);
+      }
+    }
+
+    // 3. Fallback to live JSON stores (only real student records, filtering out mock dummy data)
+    const fileTickets = ActivityOrderStore.getTickets().filter(
+      (t) => !t.userEmail?.includes('dispute.student@example.com') && !t.studentContact?.includes('dispute.student@example.com')
+    );
+    fileTickets.forEach((t) => {
+      if (!seenOrderIds.has(t.orderId)) {
+        seenOrderIds.add(t.orderId);
+        liveTickets.push(t);
+      }
+    });
+
+    const fileOrders = ActivityOrderStore.getOrders();
+    fileOrders
+      .filter((o) => o.status && (o.status.toLowerCase().includes('fail') || o.status.toLowerCase().includes('cancel') || o.status.toLowerCase().includes('refund')))
+      .forEach((p) => {
+        const orderNum = p.orderId || p.razorpayOrderId;
+        if (orderNum && !seenOrderIds.has(orderNum)) {
+          seenOrderIds.add(orderNum);
+          const email = p.customerEmail || p.userEmail || 'student@example.com';
+          const isCanceled = (p.status || '').toLowerCase().includes('cancel');
+          const isRefunded = (p.status || '').toLowerCase().includes('refund');
+          const issueCategory = isCanceled ? 'User Cancelled / Modal Dismissed' : 'amount_debited_payment_failed';
+          const inrAmt = p.amount ? (Number(p.amount) > 500 ? Number(p.amount) / 100 : Number(p.amount)) : 74;
+          const slaDate = new Date(p.createdAt || Date.now());
+          slaDate.setDate(slaDate.getDate() + 7);
+
+          liveTickets.push({
+            ticketId: `tkt_pg_${(orderNum || '').replace(/\D/g, '').slice(-6) || Math.floor(100000 + Math.random() * 900000)}`,
+            createdAt: p.createdAt || p.date || new Date().toISOString(),
+            studentContact: `${email} (${p.customerPhone || 'N/A'})`,
+            userEmail: email,
+            customerName: p.customerName || email.split('@')[0],
+            orderId: orderNum,
+            bankRrn: p.bankRrn || 'N/A',
+            amount: inrAmt,
+            issueCategory,
+            status: isRefunded ? 'resolved' : 'under_investigation',
+            slaDeadline: slaDate.toLocaleDateString('en-IN'),
+          });
+        }
+      });
+
+    return res.json({ success: true, count: liveTickets.length, tickets: liveTickets });
   } catch (err) {
-    const list = ActivityOrderStore.getTickets();
-    return res.json({ success: true, count: list.length, tickets: list });
+    return res.json({ success: true, count: 0, tickets: [] });
   }
 });
 

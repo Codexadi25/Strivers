@@ -135,36 +135,7 @@ const SEED_ORDERS = [
   },
 ];
 
-const SEED_TICKETS = [
-  {
-    ticketId: 'tkt_8431432921',
-    createdAt: '2026-11-09T18:42:00.000Z',
-    studentContact: 'kamaldeep@gmail.com (+91 9876545543)',
-    userEmail: 'kamaldeep@gmail.com',
-    customerName: 'Kamaldeep',
-    orderId: 'order_TyAg2Ra7PZJtZv',
-    bankRrn: 'UTR_BANK_9918237190',
-    amount: 74,
-    issueCategory: 'amount_debited_payment_failed',
-    status: 'under_investigation',
-    slaDeadline: 'Nov 16, 2026 (7 Business Days)',
-    action: 'Verify Bank Reversal',
-  },
-  {
-    ticketId: 'tkt_8431432922',
-    createdAt: '2026-11-09T16:20:00.000Z',
-    studentContact: 'student@example.com (+91 9123456789)',
-    userEmail: 'student@example.com',
-    customerName: 'Rohan Sharma',
-    orderId: 'order_TyAg9918239011',
-    bankRrn: 'UTR_BANK_7718290111',
-    amount: 111,
-    issueCategory: 'website_risk_check_blocked',
-    status: 'resolved',
-    slaDeadline: 'Nov 14, 2026',
-    action: 'Access Granted Manually',
-  },
-];
+const SEED_TICKETS = [];
 
 const SEED_REFUNDS = [
   {

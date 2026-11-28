@@ -7,6 +7,7 @@ import Skeleton from '@mui/material/Skeleton';
 import BoltIcon from '@mui/icons-material/Bolt';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
+import SearchOffIcon from '@mui/icons-material/SearchOff';
 import { apiCall } from '../services/api';
 import LifelineSearchBar from '../components/lifeline/LifelineSearchBar';
 import LifelineCustomerPanel, { LifelineProfileCard } from '../components/lifeline/LifelineCustomerPanel';
@@ -328,10 +329,27 @@ export default function LifelinePage() {
       )}
 
       {notFoundQuery && !loading && (
-        <Alert severity="info" className="sc-lifeline-alert">
-          No customer or order record matched <strong>&ldquo;{notFoundQuery}&rdquo;</strong> under parameter{' '}
-          <strong>{LIFELINE_CATEGORIES.find((c) => c.id === selectedCategory)?.label}</strong>.
-        </Alert>
+        <Paper
+          variant="outlined"
+          className="sc-lifeline-empty-state"
+          sx={{
+            my: 3,
+            p: 4,
+            textAlign: 'center',
+            borderRadius: 2,
+            backgroundColor: (theme) => (theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.1)' : '#fef2f2'),
+            borderColor: (theme) => (theme.palette.mode === 'dark' ? '#ef4444' : '#fecaca'),
+          }}
+        >
+          <SearchOffIcon sx={{ fontSize: 52, color: '#ef4444', mb: 1.5 }} />
+          <h2 style={{ margin: '0.25rem 0 0.5rem', fontSize: '1.35rem', fontWeight: 700, color: '#b91c1c' }}>
+            No Such {LIFELINE_CATEGORIES.find((c) => c.id === selectedCategory)?.label || 'Parameter'} found.
+          </h2>
+          <p style={{ margin: 0, color: '#64748b', fontSize: '0.92rem' }}>
+            No database record matches query <strong>&ldquo;{notFoundQuery}&rdquo;</strong> under parameter{' '}
+            <strong>{LIFELINE_CATEGORIES.find((c) => c.id === selectedCategory)?.label}</strong>.
+          </p>
+        </Paper>
       )}
 
       {!loading && !lifelineData && !notFoundQuery && !error && (
