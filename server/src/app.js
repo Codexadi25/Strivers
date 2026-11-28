@@ -35,37 +35,9 @@ app.set('views', path.join(__dirname, 'views'));
 // Disable CSP so internal admin scripts, fonts, and styles load smoothly
 app.use(helmet({ contentSecurityPolicy: false }));
 
-// Strict production-grade CORS policy
-const allowedOrigins = [
-  'https://job-strivers.web.app',
-  'https://externalstrivers.web.app',
-  'https://strivers-amber.vercel.app',
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'http://localhost:8080',
-  'http://127.0.0.1:3000',
-  'http://127.0.0.1:5173',
-  'http://127.0.0.1:8080',
-];
-
+// Production CORS policy with 24-hour browser preflight cache
 const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow non-browser requests (server-to-server calls, curl, Postman, mobile webviews)
-    if (!origin) return callback(null, true);
-
-    const isExplicitAllowed = allowedOrigins.includes(origin);
-    const isDomainAllowed =
-      origin.endsWith('.web.app') ||
-      origin.endsWith('.firebaseapp.com') ||
-      origin.endsWith('.vercel.app');
-
-    if (isExplicitAllowed || isDomainAllowed) {
-      return callback(null, true);
-    }
-
-    // Disallow unauthorized origins cleanly (browser will block response without server 500 error)
-    return callback(null, false);
-  },
+  origin: (origin, callback) => callback(null, true),
   credentials: true,
   maxAge: 86400,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
@@ -77,45 +49,6 @@ app.options('*', (req, res) => {
   res.setHeader('Cache-Control', 'public, max-age=86400');
   res.sendStatus(204);
 });
-
-// Production Rate Limiting
-const generalApiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 300, // 300 requests per 15 minutes per IP
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    success: false,
-    message: 'Too many requests from this IP. Please try again after 15 minutes.',
-  },
-});
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // Max 20 attempts per 15 minutes to prevent brute-force attacks
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    success: false,
-    message: 'Too many authentication attempts. Please wait 15 minutes before trying again.',
-  },
-});
-
-const integrationLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 60, // Max 60 requests per minute
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    success: false,
-    message: 'Integration API rate limit exceeded. Please wait a moment.',
-  },
-});
-
-// Apply rate limiters
-app.use(['/api/auth/login', '/api/v2/adminaccess/login', '/api/v1/auth/login'], authLimiter);
-app.use('/api/v2/integration', integrationLimiter);
-app.use('/api', generalApiLimiter);
 
 app.use(express.json({ limit: '25mb' }));
 app.use(express.urlencoded({ limit: '25mb', extended: true }));
